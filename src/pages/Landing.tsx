@@ -27,6 +27,10 @@ const games: GameTile[] = [
   { slug: "hyper-circuit", title: "Hyper Circuit", era: "SNES", alt: "Hover car racing toward a sunset horizon" },
   { slug: "the-undervault", title: "The Undervault", era: "Original", alt: "Torch-lit dungeon staircase descending into darkness" },
   { slug: "flap-hero", title: "Flap Hero", era: "Mobile", alt: "Plump bird flying between tall pillars" },
+  { slug: "sky-defense", title: "Sky Defense", era: "Arcade", alt: "Counter-rockets rising to intercept falling missiles over cities" },
+  { slug: "gem-columns", title: "Gem Columns", era: "Genesis", alt: "Columns of gems falling and stacking in a pit" },
+  { slug: "kickflip-city", title: "Kickflip City", era: "PS1", alt: "Skateboarder mid-kickflip over a stair rail" },
+  { slug: "trailbound", title: "Trailbound", era: "DOS", alt: "Covered wagon crossing the plains toward mountains" },
 ];
 
 const facts = [
@@ -67,9 +71,16 @@ const Landing = () => (
     {/* Header */}
     <header className="sticky top-0 z-20 border-b border-border bg-background/90 backdrop-blur">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
-        <p className="font-display text-xl font-extrabold tracking-tight">
-          neon<span className="text-terra">arcade</span>
-        </p>
+        <div className="flex items-center gap-2.5">
+          <img
+            src="/assets/brand/logo-mark.png"
+            alt="Neon Arcade logo"
+            className="h-9 w-9 rounded-full shadow-sm ring-1 ring-foreground/10"
+          />
+          <p className="font-display text-xl font-extrabold tracking-tight">
+            neon<span className="text-terra">arcade</span>
+          </p>
+        </div>
         <nav className="flex items-center gap-1 sm:gap-2">
           <Button asChild variant="ghost" className="rounded-full font-medium text-muted-foreground hover:text-foreground">
             <Link to="/faq">FAQ</Link>
@@ -110,7 +121,7 @@ const Landing = () => (
         <div className="mb-5 flex items-end justify-between">
           <h2 className="font-display text-2xl font-bold tracking-tight">The launch lineup</h2>
           <span className="font-mono text-xs tracking-widest text-muted-foreground">
-            8 OF 30 REVEALED
+            12 OF 30 REVEALED
           </span>
         </div>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4">
