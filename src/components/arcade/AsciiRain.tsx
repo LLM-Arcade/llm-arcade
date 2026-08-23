@@ -33,16 +33,16 @@ const AsciiRain = ({ className }: { className?: string }) => {
       const t = now - start;
       const fade = t > DURATION ? Math.max(0, 1 - (t - DURATION) / FADE) : 1;
 
-      ctx.fillStyle = "rgba(15, 18, 32, 0.2)";
+      ctx.fillStyle = "rgba(23, 19, 16, 0.2)";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       ctx.font = `${fontSize}px "JetBrains Mono", monospace`;
 
       for (let i = 0; i < columns; i++) {
         const char = GLYPHS[Math.floor(Math.random() * GLYPHS.length)];
-        const isViolet = Math.random() < 0.12;
-        ctx.fillStyle = isViolet
-          ? `rgba(124, 92, 255, ${0.95 * fade})`
-          : `rgba(45, 226, 230, ${0.35 * fade})`;
+        const isAmber = Math.random() < 0.12;
+        ctx.fillStyle = isAmber
+          ? `rgba(255, 176, 32, ${0.95 * fade})`
+          : `rgba(155, 232, 88, ${0.3 * fade})`;
         ctx.fillText(char, i * fontSize, drops[i] * fontSize);
         if (drops[i] * fontSize > canvas.height && Math.random() > 0.97) {
           drops[i] = 0;

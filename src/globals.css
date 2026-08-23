@@ -4,52 +4,51 @@
 
 @layer base {
   :root {
-    /* Neon Arcade tokens — dark base only (v1) */
-    --background: 229 36% 9%; /* #0F1220 */
-    --foreground: 230 30% 96%; /* #F2F3F8 */
+    /* Neon Arcade — warm CRT palette. No purple, no blue, ever. */
+    --background: 26 18% 8%; /* #171310 warm near-black */
+    --foreground: 38 46% 91%; /* #F2EADC cream */
 
-    --card: 229 31% 14%; /* #181C2E surface */
-    --card-foreground: 230 30% 96%;
+    --card: 32 24% 11%; /* #221C15 */
+    --card-foreground: 38 46% 91%;
 
-    --popover: 229 31% 14%;
-    --popover-foreground: 230 30% 96%;
+    --popover: 32 24% 11%;
+    --popover-foreground: 38 46% 91%;
 
-    --primary: 252 100% 68%; /* #7C5CFF electric violet */
-    --primary-foreground: 0 0% 100%;
+    --primary: 11 100% 57%; /* #FF4D24 signal red */
+    --primary-foreground: 38 46% 96%;
 
-    --secondary: 230 31% 19%; /* #222741 surface-2 */
-    --secondary-foreground: 230 30% 96%;
+    --secondary: 37 30% 14%; /* #2E2619 */
+    --secondary-foreground: 38 46% 91%;
 
-    --muted: 230 31% 19%;
-    --muted-foreground: 230 17% 66%; /* #9BA0B8 */
+    --muted: 37 30% 14%;
+    --muted-foreground: 38 17% 59%; /* #A89B85 warm gray */
 
-    --accent: 230 31% 19%;
-    --accent-foreground: 230 30% 96%;
+    --accent: 37 30% 14%;
+    --accent-foreground: 38 46% 91%;
 
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 100%;
+    --destructive: 11 100% 57%;
+    --destructive-foreground: 38 46% 96%;
 
-    --border: 230 26% 24%;
-    --input: 230 31% 19%;
-    --ring: 252 100% 68%;
+    --border: 35 20% 22%;
+    --input: 37 30% 14%;
+    --ring: 39 100% 56%;
 
-    --radius: 1rem;
+    --radius: 0.75rem;
 
     /* Arcade palette */
-    --neon-violet: 252 100% 68%; /* #7C5CFF */
-    --neon-cyan: 181 79% 54%; /* #2DE2E6 */
-    --neon-pink: 339 100% 62%; /* #FF3D81 */
-    --neon-lime: 95 100% 68%; /* #9FFF5B */
-    --neon-amber: 39 100% 56%; /* #FFB020 */
+    --arcade-red: 11 100% 57%; /* #FF4D24 */
+    --arcade-amber: 39 100% 56%; /* #FFB020 marquee bulbs */
+    --arcade-green: 92 76% 63%; /* #9BE858 phosphor */
+    --arcade-cream: 38 46% 91%; /* #F2EADC */
 
-    --sidebar-background: 229 31% 14%;
-    --sidebar-foreground: 230 30% 96%;
-    --sidebar-primary: 252 100% 68%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 230 31% 19%;
-    --sidebar-accent-foreground: 230 30% 96%;
-    --sidebar-border: 230 26% 24%;
-    --sidebar-ring: 252 100% 68%;
+    --sidebar-background: 32 24% 11%;
+    --sidebar-foreground: 38 46% 91%;
+    --sidebar-primary: 11 100% 57%;
+    --sidebar-primary-foreground: 38 46% 96%;
+    --sidebar-accent: 37 30% 14%;
+    --sidebar-accent-foreground: 38 46% 91%;
+    --sidebar-border: 35 20% 22%;
+    --sidebar-ring: 39 100% 56%;
   }
 }
 
@@ -67,39 +66,54 @@
   }
 
   ::selection {
-    background: hsl(var(--neon-violet) / 0.45);
+    background: hsl(var(--arcade-amber) / 0.4);
   }
 }
 
 @layer utilities {
-  /* Neon edge glow — used on interactive hover states */
-  .glow-violet {
-    box-shadow:
-      0 0 0 1px hsl(var(--neon-violet) / 0.6),
-      0 0 24px hsl(var(--neon-violet) / 0.4);
+  /* Hard pixel shadows — no soft glows */
+  .shadow-hard-red {
+    box-shadow: 4px 4px 0 0 hsl(var(--arcade-red));
   }
-  .glow-cyan {
-    box-shadow:
-      0 0 0 1px hsl(var(--neon-cyan) / 0.6),
-      0 0 24px hsl(var(--neon-cyan) / 0.35);
+  .shadow-hard-amber {
+    box-shadow: 4px 4px 0 0 hsl(var(--arcade-amber));
   }
-  .glow-pink {
-    box-shadow:
-      0 0 0 1px hsl(var(--neon-pink) / 0.6),
-      0 0 24px hsl(var(--neon-pink) / 0.35);
+  .shadow-hard-sm {
+    box-shadow: 3px 3px 0 0 hsl(var(--border));
   }
 
-  .text-glow-violet {
-    text-shadow: 0 0 18px hsl(var(--neon-violet) / 0.65);
-  }
-  .text-glow-cyan {
-    text-shadow: 0 0 18px hsl(var(--neon-cyan) / 0.6);
+  .text-shadow-pixel {
+    text-shadow:
+      3px 3px 0 hsl(var(--arcade-red)),
+      6px 6px 0 hsl(26 18% 4%);
   }
 
-  /* Staggered page entrance — apply .fade-up with inline animation-delay */
+  /* CRT scanlines overlay — apply to a relatively positioned screen area */
+  .scanlines::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: repeating-linear-gradient(
+      to bottom,
+      transparent 0px,
+      transparent 2px,
+      rgba(0, 0, 0, 0.28) 3px,
+      rgba(0, 0, 0, 0.28) 4px
+    );
+  }
+
   .fade-up {
     opacity: 0;
     animation: fade-up 0.4s ease-out forwards;
+  }
+
+  .animate-blink {
+    animation: blink 1.2s steps(2, start) infinite;
+  }
+
+  .animate-ticker {
+    animation: ticker 28s linear infinite;
   }
 
   .tabular-nums {
@@ -118,11 +132,30 @@
   }
 }
 
+@keyframes blink {
+  to {
+    visibility: hidden;
+  }
+}
+
+@keyframes ticker {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .fade-up {
     animation: none;
     opacity: 1;
     transform: none;
+  }
+  .animate-blink,
+  .animate-ticker {
+    animation: none;
   }
   *,
   *::before,

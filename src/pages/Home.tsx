@@ -7,8 +7,8 @@ import SiteFooter from "@/components/layout/SiteFooter";
 const Home = () => (
   <div className="flex min-h-screen flex-col bg-background">
     <main className="flex flex-1 flex-col items-center justify-center px-6 text-center">
-      <h1 className="font-display text-[40px] font-bold">
-        NEON<span className="text-neon-violet text-glow-violet">ARCADE</span>
+      <h1 className="font-pixel text-2xl text-arcade-cream text-shadow-pixel sm:text-4xl">
+        NEON ARCADE
       </h1>
       <p className="mt-3 text-muted-foreground">
         The arcade floor is being wired up. Cabinets arriving shortly.

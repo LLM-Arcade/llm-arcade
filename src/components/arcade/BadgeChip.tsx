@@ -5,12 +5,12 @@ export type BadgeRarity = "bronze" | "silver" | "gold" | "neon";
 
 const rarityStyles: Record<BadgeRarity, { ring: string; icon: string; label: string }> = {
   bronze: { ring: "border-[#B07B4F]", icon: "text-[#D9A272]", label: "text-[#D9A272]" },
-  silver: { ring: "border-[#AEB6CC]", icon: "text-[#C9D0E3]", label: "text-[#C9D0E3]" },
-  gold: { ring: "border-neon-amber", icon: "text-neon-amber", label: "text-neon-amber" },
+  silver: { ring: "border-[#C9C2B4]", icon: "text-[#DFD9CC]", label: "text-[#DFD9CC]" },
+  gold: { ring: "border-arcade-amber", icon: "text-arcade-amber", label: "text-arcade-amber" },
   neon: {
-    ring: "border-neon-pink shadow-[0_0_16px_hsl(var(--neon-pink)/0.5)]",
-    icon: "text-neon-pink",
-    label: "text-neon-pink",
+    ring: "border-arcade-red shadow-hard-sm",
+    icon: "text-arcade-red",
+    label: "text-arcade-red",
   },
 };
 
@@ -38,8 +38,8 @@ const BadgeChip = ({ name, rarity, icon: Icon, className }: BadgeChipProps) => {
         <Icon className={cn("h-5 w-5", style.icon)} />
       </div>
       <div className="flex flex-col">
-        <span className="font-display text-sm font-bold leading-tight">{name}</span>
-        <span className={cn("text-xs uppercase tracking-widest", style.label)}>
+        <span className="font-mono text-sm font-semibold leading-tight">{name}</span>
+        <span className={cn("font-mono text-[10px] uppercase tracking-widest", style.label)}>
           {rarity}
         </span>
       </div>

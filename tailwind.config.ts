@@ -20,16 +20,16 @@ export default {
     extend: {
       fontFamily: {
         sans: ["Inter", "system-ui", "sans-serif"],
-        display: ["Space Grotesk", "Inter", "sans-serif"],
+        display: ["Archivo Black", "Inter", "sans-serif"],
+        pixel: ["'Press Start 2P'", "monospace"],
         mono: ["JetBrains Mono", "ui-monospace", "monospace"],
       },
       colors: {
-        neon: {
-          violet: "hsl(var(--neon-violet))",
-          cyan: "hsl(var(--neon-cyan))",
-          pink: "hsl(var(--neon-pink))",
-          lime: "hsl(var(--neon-lime))",
-          amber: "hsl(var(--neon-amber))",
+        arcade: {
+          red: "hsl(var(--arcade-red))",
+          amber: "hsl(var(--arcade-amber))",
+          green: "hsl(var(--arcade-green))",
+          cream: "hsl(var(--arcade-cream))",
         },
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
