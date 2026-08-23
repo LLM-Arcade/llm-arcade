@@ -25,8 +25,8 @@ const LaunchGate = ({ children }: { children: React.ReactNode }) => {
   if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
-        <p className="animate-pulse font-pixel text-sm text-muted-foreground">
-          NEON<span className="text-arcade-red">ARCADE</span>
+        <p className="animate-pulse font-display text-xl font-extrabold tracking-tight text-muted-foreground">
+          neon<span className="text-terra">arcade</span>
         </p>
       </div>
     );

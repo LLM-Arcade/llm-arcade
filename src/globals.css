@@ -4,51 +4,50 @@
 
 @layer base {
   :root {
-    /* Neon Arcade — warm CRT palette. No purple, no blue, ever. */
-    --background: 26 18% 8%; /* #171310 warm near-black */
-    --foreground: 38 46% 91%; /* #F2EADC cream */
+    /* Neon Arcade — warm, down-to-earth palette */
+    --background: 40 43% 94%; /* #F6F1E7 warm paper */
+    --foreground: 35 20% 14%; /* #2B241D ink */
 
-    --card: 32 24% 11%; /* #221C15 */
-    --card-foreground: 38 46% 91%;
+    --card: 42 60% 98%; /* warm white */
+    --card-foreground: 35 20% 14%;
 
-    --popover: 32 24% 11%;
-    --popover-foreground: 38 46% 91%;
+    --popover: 42 60% 98%;
+    --popover-foreground: 35 20% 14%;
 
-    --primary: 11 100% 57%; /* #FF4D24 signal red */
-    --primary-foreground: 38 46% 96%;
+    --primary: 14 71% 45%; /* #C4491F terracotta */
+    --primary-foreground: 40 43% 97%;
 
-    --secondary: 37 30% 14%; /* #2E2619 */
-    --secondary-foreground: 38 46% 91%;
+    --secondary: 41 35% 88%; /* warm sand */
+    --secondary-foreground: 35 20% 14%;
 
-    --muted: 37 30% 14%;
-    --muted-foreground: 38 17% 59%; /* #A89B85 warm gray */
+    --muted: 41 35% 90%;
+    --muted-foreground: 37 12% 40%;
 
-    --accent: 37 30% 14%;
-    --accent-foreground: 38 46% 91%;
+    --accent: 41 35% 88%;
+    --accent-foreground: 35 20% 14%;
 
-    --destructive: 11 100% 57%;
-    --destructive-foreground: 38 46% 96%;
+    --destructive: 8 72% 44%;
+    --destructive-foreground: 40 43% 97%;
 
-    --border: 35 20% 22%;
-    --input: 37 30% 14%;
-    --ring: 39 100% 56%;
+    --border: 40 26% 82%;
+    --input: 40 26% 82%;
+    --ring: 14 71% 45%;
 
-    --radius: 0.75rem;
+    --radius: 1rem;
 
-    /* Arcade palette */
-    --arcade-red: 11 100% 57%; /* #FF4D24 */
-    --arcade-amber: 39 100% 56%; /* #FFB020 marquee bulbs */
-    --arcade-green: 92 76% 63%; /* #9BE858 phosphor */
-    --arcade-cream: 38 46% 91%; /* #F2EADC */
+    /* Earth accents */
+    --terra: 14 71% 45%; /* terracotta */
+    --olive: 75 24% 36%; /* #6E7546 */
+    --mustard: 41 80% 50%; /* #E6A518 */
 
-    --sidebar-background: 32 24% 11%;
-    --sidebar-foreground: 38 46% 91%;
-    --sidebar-primary: 11 100% 57%;
-    --sidebar-primary-foreground: 38 46% 96%;
-    --sidebar-accent: 37 30% 14%;
-    --sidebar-accent-foreground: 38 46% 91%;
-    --sidebar-border: 35 20% 22%;
-    --sidebar-ring: 39 100% 56%;
+    --sidebar-background: 42 60% 98%;
+    --sidebar-foreground: 35 20% 14%;
+    --sidebar-primary: 14 71% 45%;
+    --sidebar-primary-foreground: 40 43% 97%;
+    --sidebar-accent: 41 35% 88%;
+    --sidebar-accent-foreground: 35 20% 14%;
+    --sidebar-border: 40 26% 82%;
+    --sidebar-ring: 14 71% 45%;
   }
 }
 
@@ -57,63 +56,19 @@
     @apply border-border;
   }
 
-  html {
-    color-scheme: dark;
-  }
-
   body {
     @apply bg-background text-foreground font-sans antialiased;
   }
 
   ::selection {
-    background: hsl(var(--arcade-amber) / 0.4);
+    background: hsl(var(--terra) / 0.25);
   }
 }
 
 @layer utilities {
-  /* Hard pixel shadows — no soft glows */
-  .shadow-hard-red {
-    box-shadow: 4px 4px 0 0 hsl(var(--arcade-red));
-  }
-  .shadow-hard-amber {
-    box-shadow: 4px 4px 0 0 hsl(var(--arcade-amber));
-  }
-  .shadow-hard-sm {
-    box-shadow: 3px 3px 0 0 hsl(var(--border));
-  }
-
-  .text-shadow-pixel {
-    text-shadow:
-      3px 3px 0 hsl(var(--arcade-red)),
-      6px 6px 0 hsl(26 18% 4%);
-  }
-
-  /* CRT scanlines overlay — apply to a relatively positioned screen area */
-  .scanlines::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    background: repeating-linear-gradient(
-      to bottom,
-      transparent 0px,
-      transparent 2px,
-      rgba(0, 0, 0, 0.28) 3px,
-      rgba(0, 0, 0, 0.28) 4px
-    );
-  }
-
   .fade-up {
     opacity: 0;
     animation: fade-up 0.4s ease-out forwards;
-  }
-
-  .animate-blink {
-    animation: blink 1.2s steps(2, start) infinite;
-  }
-
-  .animate-ticker {
-    animation: ticker 28s linear infinite;
   }
 
   .tabular-nums {
@@ -132,30 +87,11 @@
   }
 }
 
-@keyframes blink {
-  to {
-    visibility: hidden;
-  }
-}
-
-@keyframes ticker {
-  from {
-    transform: translateX(0);
-  }
-  to {
-    transform: translateX(-50%);
-  }
-}
-
 @media (prefers-reduced-motion: reduce) {
   .fade-up {
     animation: none;
     opacity: 1;
     transform: none;
-  }
-  .animate-blink,
-  .animate-ticker {
-    animation: none;
   }
   *,
   *::before,

@@ -1,136 +1,176 @@
 import { Link } from "react-router-dom";
-import AsciiRain from "@/components/arcade/AsciiRain";
 import WaitlistForm from "@/components/arcade/WaitlistForm";
 import SiteFooter from "@/components/layout/SiteFooter";
+import { Button } from "@/components/ui/button";
+import { ArrowRight, Bot, Trophy, Upload } from "lucide-react";
 
-const TICKER_ITEMS = [
-  "SYSTEM ONLINE",
-  "30 CABINETS IN PRODUCTION",
-  "HUMAN CODERS: 0",
-  "HIGH SCORES WILL BE KEPT FOREVER",
-  "INSERT COIN",
+interface GameTile {
+  slug: string;
+  title: string;
+  era: string;
+  alt: string;
+  featured?: boolean;
+}
+
+const games: GameTile[] = [
+  {
+    slug: "starfall-squadron",
+    title: "Starfall Squadron",
+    era: "Arcade",
+    alt: "Alien squadron descending toward a lone fighter ship",
+    featured: true,
+  },
+  { slug: "munch-maze", title: "Munch Maze", era: "Arcade", alt: "Round creature eating seeds in a hedge maze" },
+  { slug: "brickstorm", title: "Brickstorm", era: "Arcade", alt: "Ball smashing through a wall of bricks" },
+  { slug: "rockbuster", title: "Rockbuster", era: "Arcade", alt: "Spaceship drifting among tumbling asteroids" },
+  { slug: "boulder-rush", title: "Boulder Rush", era: "DOS", alt: "Miner digging tunnels past boulders and gems" },
+  { slug: "hyper-circuit", title: "Hyper Circuit", era: "SNES", alt: "Hover car racing toward a sunset horizon" },
+  { slug: "the-undervault", title: "The Undervault", era: "Original", alt: "Torch-lit dungeon staircase descending into darkness" },
+  { slug: "flap-hero", title: "Flap Hero", era: "Mobile", alt: "Plump bird flying between tall pillars" },
 ];
 
-const teasers = [
-  { glyph: "▲", era: "ARCADE", color: "text-arcade-red" },
-  { glyph: "◆", era: "NES-ERA", color: "text-arcade-amber" },
-  { glyph: ">_", era: "TERMINAL", color: "text-arcade-green" },
+const facts = [
+  { icon: Bot, text: "Every game coded end-to-end by an AI agent" },
+  { icon: Trophy, text: "High scores, achievements & streaks that stick" },
+  { icon: Upload, text: "Upload your own AI-built game after launch" },
 ];
 
-const stats = [
-  { value: "30", label: "GAMES AT LAUNCH" },
-  { value: "100", label: "CANDIDATE CATALOG" },
-  { value: "0", label: "HUMAN-WRITTEN LINES" },
-];
-
-const Ticker = () => {
-  const row = TICKER_ITEMS.join("  ···  ") + "  ···  ";
-  return (
-    <div className="overflow-hidden border-b border-border bg-card py-2">
-      <div className="flex w-max animate-ticker whitespace-nowrap font-mono text-xs tracking-[0.2em] text-arcade-amber">
-        <span>{row}</span>
-        <span aria-hidden="true">{row}</span>
-      </div>
+const GameCard = ({ game, index }: { game: GameTile; index: number }) => (
+  <div
+    className={`group fade-up relative overflow-hidden rounded-2xl bg-card shadow-sm ring-1 ring-foreground/10 transition-all duration-150 hover:-translate-y-1 hover:shadow-lg ${
+      game.featured ? "col-span-2 row-span-2" : ""
+    }`}
+    style={{ animationDelay: `${120 + index * 60}ms` }}
+  >
+    <img
+      src={`/assets/games/${game.slug}.png`}
+      alt={game.alt}
+      loading="lazy"
+      className="aspect-square h-full w-full object-cover transition-transform duration-200 group-hover:scale-[1.03]"
+    />
+    <span className="absolute right-3 top-3 rounded-full bg-mustard px-2.5 py-1 font-mono text-[10px] font-medium tracking-widest text-foreground shadow-sm">
+      SOON
+    </span>
+    <div className="absolute inset-x-3 bottom-3 flex items-center justify-between gap-2 rounded-xl bg-card/95 px-3.5 py-2.5 shadow-sm">
+      <span className={`truncate font-display font-bold ${game.featured ? "text-lg" : "text-sm"}`}>
+        {game.title}
+      </span>
+      <span className="shrink-0 font-mono text-[10px] tracking-widest text-muted-foreground">
+        {game.era.toUpperCase()}
+      </span>
     </div>
-  );
-};
+  </div>
+);
 
 const Landing = () => (
   <div className="min-h-screen bg-background">
-    <Ticker />
+    {/* Header */}
+    <header className="sticky top-0 z-20 border-b border-border bg-background/90 backdrop-blur">
+      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
+        <p className="font-display text-xl font-extrabold tracking-tight">
+          neon<span className="text-terra">arcade</span>
+        </p>
+        <nav className="flex items-center gap-1 sm:gap-2">
+          <Button asChild variant="ghost" className="rounded-full font-medium text-muted-foreground hover:text-foreground">
+            <Link to="/faq">FAQ</Link>
+          </Button>
+          <Button asChild variant="ghost" className="rounded-full font-medium text-muted-foreground hover:text-foreground">
+            <Link to="/playtest">Playtest</Link>
+          </Button>
+          <Button asChild className="rounded-full bg-primary font-semibold hover:bg-primary/90">
+            <a href="#waitlist">Get updates</a>
+          </Button>
+        </nav>
+      </div>
+    </header>
 
-    {/* Hero — attract mode */}
-    <section className="relative flex min-h-[88vh] flex-col items-center justify-center overflow-hidden px-6">
-      <AsciiRain className="absolute inset-0 h-full w-full opacity-70" />
-      <div className="relative z-10 flex flex-col items-center text-center">
+    <main className="mx-auto max-w-6xl px-4 sm:px-6">
+      {/* Hero */}
+      <section className="flex flex-col gap-5 py-10 sm:py-14 lg:max-w-3xl">
+        <p className="fade-up font-mono text-xs tracking-[0.2em] text-olive">
+          OPENING SOON
+        </p>
         <h1
-          className="fade-up font-pixel text-2xl leading-relaxed text-arcade-cream text-shadow-pixel sm:text-4xl md:text-5xl"
-          style={{ animationDelay: "1.4s" }}
+          className="fade-up font-display text-4xl font-extrabold leading-[1.05] tracking-tight sm:text-6xl"
+          style={{ animationDelay: "60ms" }}
         >
-          NEON
-          <br />
-          ARCADE
+          An arcade built entirely by&nbsp;
+          <span className="text-terra">machines.</span>
         </h1>
-        <p
-          className="fade-up mt-8 font-mono text-sm tracking-[0.2em] text-muted-foreground sm:text-base"
-          style={{ animationDelay: "1.7s" }}
-        >
-          30 GAMES · ZERO HUMAN-WRITTEN CODE
+        <p className="fade-up text-lg text-muted-foreground" style={{ animationDelay: "120ms" }}>
+          30 games. Zero human-written code. High scores that matter.
         </p>
-        <p
-          className="fade-up mt-6 font-pixel text-xs text-arcade-amber"
-          style={{ animationDelay: "2s" }}
-        >
-          <span className="animate-blink">OPENING SOON</span>
-        </p>
-        <div
-          className="fade-up mt-10 flex w-full flex-col items-center gap-5"
-          style={{ animationDelay: "2.2s" }}
-        >
+        <div id="waitlist" className="fade-up scroll-mt-24 pt-1" style={{ animationDelay: "180ms" }}>
           <WaitlistForm />
+        </div>
+      </section>
+
+      {/* Game wall */}
+      <section className="pb-4">
+        <div className="mb-5 flex items-end justify-between">
+          <h2 className="font-display text-2xl font-bold tracking-tight">The launch lineup</h2>
+          <span className="font-mono text-xs tracking-widest text-muted-foreground">
+            8 OF 30 REVEALED
+          </span>
+        </div>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4">
+          {games.map((game, i) => (
+            <GameCard key={game.slug} game={game} index={i} />
+          ))}
+
+          {/* Playtest tile */}
           <Link
             to="/playtest"
-            className="font-mono text-sm tracking-widest text-arcade-green transition-colors hover:text-arcade-cream"
+            className="group fade-up relative flex flex-col justify-between overflow-hidden rounded-2xl bg-olive p-5 shadow-sm transition-all duration-150 hover:-translate-y-1 hover:shadow-lg"
+            style={{ animationDelay: "600ms" }}
           >
-            ► BECOME A PLAYTESTER
-          </Link>
-        </div>
-      </div>
-    </section>
-
-    {/* Stats strip */}
-    <section className="border-y border-border bg-card">
-      <div className="mx-auto grid max-w-4xl grid-cols-3 divide-x divide-border">
-        {stats.map((s) => (
-          <div key={s.label} className="flex flex-col items-center gap-1 px-2 py-6 text-center">
-            <span className="font-pixel text-xl text-arcade-red sm:text-3xl">{s.value}</span>
-            <span className="font-mono text-[10px] tracking-widest text-muted-foreground sm:text-xs">
-              {s.label}
+            <span className="font-mono text-[10px] tracking-widest text-background/80">
+              LIMITED SEATS
             </span>
-          </div>
-        ))}
-      </div>
-    </section>
+            <div>
+              <p className="font-display text-xl font-bold leading-snug text-background">
+                Play everything before launch
+              </p>
+              <p className="mt-2 flex items-center gap-1.5 text-sm font-medium text-background/85">
+                Become a playtester
+                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+              </p>
+            </div>
+          </Link>
 
-    {/* Teaser cabinets */}
-    <section className="mx-auto max-w-5xl px-6 py-20">
-      <h2 className="font-display text-2xl uppercase tracking-tight sm:text-3xl">
-        What's in the cabinet?
-      </h2>
-      <div className="mt-2 h-1 w-16 rounded-full bg-arcade-red" />
-      <p className="mt-4 max-w-lg text-muted-foreground">
-        Every game built end-to-end by an AI agent. Names stay redacted until
-        opening night.
-      </p>
-      <div className="mt-10 grid gap-6 sm:grid-cols-3">
-        {teasers.map(({ glyph, era, color }) => (
+          {/* Catalog tile */}
           <div
-            key={era}
-            className="group overflow-hidden rounded-2xl border-2 border-border bg-card transition-transform duration-150 hover:-translate-y-1 hover:shadow-hard-red"
+            className="fade-up flex flex-col justify-between rounded-2xl bg-secondary p-5 shadow-sm ring-1 ring-foreground/5"
+            style={{ animationDelay: "660ms" }}
           >
-            {/* Marquee strip */}
-            <div className="flex items-center justify-center bg-arcade-red py-2">
-              <span className="font-pixel text-[10px] text-background">? ? ?</span>
-            </div>
-            {/* CRT screen */}
-            <div className="scanlines relative flex aspect-video items-center justify-center bg-[hsl(26,18%,5%)]">
-              <span
-                className={`font-pixel text-4xl ${color} opacity-50 blur-[5px] transition-all duration-300 group-hover:blur-[2px] group-hover:opacity-80`}
-              >
-                {glyph}
-              </span>
-            </div>
-            {/* Control panel */}
-            <div className="flex items-center justify-between px-4 py-3">
-              <span className="font-mono text-xs tracking-widest text-muted-foreground">
-                {era}
-              </span>
-              <span className="h-3 w-3 rounded-full bg-arcade-amber shadow-hard-sm" />
+            <span className="font-mono text-[10px] tracking-widest text-muted-foreground">
+              THE VAULT
+            </span>
+            <div>
+              <p className="font-display text-3xl font-extrabold text-terra">100</p>
+              <p className="mt-1 text-sm font-medium leading-snug text-foreground">
+                games in the candidate catalog. 30 make opening night.
+              </p>
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* Facts strip */}
+      <section className="my-12 grid gap-3 sm:grid-cols-3 sm:gap-4">
+        {facts.map(({ icon: Icon, text }) => (
+          <div
+            key={text}
+            className="flex items-start gap-3 rounded-2xl border border-border bg-card p-5"
+          >
+            <div className="rounded-full bg-secondary p-2.5">
+              <Icon className="h-4 w-4 text-terra" />
+            </div>
+            <p className="text-sm font-medium leading-relaxed">{text}</p>
+          </div>
         ))}
-      </div>
-    </section>
+      </section>
+    </main>
 
     <SiteFooter />
   </div>

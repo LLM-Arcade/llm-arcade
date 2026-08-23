@@ -20,17 +20,13 @@ export default {
     extend: {
       fontFamily: {
         sans: ["Inter", "system-ui", "sans-serif"],
-        display: ["Archivo Black", "Inter", "sans-serif"],
-        pixel: ["'Press Start 2P'", "monospace"],
+        display: ["'Bricolage Grotesque'", "Inter", "sans-serif"],
         mono: ["JetBrains Mono", "ui-monospace", "monospace"],
       },
       colors: {
-        arcade: {
-          red: "hsl(var(--arcade-red))",
-          amber: "hsl(var(--arcade-amber))",
-          green: "hsl(var(--arcade-green))",
-          cream: "hsl(var(--arcade-cream))",
-        },
+        terra: "hsl(var(--terra))",
+        olive: "hsl(var(--olive))",
+        mustard: "hsl(var(--mustard))",
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",

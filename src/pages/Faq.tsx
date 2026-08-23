@@ -116,14 +116,13 @@ const Faq = () => {
       <div className="mx-auto max-w-3xl px-6 py-16">
         <Link
           to="/"
-          className="mb-10 inline-flex items-center gap-2 font-mono text-xs tracking-widest text-muted-foreground transition-colors hover:text-arcade-amber"
+          className="mb-10 inline-flex items-center gap-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
         >
-          <ArrowLeft className="h-4 w-4" /> BACK TO THE ARCADE
+          <ArrowLeft className="h-4 w-4" /> Back to the arcade
         </Link>
-        <h1 className="fade-up font-display text-4xl uppercase leading-tight">
-          FAQ
+        <h1 className="fade-up font-display text-4xl font-extrabold leading-tight tracking-tight sm:text-5xl">
+          Questions, answered
         </h1>
-        <div className="mt-3 h-1 w-16 rounded-full bg-arcade-red" />
         <p className="fade-up mt-2 text-muted-foreground" style={{ animationDelay: "80ms" }}>
           Everything about the AI-built arcade.
         </p>
@@ -136,17 +135,17 @@ const Faq = () => {
               className="fade-up scroll-mt-24"
               style={{ animationDelay: `${160 + gi * 80}ms` }}
             >
-              <h2 className="mb-3 font-mono text-sm uppercase tracking-[0.2em] text-arcade-amber">
+              <h2 className="mb-3 font-mono text-xs uppercase tracking-[0.2em] text-olive">
                 {group.title}
               </h2>
               <Accordion
                 type="multiple"
                 defaultValue={hash ? [hash.slice(1)] : []}
-                className="rounded-2xl border-2 border-border bg-card px-5"
+                className="rounded-2xl border border-border bg-card px-5 shadow-sm"
               >
                 {group.items.map((item) => (
                   <AccordionItem key={item.id} value={item.id} id={item.id} className="scroll-mt-24 border-border/60">
-                    <AccordionTrigger className="text-left font-medium hover:text-arcade-red hover:no-underline">
+                    <AccordionTrigger className="text-left font-medium hover:text-terra hover:no-underline">
                       {item.q}
                     </AccordionTrigger>
                     <AccordionContent className="text-muted-foreground">

@@ -27,9 +27,9 @@ const WaitlistForm = () => {
 
   if (status === "done") {
     return (
-      <div className="inline-flex h-12 items-center gap-2 rounded-full border-2 border-arcade-green px-6 font-mono text-sm tracking-wide text-arcade-green">
+      <div className="inline-flex h-12 items-center gap-2 rounded-full bg-olive/15 px-6 font-medium text-olive">
         <Check className="h-4 w-4" />
-        YOU'RE ON THE LIST
+        You're on the list — see you at opening night.
       </div>
     );
   }
@@ -43,17 +43,17 @@ const WaitlistForm = () => {
         onChange={(e) => setEmail(e.target.value)}
         placeholder="you@example.com"
         aria-label="Email address"
-        className="h-12 rounded-full border-2 border-border bg-secondary px-5 font-mono text-sm placeholder:text-muted-foreground focus-visible:ring-arcade-amber"
+        className="h-12 rounded-full border-border bg-card px-5 text-base shadow-sm placeholder:text-muted-foreground"
       />
       <Button
         type="submit"
         disabled={status === "loading"}
-        className="h-12 shrink-0 rounded-full bg-arcade-red px-6 font-mono text-sm font-semibold tracking-wide text-primary-foreground transition-all hover:bg-arcade-red hover:shadow-hard-amber"
+        className="h-12 shrink-0 rounded-full bg-primary px-6 font-semibold hover:bg-primary/90"
       >
         {status === "loading" ? (
           <Loader2 className="h-4 w-4 animate-spin" />
         ) : (
-          "SIGN UP"
+          "Get updates"
         )}
       </Button>
     </form>
