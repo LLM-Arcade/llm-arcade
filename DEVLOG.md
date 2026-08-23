@@ -71,3 +71,20 @@ too far the other direction.
 
 **Next:** Phase 2 — auth (Google OAuth), profiles, game registry,
 `/game/:slug` with sandboxed player + Arcade SDK, leaderboards.
+
+## Session 5 — Conventions & session-handoff prep
+
+**Actions**
+- Audited all file/asset names; established conventions (PascalCase
+  components/pages, kebab-case modules/assets, `useCamelCase` hooks,
+  UPPERCASE root docs, snake_case DB). Asset slugs already matched — no
+  renames needed.
+- Extracted the landing's inline game array into `src/data/launch-lineup.ts`
+  (typed `RevealedGame`, `Era` union, `TOTAL_LAUNCH_GAMES`, `gameArtPath()`);
+  the "N OF 30 REVEALED" counter is now derived, not hardcoded.
+- Rewrote `AI_RULES.md` as the persistent entry point for fresh sessions:
+  doc index (HANDOFF/DEVLOG/spec), non-negotiable design rules, naming
+  conventions, stack notes.
+
+**Convention:** every future session appends a DEVLOG entry and keeps
+HANDOFF.md's "Current state" section truthful.

@@ -94,13 +94,22 @@ All tables have RLS enabled with explicit role grants:
 src/
   App.tsx                        routes + providers + LaunchGate
   globals.css                    design tokens, fade-up, reduced-motion
+  data/launch-lineup.ts          revealed games + gameArtPath() helper
   pages/{Landing,Home,Faq,Playtest,NotFound}.tsx
   components/
     layout/{LaunchGate,SiteFooter}.tsx
     arcade/{WaitlistForm,BadgeChip}.tsx
   integrations/supabase/client.ts
-public/assets/{brand,games}/     generated art
+public/assets/
+  brand/logo-mark.png            logo (also favicon)
+  games/<slug>.png               key art, slug matches launch-lineup.ts
 ```
+
+## Naming conventions
+
+Defined in `AI_RULES.md` (authoritative). Summary: PascalCase components/pages,
+kebab-case non-component modules and assets, `useCamelCase` hooks,
+UPPERCASE root docs, snake_case DB. Asset slugs must match game slugs.
 
 `BadgeChip` takes `rarity: "bronze" | "silver" | "gold" | "neon"` — the
 progression system (spec §3) builds on it.

@@ -3,35 +3,12 @@ import WaitlistForm from "@/components/arcade/WaitlistForm";
 import SiteFooter from "@/components/layout/SiteFooter";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Bot, Trophy, Upload } from "lucide-react";
-
-interface GameTile {
-  slug: string;
-  title: string;
-  era: string;
-  alt: string;
-  featured?: boolean;
-}
-
-const games: GameTile[] = [
-  {
-    slug: "starfall-squadron",
-    title: "Starfall Squadron",
-    era: "Arcade",
-    alt: "Alien squadron descending toward a lone fighter ship",
-    featured: true,
-  },
-  { slug: "munch-maze", title: "Munch Maze", era: "Arcade", alt: "Round creature eating seeds in a hedge maze" },
-  { slug: "brickstorm", title: "Brickstorm", era: "Arcade", alt: "Ball smashing through a wall of bricks" },
-  { slug: "rockbuster", title: "Rockbuster", era: "Arcade", alt: "Spaceship drifting among tumbling asteroids" },
-  { slug: "boulder-rush", title: "Boulder Rush", era: "DOS", alt: "Miner digging tunnels past boulders and gems" },
-  { slug: "hyper-circuit", title: "Hyper Circuit", era: "SNES", alt: "Hover car racing toward a sunset horizon" },
-  { slug: "the-undervault", title: "The Undervault", era: "Original", alt: "Torch-lit dungeon staircase descending into darkness" },
-  { slug: "flap-hero", title: "Flap Hero", era: "Mobile", alt: "Plump bird flying between tall pillars" },
-  { slug: "sky-defense", title: "Sky Defense", era: "Arcade", alt: "Counter-rockets rising to intercept falling missiles over cities" },
-  { slug: "gem-columns", title: "Gem Columns", era: "Genesis", alt: "Columns of gems falling and stacking in a pit" },
-  { slug: "kickflip-city", title: "Kickflip City", era: "PS1", alt: "Skateboarder mid-kickflip over a stair rail" },
-  { slug: "trailbound", title: "Trailbound", era: "DOS", alt: "Covered wagon crossing the plains toward mountains" },
-];
+import {
+  LAUNCH_LINEUP,
+  TOTAL_LAUNCH_GAMES,
+  gameArtPath,
+  type RevealedGame,
+} from "@/data/launch-lineup";
 
 const facts = [
   { icon: Bot, text: "Every game coded end-to-end by an AI agent" },
@@ -39,7 +16,7 @@ const facts = [
   { icon: Upload, text: "Upload your own AI-built game after launch" },
 ];
 
-const GameCard = ({ game, index }: { game: GameTile; index: number }) => (
+const GameCard = ({ game, index }: { game: RevealedGame; index: number }) => (
   <div
     className={`group fade-up relative overflow-hidden rounded-2xl bg-card shadow-sm ring-1 ring-foreground/10 transition-all duration-150 hover:-translate-y-1 hover:shadow-lg ${
       game.featured ? "col-span-2 row-span-2" : ""
@@ -47,7 +24,7 @@ const GameCard = ({ game, index }: { game: GameTile; index: number }) => (
     style={{ animationDelay: `${120 + index * 60}ms` }}
   >
     <img
-      src={`/assets/games/${game.slug}.png`}
+      src={gameArtPath(game.slug)}
       alt={game.alt}
       loading="lazy"
       className="aspect-square h-full w-full object-cover transition-transform duration-200 group-hover:scale-[1.03]"
@@ -121,11 +98,11 @@ const Landing = () => (
         <div className="mb-5 flex items-end justify-between">
           <h2 className="font-display text-2xl font-bold tracking-tight">The launch lineup</h2>
           <span className="font-mono text-xs tracking-widest text-muted-foreground">
-            12 OF 30 REVEALED
+            {LAUNCH_LINEUP.length} OF {TOTAL_LAUNCH_GAMES} REVEALED
           </span>
         </div>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4">
-          {games.map((game, i) => (
+          {LAUNCH_LINEUP.map((game, i) => (
             <GameCard key={game.slug} game={game} index={i} />
           ))}
 
