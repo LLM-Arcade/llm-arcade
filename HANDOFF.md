@@ -6,132 +6,121 @@ Decision history: `DEVLOG.md`.
 
 ## Current state
 
-**Phase 1 complete (pre-launch).** The site is gated behind
-`site_settings.launched = false` — visitors see the Coming Soon landing.
-Live routes:
+**Phase 2 complete (platform core).** Auth, profiles, game catalog, sandboxed
+player + Arcade SDK, leaderboards, ratings/favorites/comments are live. The
+site is still gated (`site_settings.launched = false`) — but signed-in
+**playtesters/moderators/admins bypass the gate** (with a preview banner).
+**The first account to sign up automatically becomes admin.**
 
 | Route | Page | Notes |
 |---|---|---|
-| `/` | `LaunchGate` → `Landing` (pre-launch) or `Home` (post-launch placeholder) | Gate reads `site_settings.launched` |
-| `/faq` | `Faq` | Accordion groups, deep-linkable anchors (`/faq#uploading`) |
-| `/playtest` | `Playtest` | Application form → `playtest_applications` |
+| `/` | `LaunchGate` → `Landing` or `Home` | Home links to `/games` |
+| `/games` | `Games` (gated) | Era filter chips, tile grid, PLAY/SOON chips |
+| `/game/:slug` | `GameDetail` (gated) | Player + Leaderboard/Comments/About tabs, rating/favorite sidebar |
+| `/login` | `Login` | Google OAuth + email/password, `?next=` redirect |
+| `/settings` | `Settings` | Username (inline uniqueness), display name, bio, sign out |
+| `/faq`, `/playtest` | public | unchanged |
+
+**Auth notes:** email/password works out of the box (email confirmation may be
+on). Google OAuth needs the provider enabled in Supabase → Auth → Providers;
+the login page degrades gracefully until then.
+
+## The core loop (implemented)
+
+- **Play** — `GamePlayer` renders Track-A registry components or Track-B HTML
+  in `<iframe sandbox="allow-scripts">` (opaque origin, no cookies/storage).
+- **Arcade SDK** (`src/lib/arcade-sdk.ts`) — postMessage protocol:
+  `ARCADE_READY` · `ARCADE_SCORE {score, stats}` · `ARCADE_ACHIEVEMENT {id}`
+  (parsed, acted on in Phase 3) · `ARCADE_SAVE/LOAD` (Phase 3). Source-checked
+  against the iframe, scores sanitized + capped client- AND server-side.
+- **Game over** — overlay with score, personal-best delta, weekly rank,
+  auto-submit for signed-in players. **Guest interception:** run is held in
+  `sessionStorage` (`held-score:<slug>`, 30 min TTL, keeps best) → sign-in →
+  auto-claimed with a toast. Zero-score runs are never submitted.
+- **First playable cabinet:** Flap Hero (`public/games/flap-hero.html`) — a
+  real Track-B build (manifest JSON block, SDK events, attract state, pause,
+  touch + keyboard). Future uploads live in Supabase Storage instead.
 
 ## Stack
 
-- Vite + React + TypeScript + React Router (routes live in `src/App.tsx`)
-- Tailwind + shadcn/ui (customized — never ship default shadcn styling)
-- TanStack Query for server state
-- Supabase: Postgres + RLS (auth, storage, realtime planned for Phase 2+)
-  - Client: `src/integrations/supabase/client.ts`
+- Vite + React + TS + React Router (routes in `src/App.tsx`), Tailwind +
+  customized shadcn/ui, TanStack Query, lucide-react
+- Supabase: Postgres + RLS (client at `src/integrations/supabase/client.ts`)
+- Design system "down to earth" v3 — see `AI_RULES.md` hard rules. Tokens in
+  `src/globals.css`; Bricolage Grotesque / Inter / JetBrains Mono.
 
-## Design system — "down to earth" (v3, approved)
+## Database (Supabase)
 
-**Hard rules (user-mandated, do not violate):**
-- ❌ No purple, no blue, no neon glows, no gradient backgrounds — the
-  "AI slop" look is explicitly banned
-- ❌ No pixel fonts, blinking text, or childish retro cosplay
-- ✅ Warm, grounded palette; games-first layouts (Poki-style density,
-  original execution); real product polish
+All tables RLS + explicit grants; `service_role` full access everywhere.
+**Never write to `supabase/migrations/` — schema changes via the SQL tool.**
 
-**Tokens** (CSS vars in `src/globals.css`, mapped in `tailwind.config.ts`):
-
-| Token | Value | Use |
+| Table | Access | Purpose |
 |---|---|---|
-| `background` | `#F6F1E7` warm paper | App background |
-| `foreground` | `#2B241D` ink | Text |
-| `primary` / `terra` | `#C4491F` terracotta | CTAs, accents, brand |
-| `olive` | `#6E7546` | Secondary accent, success-ish states |
-| `mustard` | `#E6A518` | Chips ("SOON"), highlights |
-| `card` | warm white | Cards, panels |
+| `profiles` | public SELECT; own UPDATE (column-grant: username/display_name/avatar_url/bio only — role/xp/level protected) | Created by `handle_new_user()` trigger; username from email, **first user → admin** |
+| `games` | public SELECT; writes service_role only | Catalog. 12 seeded, `flap-hero` published (`track='B'`, `html_path`) |
+| `scores` | public SELECT; own INSERT — RLS enforces published game, `score <= games.score_cap`, **1 insert /10 s/user/game** | `stats` jsonb from SDK |
+| `ratings` | public SELECT; own INSERT/UPDATE/DELETE (PK game+user) | 1–5 stars |
+| `favorites` | public SELECT; own INSERT/DELETE | hearts |
+| `comments` | public SELECT; own INSERT/DELETE; 1-level threading via `parent_id` | body ≤1000 chars |
+| `waitlist`, `playtest_applications`, `site_settings` | unchanged from Phase 1 | |
 
-**Type:** Bricolage Grotesque (`font-display`, headings/wordmark) ·
-Inter (`font-sans`, body) · JetBrains Mono (`font-mono`, data labels, era tags).
+**Functions:** `get_leaderboard(game_id, since)` → best-per-user top 100
+(invoker) · `increment_play_count(game_id)` (definer, published games only) ·
+`handle_new_user()` (definer, signup trigger).
 
-**Shape & depth:** `rounded-2xl` cards, `rounded-full` buttons/chips,
-soft shadows + 1px `ring-foreground/10` hairlines. No hard drop shadows.
+## Key files
 
-**Motion:** one staggered `.fade-up` entrance per page (inline
-`animation-delay`), hover lift `-translate-y-1` + shadow on tiles.
-Everything disabled under `prefers-reduced-motion`.
-
-**Wordmark:** lowercase `neonarcade` — "neon" in ink, "arcade" in terracotta,
-with the round token logo (`public/assets/brand/logo-mark.png`, also favicon).
+```
+src/
+  App.tsx                        routes + AuthProvider + LaunchGate
+  contexts/AuthContext.tsx       session + profile + signOut (useAuth)
+  lib/arcade-sdk.ts              SDK bridge: useArcadeBridge, sanitizeScore
+  games/registry.ts              Track-A slug → lazy component (empty; Phase 6)
+  hooks/{useGames,useLeaderboard}.ts
+  pages/{Landing,Home,Games,GameDetail,Login,Settings,Faq,Playtest,NotFound}.tsx
+  components/
+    layout/{LaunchGate,SiteHeader,SiteFooter}.tsx
+    arcade/{GamePlayer,GameTile,LeaderboardPanel,CommentsPanel,
+            RatingWidget,FavoriteButton,WaitlistForm,BadgeChip}.tsx
+  data/launch-lineup.ts          landing wall data + gameArtPath()
+public/
+  assets/brand/logo-mark.png · assets/games/<slug>.png (12 pieces)
+  games/flap-hero.html           Track-B game file (dev hosting; Storage later)
+```
 
 ## Asset pipeline (game key art)
 
-All art is AI-generated, original (no trademarked names/art). Files live in
-`public/assets/games/<slug>.png`, square, referenced by the `games` array in
-`src/pages/Landing.tsx`.
-
-**Prompt template for new art (keep the set cohesive):**
+Unchanged — square AI-generated originals in `public/assets/games/<slug>.png`.
+Prompt template (keep the set cohesive):
 
 > Video game key art: [scene description]. Flat vector illustration, warm
 > earthy retro palette: cream, terracotta orange, olive green, mustard yellow,
 > dark umber. Paper grain texture, bold shapes, no text, no logos.
 > Square composition.
 
-**Generated so far (12 of 30 revealed):** starfall-squadron (featured),
-munch-maze, brickstorm, rockbuster, boulder-rush, hyper-circuit,
-the-undervault, flap-hero, sky-defense, gem-columns, kickflip-city,
-trailbound · plus `brand/logo-mark.png`.
+## Next up (per spec §9)
 
-## Database (Supabase)
+1. **Phase 3 — Progression:** achievements engine (validate manifest IDs
+   server-side, unlock toasts, Achievements tab on `GameDetail`), XP/levels/
+   streaks, badges + `BadgeChip` case, activity feed + follows, real Arcade
+   Home (Spotlight, rails, ScoreTicker) behind the gate.
+2. **Phase 4 — Upload wizard + Admin** (review queue, Storage hosting for
+   Track-B files, score wipes, role grants, playtester approvals).
+3. **Phase 5 — Chat.** **Phase 6 — Track-A games** (Munch Maze first).
+   **Phase 7 — flip `launched`.**
 
-All tables have RLS enabled with explicit role grants:
-
-| Table | Access | Purpose |
-|---|---|---|
-| `waitlist` | `anon`/`authenticated` INSERT only; email UNIQUE | Email signups. Duplicate insert (code `23505`) is treated as success in `WaitlistForm` |
-| `playtest_applications` | `anon`/`authenticated` INSERT only | name, email, devices[], hours_per_week, favorite_eras[], status (default `pending`) |
-| `site_settings` | public SELECT; single row `id=1` | `launched` (false), `slow_mode_seconds` |
-
-`service_role` has full access everywhere. **Never write files to
-`supabase/migrations/` — schema changes go through the SQL tool.**
-
-## Key files
-
-```
-src/
-  App.tsx                        routes + providers + LaunchGate
-  globals.css                    design tokens, fade-up, reduced-motion
-  data/launch-lineup.ts          revealed games + gameArtPath() helper
-  pages/{Landing,Home,Faq,Playtest,NotFound}.tsx
-  components/
-    layout/{LaunchGate,SiteFooter}.tsx
-    arcade/{WaitlistForm,BadgeChip}.tsx
-  integrations/supabase/client.ts
-public/assets/
-  brand/logo-mark.png            logo (also favicon)
-  games/<slug>.png               key art, slug matches launch-lineup.ts
-```
-
-## Naming conventions
-
-Defined in `AI_RULES.md` (authoritative). Summary: PascalCase components/pages,
-kebab-case non-component modules and assets, `useCamelCase` hooks,
-UPPERCASE root docs, snake_case DB. Asset slugs must match game slugs.
-
-`BadgeChip` takes `rarity: "bronze" | "silver" | "gold" | "neon"` — the
-progression system (spec §3) builds on it.
-
-## Next up (in order, per spec §9)
-
-1. **Phase 2 — Platform core:** Google OAuth + `AuthContext`, `profiles`
-   table (+ signup trigger), `/settings`, game registry (`src/games/registry.ts`),
-   `/game/:slug` detail page, sandboxed iframe player + Arcade SDK
-   (postMessage: `ARCADE_READY/SCORE/ACHIEVEMENT/SAVE/LOAD`), leaderboards
-   (daily/weekly/all-time), ratings/favorites/comments.
-2. **Phase 3 — Progression:** achievements, XP/levels/streaks, badges,
-   activity feed, real Arcade Home behind the gate.
-3. **Phase 4 — Upload wizard + Admin** (review queue approves Track-B games).
-4. **Phase 5 — Chat.** **Phase 6 — Track-A games.** **Phase 7 — flip `launched`.**
+**Deferred small items:** avatar upload/crop (needs Storage), `ARCADE_SAVE/LOAD`
+persistence, leaderboard friend filter + virtualization, mod comment deletion.
 
 ## Gotchas
 
-- `--radius` is `1rem`; shadcn components inherit it — don't hardcode radii.
-- The launch gate only hides `/` content; `/faq` and `/playtest` are
-  intentionally public pre-launch.
-- Guest score interception (spec §4.4) is a core conversion mechanic — design
-  the score submit path around it from the start.
-- Uploaded games must run in `iframe sandbox="allow-scripts"` (no same-origin);
-  validate achievement IDs against the approved manifest server-side.
+- `--radius` is 1rem; shadcn components inherit it — don't hardcode radii.
+- The gate wraps `/`, `/games`, `/game/:slug`. `/login`, `/settings`, `/faq`,
+  `/playtest` are reachable pre-launch by design.
+- Score submit failures whose message contains "security" are shown as
+  rate-limit feedback (RLS denial) — keep that string check in mind if
+  policies change.
+- Daily/weekly boards are **rolling 24 h / 7 d windows**, not calendar days.
+- Uploaded games: `sandbox="allow-scripts"` ONLY (never same-origin);
+  achievement IDs must be validated against the approved manifest server-side
+  (Phase 3).

@@ -32,6 +32,8 @@ read these three docs:
 - Hooks: `useCamelCase.ts` in `src/hooks/`
 - Assets: `public/assets/brand/` and `public/assets/games/<slug>.png` —
   slugs are kebab-case and must match the game slug in `src/data/launch-lineup.ts`
+- Track-B game files (dev hosting until Storage): `public/games/<slug>.html`,
+  slug matches the `games` DB row
 - Root docs: `UPPERCASE.md` · shadcn ui files (`src/components/ui/`) keep their
   kebab-case names and are never edited
 - DB tables/columns: `snake_case`
@@ -40,8 +42,10 @@ read these three docs:
 
 - React + TypeScript + Vite; React Router — KEEP routes in `src/App.tsx`
 - Pages in `src/pages/`, components in `src/components/`
-- Pre-launch gate: `/` renders `LaunchGate` (reads `site_settings.launched`,
-  currently `false`); `/faq` and `/playtest` are public
+- Pre-launch gate: `/`, `/games`, `/game/:slug` render through `LaunchGate`
+  (reads `site_settings.launched`, currently `false`; playtester/mod/admin
+  bypass with preview banner); `/faq`, `/playtest`, `/login`, `/settings`
+  are public
 - Tailwind CSS everywhere; shadcn/ui components are installed — always
   customize their styling (never ship default shadcn look)
 - lucide-react for icons; TanStack Query for server state

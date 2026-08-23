@@ -88,3 +88,39 @@ too far the other direction.
 
 **Convention:** every future session appends a DEVLOG entry and keeps
 HANDOFF.md's "Current state" section truthful.
+
+## Session 6 — Phase 2: Platform core ✅
+
+**Goal:** auth + profiles, game catalog, sandboxed player + Arcade SDK,
+leaderboards, ratings/favorites/comments (spec §9 Phase 2).
+
+**Schema:** `profiles` (signup trigger; username from email; **first account
+becomes admin** so the gate can be operated without manual SQL), `games`
+(12 seeded from the lineup), `scores`, `ratings`, `favorites`, `comments`,
+plus `get_leaderboard()` and `increment_play_count()`. Anti-cheat v1 lives in
+RLS itself: published-game check, per-game `score_cap`, 1 insert/10s/user/game.
+`profiles` uses **column-level UPDATE grants** so users can never touch
+role/xp/level.
+
+**Decisions**
+- **Custom login page** instead of `@supabase/auth-ui-react`: the package
+  predates React 19 (peer-dep risk) and default-styled auth would violate the
+  "never ship default shadcn/generic look" rule. Google OAuth button + email/
+  password, `?next=` redirect, open-redirect guarded. Google works once the
+  provider is enabled in the Supabase dashboard; email works immediately.
+- **Launch gate bypass** for playtester/moderator/admin with a mustard
+  preview banner; gate now wraps `/games` and `/game/:slug` too.
+- **Guest score interception** (spec §4.4): run held in sessionStorage
+  (30 min TTL, keeps best of multiple guest runs), auto-claimed after
+  sign-in. Zero-score runs are never submitted.
+- **Daily/weekly = rolling 24h/7d windows** (simpler + honest; labeled in UI).
+- **Shipped one Track-B game early** (Flap Hero, `public/games/flap-hero.html`)
+  even though games are Phase 6 — the platform loop (SDK → score → board →
+  claim) needed a real cabinet to be testable end-to-end. It's the reference
+  implementation for the external-agent brief: manifest JSON block, SDK
+  postMessages, attract state, pause, touch + keyboard, palette-conformant.
+- Achievements: SDK parses `ARCADE_ACHIEVEMENT` and Flap Hero fires them, but
+  the platform ignores them until the Phase 3 manifest-validated engine.
+
+**Deferred:** avatar upload (needs Storage), SAVE/LOAD persistence, friend
+filter, board virtualization, mod deletion of comments.

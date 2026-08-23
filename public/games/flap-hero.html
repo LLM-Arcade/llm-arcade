@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<title>Flap Hero</title>
+<style>
+  html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; background: #F6F1E7; }
+  canvas { display: block; width: 100vw; height: 100vh; touch-action: manipulation; cursor: pointer; }
+</style>
+<!-- Arcade manifest: the approved copy is validated server-side (Phase 3+) -->
+<script type="application/json" id="arcade-manifest">
+{
+  "achievements": [
+    { "id": "first-flight",     "name": "First Flight",         "hint": "Clear your first pipe." },
+    { "id": "double-digits",    "name": "Double Digits",        "hint": "Clear 10 pipes in one run." },
+    { "id": "quarter-century",  "name": "Quarter Century",      "hint": "Clear 25 pipes in one run." },
+    { "id": "half-hundred",     "name": "Half Hundred",         "hint": "Clear 50 pipes in one run." },
+    { "id": "threading-needle", "name": "Threading the Needle", "hint": "Squeeze through with almost no room to spare." },
+    { "id": "marathon-wings",   "name": "Marathon Wings",       "hint": "Stay airborne for 60 seconds in one run." }
+  ]
+}
+</script>
+</head>
+<body>
+<canvas id="game"></canvas>
+<script>
+"use strict";
+
+// ---------- Arcade SDK ----------
+const post = (msg) => { try { parent.postMessage(msg, "*"); } catch (_) { /* standalone */ } };
+const fired = new Set();
+const fire = (id) => { if (!fired.has(id)) { fired.add(id); post({ type: "ARCADE_ACHIEVEMENT", id }); } };
+
+// ---------- Palette (Neon Arcade "down to earth") ----------
+const C = {
+  sky: "#F6F1E7", hillFar: "#E7DDC6", hillNear: "#DACDAE",
+  pipe: "#6E7546", pipeCap: "#59613A", pipeEdge: "#4A4F33",
+  ground: "#E2D7C0", groundLine: "#4A4433",
+  bird: "#C4491F", wing: "#9E3A18", beak: "#E6A518",
+  ink: "#2B241D", faint: "rgba(43,36,29,0.55)", sun: "#E6A518"
+};
+
+// ---------- Canvas / world ----------
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+const H = 600;                 // fixed world height; width scales with viewport
+let worldW = 400, scale = 1;
+const GROUND = 76;
+
+function resize() {
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  canvas.width = Math.floor(innerWidth * dpr);
+  canvas.height = Math.floor(innerHeight * dpr);
+  scale = canvas.height / H;
+  worldW = canvas.width / scale;
+}
+addEventListener("resize", resize);
+resize();
+
+// ---------- Game state ----------
+let mode = "attract";          // attract | playing | paused | dead
+let bird, pipes, score, runStart, flapCount, deathAt, scroll = 0;
+const PIPE_W = 68, SPACING = 250;
+
+function reset() {
+  bird = { x: 0, y: H * 0.42, vy: 0, r: 13, flapAt: -1 };
+  pipes = [];
+  score = 0;
+  flapCount = 0;
+  runStart = performance.now();
+}
+reset();
+
+function spawnPipe(x) {
+  const gapH = Math.max(120, 168 - score * 0.9);
+  const margin = 60;
+  const gapY = margin + gapH / 2 + Math.random() * (H - GROUND - 2 * margin - gapH);
+  pipes.push({ x, gapY, gapH, passed: false });
+}
+
+function startRun() {
+  reset();
+  mode = "playing";
+  bird.vy = -430;
+  bird.flapAt = performance.now();
+  flapCount = 1;
+  spawnPipe(worldW + 140);
+}
+
+function die() {
+  mode = "dead";
+  deathAt = performance.now();
+  post({
+    type: "ARCADE_SCORE",
+    score: score,
+    stats: { timeMs: Math.round(performance.now() - runStart), flaps: flapCount }
+  });
+}
+
+// ---------- Input ----------
+function action() {
+  if (mode === "attract") { startRun(); return; }
+  if (mode === "paused") { mode = "playing"; return; }
+  if (mode === "playing") {
+    bird.vy = -430;
+    bird.flapAt = performance.now();
+    flapCount++;
+    return;
+  }
+  if (mode === "dead" && performance.now() - deathAt > 900) startRun();
+}
+
+canvas.addEventListener("pointerdown", (e) => { e.preventDefault(); action(); });
+addEventListener("keydown", (e) => {
+  if (e.code === "Space" || e.code === "ArrowUp" || e.code === "KeyW") { e.preventDefault(); action(); }
+  if (e.code === "KeyP" && (mode === "playing" || mode === "paused")) {
+    mode = mode === "playing" ? "paused" : "playing";
+  }
+});
+addEventListener("blur", () => { if (mode === "playing") mode = "paused"; });
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden && mode === "playing") mode = "paused";
+});
+
+// ---------- Update ----------
+let last = performance.now();
+function update(now) {
+  const dt = Math.min((now - last) / 1000, 0.032);
+  last = now;
+  bird.x = Math.min(worldW * 0.32, 220);
+
+  if (mode !== "paused") scroll += dt * (mode === "playing" ? 150 : 24);
+
+  if (mode === "attract") {
+    bird.y = H * 0.42 + Math.sin(now / 420) * 12;
+    return;
+  }
+  if (mode !== "playing") return;
+
+  const speed = 150 + Math.min(score * 2, 110);
+
+  bird.vy += 1500 * dt;
+  bird.y += bird.vy * dt;
+  if (bird.y < bird.r) { bird.y = bird.r; bird.vy = 0; }
+  if (bird.y + bird.r >= H - GROUND) { bird.y = H - GROUND - bird.r; die(); return; }
+
+  if (pipes.length === 0 || pipes[pipes.length - 1].x < worldW - SPACING) {
+    spawnPipe(worldW + PIPE_W);
+  }
+
+  for (const p of pipes) {
+    p.x -= speed * dt;
+
+    // collision (circle vs the two pipe rects)
+    if (bird.x + bird.r > p.x && bird.x - bird.r < p.x + PIPE_W) {
+      const top = p.gapY - p.gapH / 2, bottom = p.gapY + p.gapH / 2;
+      if (bird.y - bird.r < top || bird.y + bird.r > bottom) { die(); return; }
+    }
+
+    if (!p.passed && p.x + PIPE_W < bird.x - bird.r) {
+      p.passed = true;
+      score++;
+      if (Math.abs(bird.y - p.gapY) > p.gapH / 2 - bird.r - 7) fire("threading-needle");
+      if (score >= 1) fire("first-flight");
+      if (score >= 10) fire("double-digits");
+      if (score >= 25) fire("quarter-century");
+      if (score >= 50) fire("half-hundred");
+    }
+  }
+  pipes = pipes.filter((p) => p.x > -PIPE_W - 10);
+
+  if (now - runStart >= 60000) fire("marathon-wings");
+}
+
+// ---------- Draw ----------
+function hills(baseY, amp, wl, offset, color) {
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.moveTo(0, H);
+  for (let x = 0; x <= worldW + 20; x += 20) {
+    ctx.lineTo(x, baseY + Math.sin((x + offset) / wl) * amp);
+  }
+  ctx.lineTo(worldW, H);
+  ctx.closePath();
+  ctx.fill();
+}
+
+function drawBird(now) {
+  const angle = Math.max(-0.38, Math.min(bird.vy / 640, 0.85));
+  const flapping = now - bird.flapAt < 220;
+  ctx.save();
+  ctx.translate(bird.x, bird.y);
+  ctx.rotate(mode === "attract" ? Math.sin(now / 420) * 0.08 : angle);
+  // body
+  ctx.fillStyle = C.bird;
+  ctx.beginPath(); ctx.arc(0, 0, bird.r, 0, Math.PI * 2); ctx.fill();
+  // wing
+  ctx.fillStyle = C.wing;
+  ctx.beginPath();
+  ctx.ellipse(-3, 1, 8, 5.5, flapping ? -0.7 + Math.sin(now / 30) * 0.35 : -0.25, 0, Math.PI * 2);
+  ctx.fill();
+  // eye
+  ctx.fillStyle = "#FFFDF5";
+  ctx.beginPath(); ctx.arc(5.5, -4.5, 4, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = C.ink;
+  ctx.beginPath(); ctx.arc(6.5, -4.5, 1.8, 0, Math.PI * 2); ctx.fill();
+  // beak
+  ctx.fillStyle = C.beak;
+  ctx.beginPath(); ctx.moveTo(11, -1); ctx.lineTo(19, 1.5); ctx.lineTo(11, 4.5); ctx.closePath(); ctx.fill();
+  ctx.restore();
+}
+
+function drawPipe(p) {
+  const top = p.gapY - p.gapH / 2, bottom = p.gapY + p.gapH / 2;
+  ctx.fillStyle = C.pipe;
+  ctx.fillRect(p.x, 0, PIPE_W, top - 14);
+  ctx.fillRect(p.x, bottom + 14, PIPE_W, H - GROUND - bottom - 14);
+  ctx.fillStyle = C.pipeCap;
+  ctx.fillRect(p.x - 5, top - 16, PIPE_W + 10, 16);
+  ctx.fillRect(p.x - 5, bottom, PIPE_W + 10, 16);
+  ctx.fillStyle = C.pipeEdge;
+  ctx.fillRect(p.x - 5, top - 3, PIPE_W + 10, 3);
+  ctx.fillRect(p.x - 5, bottom, PIPE_W + 10, 3);
+}
+
+function text(str, x, y, px, color, weight) {
+  ctx.fillStyle = color;
+  ctx.font = (weight || 700) + " " + px + "px system-ui, -apple-system, sans-serif";
+  ctx.textAlign = "center";
+  ctx.fillText(str, x, y);
+}
+
+function draw(now) {
+  ctx.setTransform(scale, 0, 0, scale, 0, 0);
+  ctx.fillStyle = C.sky;
+  ctx.fillRect(0, 0, worldW, H);
+
+  // sun + hills (parallax)
+  ctx.fillStyle = C.sun;
+  ctx.beginPath(); ctx.arc(worldW * 0.78, 110, 34, 0, Math.PI * 2); ctx.fill();
+  hills(H - GROUND - 90, 26, 150, scroll * 0.25, C.hillFar);
+  hills(H - GROUND - 40, 20, 90, scroll * 0.5, C.hillNear);
+
+  for (const p of pipes) drawPipe(p);
+
+  // ground
+  ctx.fillStyle = C.ground;
+  ctx.fillRect(0, H - GROUND, worldW, GROUND);
+  ctx.fillStyle = C.groundLine;
+  ctx.fillRect(0, H - GROUND, worldW, 3);
+  ctx.fillStyle = "rgba(74,68,51,0.35)";
+  for (let x = -(scroll % 34); x < worldW; x += 34) {
+    ctx.fillRect(x, H - GROUND + 14, 16, 3);
+  }
+
+  drawBird(now);
+
+  if (mode === "attract") {
+    text("FLAP HERO", worldW / 2, H * 0.24, 44, C.ink, 800);
+    text("Tap, click, or press Space to flap", worldW / 2, H * 0.24 + 34, 16, C.faint, 600);
+    text("P pauses · pillars do not negotiate", worldW / 2, H * 0.24 + 58, 13, C.faint, 500);
+  } else {
+    text(String(score), worldW / 2, 84, 52, C.ink, 800);
+  }
+
+  if (mode === "paused") {
+    ctx.fillStyle = "rgba(246,241,231,0.82)";
+    ctx.fillRect(0, 0, worldW, H);
+    text("PAUSED", worldW / 2, H / 2 - 8, 34, C.ink, 800);
+    text("Tap or press P to resume", worldW / 2, H / 2 + 22, 15, C.faint, 600);
+  }
+}
+
+function frame(now) {
+  update(now);
+  draw(now);
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+
+post({ type: "ARCADE_READY" });
+</script>
+</body>
+</html>
