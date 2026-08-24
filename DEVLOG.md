@@ -712,3 +712,23 @@ until the user signs in on llmarcade.fun in the driven browser.
   to guests with `db/publish-hyper-circuit.sql`; the production guest run
   was played through game over and screenshotted before Run 'n Gunner work
   began.
+
+## Session 18 — Run 'n Gunner original art + publication
+
+- Replaced all borrowed cabinet art with an original three-pose gunner,
+  five machine foes, five combat effects, three weapon crates, and a new
+  square canyon key-art tile. The four magenta sheets were manually
+  recomposed into equal cells, palette-quantized, and stripped; the runtime
+  slicer resolves exactly 3/5/5/3 frames.
+- In-game sheets total 9,950 bytes and the 768 px key art is 320,084 bytes:
+  330,034 bytes total, or 31.47% of the 1 MiB cabinet budget. The player and
+  foes now mirror as side-view sprites; engine, stages, scoring, collision,
+  and balance code did not change.
+- Both cabinet harnesses print PASS and `pnpm check` is green. Real keyboard
+  play on `/dev/run-n-gunner` exercised movement, jumping, firing, damage,
+  and enemies; the generated set stayed legible and cohesive at cabinet
+  scale, with clean chroma keying and no clipart clash.
+- Run 'n Gunner shipped in its own commit after Hyper Circuit was already
+  live, deployed through Vercel, and was opened to guests with
+  `db/publish-run-n-gunner.sql`; a fresh guest run reached game over on the
+  production route and was screenshotted.

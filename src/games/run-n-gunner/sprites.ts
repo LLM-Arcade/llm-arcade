@@ -1,22 +1,12 @@
 // Run 'n Gunner sprites. Chroma-key + gap-slice pipeline copied from
 // Starfall Squadron per PATTERNS.md (each cabinet carries its own copy).
-//
-// STAND-IN ART: Zo image generation is down, so every sheet below is
-// borrowed from existing cabinets. Final sheets to generate later:
-//   run-n-gunner/gunner.png  (3 frames: run A, run B, jump; side view)
-//   run-n-gunner/foes.png    (5 frames: runner bot, turret pod, lobber,
-//                             supply drone, boss hulk)
-//   run-n-gunner/fx.png      (5 frames: rifle bolt, enemy orb, grenade,
-//                             burst, muzzle flash)
-//   run-n-gunner/pickups.png (3 frames: fan, raker, slug weapon crates)
 
 import type { WeaponId } from "./stages.ts";
 
-const STARFALL = "/assets/games/starfall-squadron";
-const MUNCH = "/assets/games/munch-maze";
+const ASSETS = "/assets/games/run-n-gunner";
 
 export interface GunnerSprites {
-  soldier: HTMLCanvasElement;
+  soldierFrames: HTMLCanvasElement[];
   runner: HTMLCanvasElement;
   turret: HTMLCanvasElement;
   lobber: HTMLCanvasElement;
@@ -24,6 +14,7 @@ export interface GunnerSprites {
   boss: HTMLCanvasElement;
   bolt: HTMLCanvasElement;
   orb: HTMLCanvasElement;
+  grenade: HTMLCanvasElement;
   burst: HTMLCanvasElement;
   muzzle: HTMLCanvasElement;
   pickups: Record<WeaponId, HTMLCanvasElement>;
@@ -125,33 +116,28 @@ const sliceSheet = (img: HTMLImageElement, count: number): HTMLCanvasElement[] =
 };
 
 export const loadSprites = async (): Promise<GunnerSprites> => {
-  const [shipsImg, fxImg, itemsImg] = await Promise.all([
-    // STAND-IN ART: Starfall ships.png stands in for run-n-gunner
-    // gunner.png + foes.png (fighter = the gunner, drone = runner bot and
-    // supply drone, warrior = lobber, captor = turret pod and boss hulk).
-    loadImage(`${STARFALL}/ships.png`),
-    // STAND-IN ART: Starfall fx.png stands in for run-n-gunner fx.png
-    // (bolt = rifle bolt, orb = enemy orb and grenade, burst = burst,
-    // star = muzzle flash).
-    loadImage(`${STARFALL}/fx.png`),
-    // STAND-IN ART: Munch Maze items.png stands in for run-n-gunner
-    // pickups.png (seed = fan, acorn = raker, berry = slug).
-    loadImage(`${MUNCH}/items.png`),
+  const [gunnerImg, foesImg, fxImg, pickupsImg] = await Promise.all([
+    loadImage(`${ASSETS}/gunner.png`),
+    loadImage(`${ASSETS}/foes.png`),
+    loadImage(`${ASSETS}/fx.png`),
+    loadImage(`${ASSETS}/pickups.png`),
   ]);
-  const ships = sliceSheet(shipsImg, 4);
+  const gunner = sliceSheet(gunnerImg, 3);
+  const foes = sliceSheet(foesImg, 5);
   const fx = sliceSheet(fxImg, 5);
-  const items = sliceSheet(itemsImg, 3);
+  const pickups = sliceSheet(pickupsImg, 3);
   return {
-    soldier: ships[0],
-    runner: ships[1],
-    turret: ships[3],
-    lobber: ships[2],
-    drone: ships[1],
-    boss: ships[3],
+    soldierFrames: gunner,
+    runner: foes[0],
+    turret: foes[1],
+    lobber: foes[2],
+    drone: foes[3],
+    boss: foes[4],
     bolt: fx[0],
     orb: fx[1],
-    burst: fx[2],
-    muzzle: fx[3],
-    pickups: { rifle: items[0], fan: items[0], raker: items[1], slug: items[2] },
+    grenade: fx[2],
+    burst: fx[3],
+    muzzle: fx[4],
+    pickups: { rifle: pickups[0], fan: pickups[0], raker: pickups[1], slug: pickups[2] },
   };
 };

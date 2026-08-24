@@ -17,9 +17,8 @@ games before chat).** Shipped so far: **Munch Maze** (A,
 **Starfall Squadron** (A, `src/games/starfall-squadron/`, 7 ach),
 **Rockbuster** (B, `public/games/rockbuster.html`, 7 ach), **Boulder Rush**
 (B, `public/games/boulder-rush.html`, 7 ach), and **Hyper Circuit** (A,
-`src/games/hyper-circuit/`, 7 ach) — all published. **Run 'n Gunner** (A,
-`src/games/run-n-gunner/`, 7 ach, session 17) is built and agent-playtested
-but remains `coming_soon` until its stand-in art is replaced.
+`src/games/hyper-circuit/`, 7 ach), and **Run 'n Gunner** (A,
+`src/games/run-n-gunner/`, 7 ach) — all published.
 **TypeStorm** (B, `public/games/typestorm.html`, 8 ach) is built and
 tuned but has NO games row on purpose: it goes through the upload
 wizard as the pipeline's first real submission, and the approval RPC
@@ -28,7 +27,7 @@ trio.** The Phase-4 pipeline test with a
 second account was explicitly skipped (user decision) — the upload
 wizard/admin queue remain untested with real traffic. Site still gated
 (`site_settings.launched = false`, guests → Landing, signed-in → Arcade
-Home + preview banner). **1 account (the admin), 8 published cabinets. The
+Home + preview banner). **1 account (the admin), 9 published cabinets. The
 six session-11–15 cabinets have NOT been playtested by a human yet.**
 
 **⚖️ Asset diet (user-mandated, session 13 — see AI_RULES):** in-game art
@@ -282,7 +281,7 @@ prints par suggestions from ace lap medians. Slugs seeded + fired:
 (`src/pages/DevGame.tsx`) mounts any registry component with console-log
 stubs, for cabinets whose DB row is still coming_soon.
 
-## Run 'n Gunner (Track A, run-and-gun, STAND-IN ART, still coming_soon)
+## Run 'n Gunner (Track A, run-and-gun, published session 18)
 
 `src/games/run-n-gunner/` — Contra homage, fully original. Three
 chunk-built stages (Canyon Road, Scrap Ramparts, Dynamo Core), a
@@ -305,10 +304,9 @@ via Down+jump.
   is a real dodge; boss volleys keep 1.25 s of daylight; bosses never
   fire mid-charge; boss patrol floor `arenaX + 220` so holding distance
   never corners you on the camera wall.
-- `sprites.ts` — the Starfall gap-slicer copy. **STAND-IN ART:** borrowed
-  Starfall ships/fx + Munch Maze items sheets, every load site tagged
-  `// STAND-IN ART:`. Final sheets: gunner.png (3 frames), foes.png (5),
-  fx.png (5), pickups.png (3).
+- `sprites.ts` — the Starfall gap-slicer copy, now loading four original
+  generated sheets: gunner.png (3 frames), foes.png (5), fx.png (5), and
+  pickups.png (3). Deterministic gutters resolve exactly 3/5/5/3 at runtime.
 - `render.ts` — camera-translated sprite placement; ground/platform/ridge
   flat fills are the Munch Maze level-geometry exception.
 - `RunNGunner.tsx` — Starfall shell idiom. Touch: run pads left, JUMP +
@@ -320,14 +318,20 @@ end-boss 3000, no-hit boss +1000, stage clear +1000, victory +2000, and a
 hook). Cap 100,000. Slugs seeded + fired: `open-road`, `arsenal`,
 `wrecking-crew` (60 kills), `flawless-duel`, `long-march`,
 `one-life-run`, `gunner-legend` (40k, realistically needs the one-life
-double). Seed: `db/seed-run-n-gunner.sql` (INSERT ... ON CONFLICT upsert —
-this slug has no teaser row; status stays coming_soon on purpose).
+double). Seed: `db/seed-run-n-gunner.sql`; publication update:
+`db/publish-run-n-gunner.sql`.
 
 **Beatability harness (rerun it):** `node scripts/harness/run-n-gunner.mjs`
 proves a grunt bot clears all 3 stages within the lives budget, an ace
 bot completes a full one-life clear, every achievement threshold fires in
 simulation, and the score never exceeds the cap. Exit 0 = PASS. Prints a
 per-stage table per bot.
+
+**Original art proof:** the four palette-quantized in-game sheets total
+9,950 bytes; the 768 px key-art tile is 320,084 bytes; all Run 'n Gunner
+art totals 330,034 bytes (31.47% of the 1 MiB cabinet budget). Real keyboard
+play on `/dev/run-n-gunner` covered running, firing, jumping, damage, and
+enemy encounters with no keying fringe or palette clash before publish.
 
 ## The progression engine (Phase 3, unchanged)
 
@@ -411,14 +415,11 @@ URIs (sandbox can't read external images back).
    verify sheets slice into 5 + 6 frames, falling/rolling feel (tick
    0.125s), push chance, cave solvability across regenerations, quota/time
    curve, touch D-pad + GRAB; `TUNE` knobs at the top of its `<script>`.
-2. **The user's game queue: the flagship trio** (Run 'n Gunner shipped
-   session 17, stand-in art). Sprite games follow Munch Maze/Starfall;
+2. **The user's game queue: the flagship trio.** Sprite games follow Munch Maze/Starfall;
    text-shelf follows Rune & Ruin; self-contained Track-B follows
    Rockbuster **on the asset diet** (flat sprites, small sheets inlined
    as data URIs — no fat panoramas). Track-B briefs can also be
-   dispatched through the real wizard anytime. Run 'n Gunner additionally
-   needs its art set regenerated and its row flipped to published via
-   `db/publish-run-n-gunner.sql`.
+   dispatched through the real wizard anytime.
 3. **Phase 5 — Chat** (deferred behind games by user decision, session 11).
 4. **Phase 7 — flip `launched`** (button exists in `/admin` → Site).
 5. (Whenever convenient) run one Track-B submission through the upload

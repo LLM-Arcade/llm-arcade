@@ -94,17 +94,28 @@ export const draw = (ctx: CanvasRenderingContext2D, eng: Engine, spr: GunnerSpri
           e.x,
           e.y - 9 + Math.abs(Math.sin(eng.time * 10)) * -2,
           d.size,
-          eng.player.x < e.x ? -Math.PI / 2 : Math.PI / 2,
+          0,
+          1,
+          eng.player.x < e.x,
         );
         break;
       case "turret":
-        drawSprite(ctx, spr.turret, e.x, e.y - 10, d.size, Math.PI);
+        drawSprite(ctx, spr.turret, e.x, e.y - 10, d.size, 0, 1, eng.player.x < e.x);
         break;
       case "lobber":
-        drawSprite(ctx, spr.lobber, e.x, e.y - 8 + Math.sin(eng.time * 4) * 1.5, d.size, Math.PI);
+        drawSprite(
+          ctx,
+          spr.lobber,
+          e.x,
+          e.y - 8 + Math.sin(eng.time * 4) * 1.5,
+          d.size,
+          0,
+          1,
+          eng.player.x < e.x,
+        );
         break;
       case "drone":
-        drawSprite(ctx, spr.drone, e.x, e.y, d.size, Math.PI / 2, 0.95);
+        drawSprite(ctx, spr.drone, e.x, e.y, d.size, 0, 0.95, eng.player.x > e.x);
         break;
     }
   }
@@ -114,16 +125,16 @@ export const draw = (ctx: CanvasRenderingContext2D, eng: Engine, spr: GunnerSpri
   if (b) {
     const flick = b.flash > 0 ? 0.55 : 1;
     const tilt = b.charging > 0 ? b.dir * 0.18 : Math.sin(eng.time * 2.2) * 0.05;
-    drawSprite(ctx, spr.boss, b.x, b.y, b.def.w, Math.PI + tilt, flick);
+    drawSprite(ctx, spr.boss, b.x, b.y, b.def.w, tilt, flick, b.dir < 0);
   }
 
   // shots
   for (const s of eng.playerShots) {
-    drawSprite(ctx, spr.bolt, s.x, s.y, s.size * 1.2, Math.atan2(s.vy, s.vx) + Math.PI / 2);
+    drawSprite(ctx, spr.bolt, s.x, s.y, s.size * 1.2, Math.atan2(s.vy, s.vx));
   }
   for (const s of eng.enemyShots) {
     if (s.grav) {
-      drawSprite(ctx, spr.orb, s.x, s.y, 11, eng.time * 9, 0.95);
+      drawSprite(ctx, spr.grenade, s.x, s.y, 11, eng.time * 9, 0.95);
     } else {
       drawSprite(ctx, spr.orb, s.x, s.y, 9, 0, 0.95);
     }
@@ -135,7 +146,10 @@ export const draw = (ctx: CanvasRenderingContext2D, eng: Engine, spr: GunnerSpri
     const blink = p.iFrames > 0 ? (Math.floor(eng.time * 12) % 2 === 0 ? 0.35 : 0.9) : 1;
     const cy = p.y - 11;
     const lean = p.grounded ? Math.sin(eng.time * 14) * 0.06 : 0.14 * p.facing;
-    drawSprite(ctx, spr.soldier, p.x, cy, 20, p.facing * (Math.PI / 2) + lean, blink);
+    const frame = p.grounded
+      ? spr.soldierFrames[eng.input.dir === 0 ? 0 : Math.floor(eng.time * 10) % 2]
+      : spr.soldierFrames[2];
+    drawSprite(ctx, frame, p.x, cy, 20, lean, blink, p.facing < 0);
     if (eng.muzzle > 0) {
       const up = eng.input.up;
       const mx = up ? p.x : p.x + p.facing * 15;
