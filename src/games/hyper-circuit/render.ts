@@ -1,7 +1,6 @@
 // Hyper Circuit mode-7 renderer. Per-pixel ground sampling into a reused
 // ImageData, then sprite transforms only (no drawn shapes beyond the flat
-// sky fills). Allocation-free per
-// frame: every buffer below is module-level and reused.
+// sky fills). Every per-frame buffer below is module-level and reused.
 
 import type { Engine, Rival } from "./engine";
 import type { GroundTexture } from "./track-texture";
@@ -28,9 +27,10 @@ const HAZE = "#E4D5B8";
 const SAND32 = 0xffa3c9d9;
 const FOG_R = 217, FOG_G = 201, FOG_B = 163;
 
-const RIVAL_WORLD_W = 11;
+const RIVAL_WORLD_W = 14;
 const GHOST_WORLD_W = 10;
 const SPARK_WORLD_W = 9;
+const CAR_CONTACT_INSET = 16 / 128;
 
 // Precomputed per-row depth and fog (camera height and focal are fixed).
 const rowDepth = new Float32Array(GH);
@@ -54,9 +54,6 @@ interface SpriteSlot {
   w: number;
   alpha: number;
   bank: number;
-  bob: number;
-  thrust: number;
-  phase: number;
 }
 const slots: SpriteSlot[] = Array.from({ length: 6 }, () => ({
   fwd: 0,
@@ -66,9 +63,6 @@ const slots: SpriteSlot[] = Array.from({ length: 6 }, () => ({
   w: 0,
   alpha: 1,
   bank: 0,
-  bob: 0,
-  thrust: 0,
-  phase: 0,
 }));
 
 export interface Camera {
@@ -83,6 +77,14 @@ const wrapAngle = (a: number) => {
   while (a < -Math.PI) a += Math.PI * 2;
   return a;
 };
+
+// Directional strips run left-to-right as five yaw angles, each with a
+// grounded base and loaded-suspension pose. Keep selection visual-only.
+const yawFor = (visualTurn: number) =>
+  Math.max(0, Math.min(4, 2 + Math.round(visualTurn / 0.18)));
+
+const carFrame = (cars: HTMLCanvasElement[][], car: number, yaw: number, motion: boolean) =>
+  cars[car][yaw * 2 + (motion ? 1 : 0)];
 
 const drawSprite = (
   ctx: CanvasRenderingContext2D,
@@ -105,33 +107,31 @@ const drawSprite = (
 const drawRacer = (
   ctx: CanvasRenderingContext2D,
   craft: HTMLCanvasElement,
-  flame: HTMLCanvasElement,
   x: number,
-  y: number,
+  roadY: number,
   w: number,
   bank: number,
   alpha: number,
-  thrust: number,
-  phase: number,
+  boost: HTMLCanvasElement | null = null,
 ) => {
   const h = (w * craft.height) / craft.width;
   ctx.save();
   ctx.globalAlpha = alpha;
-  ctx.translate(x, y);
+  ctx.translate(x, roadY);
   ctx.rotate(bank);
 
-  if (thrust > 0) {
-    const pulse = 0.9 + Math.sin(phase) * 0.1;
-    const flameW = w * (0.12 + thrust * 0.12);
-    const flameH = h * (0.18 + thrust * 0.62) * pulse;
-    ctx.globalAlpha = alpha * (0.38 + thrust * 0.52);
-    ctx.drawImage(flame, -flameW / 2, h * 0.28, flameW, flameH);
-    ctx.globalAlpha = alpha * (0.32 + thrust * 0.48);
-    ctx.drawImage(flame, -flameW / 4, h * 0.3, flameW / 2, flameH * 0.58);
+  if (boost) {
+    const boostH = h * 0.42;
+    const boostW = w * 0.44;
+    ctx.globalAlpha = alpha * 0.86;
+    ctx.drawImage(boost, -boostW / 2, -h * 0.06, boostW, boostH);
   }
 
   ctx.globalAlpha = alpha;
-  ctx.drawImage(craft, -w / 2, -h / 2, w, h);
+  // The standardized cells reserve 16px beneath the tire bbox for a key
+  // gutter. Shift the canvas down by that proportional inset so roadY is the
+  // actual tire contact point for every car, including the player.
+  ctx.drawImage(craft, -w / 2, -h + h * CAR_CONTACT_INSET, w, h);
   ctx.restore();
 };
 
@@ -160,11 +160,25 @@ export const draw = (
   const camX = p.x - fwdX * CAM_BACK;
   const camY = p.y - fwdY * CAM_BACK;
 
-  // Flat paper and haze keep the horizon quiet behind the track.
-  ctx.fillStyle = SKY;
-  ctx.fillRect(0, 0, W, HORIZON - 14);
-  ctx.fillStyle = HAZE;
-  ctx.fillRect(0, HORIZON - 14, W, 14);
+  // Course art is deliberately an opaque low-horizon band. A slow crop pan
+  // makes the three locations travel past without touching race state.
+  const horizon = spr.horizons[eng.circuitIndex];
+  if (horizon) {
+    // Omit each panorama's foreground roadway: the mode-7 sampler owns the
+    // playable road below this band, avoiding a doubled asphalt seam.
+    const sourceH = Math.round(horizon.height * 0.48);
+    const sourceW = Math.min(horizon.width, Math.round(sourceH * 2.8));
+    const range = Math.max(1, horizon.width - sourceW);
+    const sourceX = Math.round(
+      (Math.sin(eng.time * 0.08 + eng.circuitIndex * 1.7) * 0.5 + 0.5) * range,
+    );
+    ctx.drawImage(horizon, sourceX, 0, sourceW, sourceH, 0, 0, W, HORIZON);
+  } else {
+    ctx.fillStyle = SKY;
+    ctx.fillRect(0, 0, W, HORIZON - 14);
+    ctx.fillStyle = HAZE;
+    ctx.fillRect(0, HORIZON - 14, W, 14);
+  }
 
   // Ground: one reused full-frame ImageData pass.
   if (!groundCanvas) {
@@ -233,15 +247,15 @@ export const draw = (
     const k = FOCAL / fwd;
     const slot = slots[count++];
     slot.fwd = fwd;
-    slot.img = spr.rivalSheets[rv.spriteIdx];
+    const headingDelta = wrapAngle(rv.heading - cam.heading);
+    const yaw = yawFor(headingDelta);
+    const motion = (Math.floor(eng.time * 8 + i) & 1) === 1;
+    slot.img = carFrame(spr.roadCars, rv.spriteIdx + 1, yaw, motion);
     slot.sx = halfW + side * k;
     slot.sy = HORIZON + CAM_H * k;
-    slot.w = Math.min(72, RIVAL_WORLD_W * k);
+    slot.w = Math.min(92, RIVAL_WORLD_W * k);
     slot.alpha = 1;
-    slot.bank = Math.max(-0.32, Math.min(0.32, wrapAngle(rv.heading - cam.heading) * 0.7));
-    slot.bob = Math.sin(eng.time * 6.5 + i * 1.9) * Math.min(1.4, slot.w * 0.035);
-    slot.thrust = Math.max(0.2, Math.min(0.82, rv.speed / REF_MAX_SPEED));
-    slot.phase = eng.time * 28 + i * 2.1;
+    slot.bank = Math.max(-0.06, Math.min(0.06, headingDelta * 0.12));
   }
   const g = eng.ghostPos();
   if (g) {
@@ -252,15 +266,12 @@ export const draw = (
       const k = FOCAL / fwd;
       const slot = slots[count++];
       slot.fwd = fwd;
-      slot.img = spr.craft;
+      slot.img = carFrame(spr.roadCars, 0, 2, false);
       slot.sx = halfW + (gdx * sideX + gdy * sideY) * k;
       slot.sy = HORIZON + CAM_H * k;
       slot.w = GHOST_WORLD_W * k;
       slot.alpha = 0.35;
-      slot.bank = Math.max(-0.28, Math.min(0.28, wrapAngle(g.heading - cam.heading) * 0.65));
-      slot.bob = Math.sin(eng.time * 5.5) * Math.min(1, slot.w * 0.025);
-      slot.thrust = 0;
-      slot.phase = 0;
+      slot.bank = Math.max(-0.05, Math.min(0.05, wrapAngle(g.heading - cam.heading) * 0.1));
     }
   }
   // Insertion sort by depth, farthest first. At most 5 entries.
@@ -276,18 +287,14 @@ export const draw = (
   for (let i = 0; i < count; i++) {
     const s = slots[i];
     if (!s.img || s.sx < -80 || s.sx > W + 80 || s.w < 1) continue;
-    const h = (s.w * s.img.height) / s.img.width;
     drawRacer(
       ctx,
       s.img,
-      spr.flame,
       s.sx,
-      s.sy - h * 0.35 + s.bob,
+      s.sy,
       s.w,
       s.bank,
       s.alpha,
-      s.thrust,
-      s.phase,
     );
   }
 
@@ -325,28 +332,27 @@ export const draw = (
     }
   }
 
-  // Player craft, screen-fixed with bank, hover bob, and boost flame.
+  // Player car stays tire-anchored; alternating sheets provide suspension
+  // and steering movement instead of an anti-gravity hover.
   const lean = Math.max(-10, Math.min(10, p.lat * 0.15));
-  const bob = Math.sin(eng.time * 6) * 1.5;
-  const craftW = 46;
+  const craftW = 68;
   const playerX = halfW + lean;
-  const playerY = H - 58 + bob;
+  const playerY = H - 42;
+  const playerYaw = yawFor(eng.input.steer * 0.36);
+  const playerMotion = (Math.floor(eng.time * 10) & 1) === 1;
   if (eng.isBoosting || p.shield < 25) {
     const pulse = 0.72 + Math.sin(eng.time * 9) * 0.08;
     const alpha = eng.isBoosting ? pulse * 0.24 : pulse * 0.13;
     drawSprite(ctx, spr.shield, playerX, playerY, 62, eng.time * 0.35, alpha);
   }
-  const cruiseThrust = Math.max(0.12, Math.min(0.48, speedFrac * 0.5));
   drawRacer(
     ctx,
-    spr.craft,
-    spr.flame,
+    carFrame(spr.roadCars, 0, playerYaw, playerMotion),
     playerX,
     playerY,
     craftW,
-    cam.bank,
+    cam.bank * 0.15,
     1,
-    eng.isBoosting ? 1 : cruiseThrust,
-    eng.time * (eng.isBoosting ? 40 : 22),
+    eng.isBoosting ? spr.boost : null,
   );
 };

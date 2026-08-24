@@ -1,12 +1,11 @@
-// Hyper Circuit sprites. Chroma-key + gap-slice pipeline copied from
-// Starfall Squadron per PATTERNS.md (each cabinet carries its own copy).
+// Hyper Circuit sprites. The directional car sheets have a fixed 5 x 2
+// contract; the compact FX/stamp sheets retain the local gap-slice helper.
 
 const ASSETS = "/assets/games/hyper-circuit";
 
 export interface HyperSprites {
-  craft: HTMLCanvasElement;
-  rivalSheets: HTMLCanvasElement[];
-  flame: HTMLCanvasElement;
+  roadCars: HTMLCanvasElement[][];
+  boost: HTMLCanvasElement;
   spark: HTMLCanvasElement;
   shield: HTMLCanvasElement;
   streak: HTMLCanvasElement;
@@ -14,6 +13,7 @@ export interface HyperSprites {
   checker: HTMLCanvasElement;
   pad: HTMLCanvasElement;
   terrain: HTMLImageElement;
+  horizons: HTMLImageElement[];
 }
 
 const loadImage = (src: string) =>
@@ -28,10 +28,11 @@ const chromaKey = (data: ImageData) => {
   const px = data.data;
   for (let i = 0; i < px.length; i += 4) {
     const r = px[i], g = px[i + 1], b = px[i + 2];
-    if (r > 150 && b > 150 && g < 120) {
+    // Production sheets are canonicalized to literal #FF00FF before they
+    // enter the renderer. Keeping the key exact prevents a broad purple key
+    // from eating the car's ink, red lamps, or warm paint details.
+    if (r === 255 && g === 0 && b === 255) {
       px[i + 3] = 0;
-    } else if (r > 120 && b > 120 && g < r - 40 && g < b - 40) {
-      px[i + 3] = Math.min(px[i + 3], 90);
     }
   }
 };
@@ -111,20 +112,65 @@ const sliceSheet = (img: HTMLImageElement, count: number): HTMLCanvasElement[] =
   });
 };
 
+// Directional vehicle sheets are authored as columns yaw 0..4 and rows
+// base/loaded. The returned order is yaw * 2 + motion, so the renderer never
+// depends on whitespace detection or a generator's accidental gaps.
+const sliceCarGrid = (img: HTMLImageElement): HTMLCanvasElement[] => {
+  if (img.width % 5 !== 0 || img.height % 2 !== 0) {
+    throw new Error(`Car sheet must use an exact 5x2 grid: ${img.src}`);
+  }
+  const sheet = toCanvas(img.width, img.height);
+  const ctx = sheet.getContext("2d")!;
+  ctx.drawImage(img, 0, 0);
+  const data = ctx.getImageData(0, 0, sheet.width, sheet.height);
+  chromaKey(data);
+  ctx.putImageData(data, 0, 0);
+
+  const frameW = Math.floor(sheet.width / 5);
+  const frameH = Math.floor(sheet.height / 2);
+  const frames: HTMLCanvasElement[] = [];
+  for (let yaw = 0; yaw < 5; yaw++) {
+    for (let motion = 0; motion < 2; motion++) {
+      const frame = toCanvas(frameW, frameH);
+      frame
+        .getContext("2d")!
+        .putImageData(ctx.getImageData(yaw * frameW, motion * frameH, frameW, frameH), 0, 0);
+      frames.push(frame);
+    }
+  }
+  return frames;
+};
+
 export const loadSprites = async (): Promise<HyperSprites> => {
-  const [shipsImg, fxImg, stampsImg, terrain] = await Promise.all([
-    loadImage(`${ASSETS}/ships.png`),
-    loadImage(`${ASSETS}/fx.png`),
-    loadImage(`${ASSETS}/stamps.png`),
+  const [
+    playerYaw,
+    rallyYaw,
+    muscleYaw,
+    enduranceYaw,
+    tunerYaw,
+    fxImg,
+    stampsImg,
+    terrain,
+    ...horizons
+  ] = await Promise.all([
+    loadImage(`${ASSETS}/player-yaw.png`),
+    loadImage(`${ASSETS}/rally-yaw.png`),
+    loadImage(`${ASSETS}/muscle-yaw.png`),
+    loadImage(`${ASSETS}/endurance-yaw.png`),
+    loadImage(`${ASSETS}/tuner-yaw.png`),
+    loadImage(`${ASSETS}/fx-road.png`),
+    loadImage(`${ASSETS}/stamps-road.png`),
     loadImage(`${ASSETS}/terrain-scrub.png`),
+    loadImage(`${ASSETS}/alkali-flats.png`),
+    loadImage(`${ASSETS}/terrace-canyon.png`),
+    loadImage(`${ASSETS}/basalt-rim.png`),
   ]);
-  const ships = sliceSheet(shipsImg, 5);
+  const roadCars = [playerYaw, rallyYaw, muscleYaw, enduranceYaw, tunerYaw].map(sliceCarGrid);
   const fx = sliceSheet(fxImg, 4);
   const stamps = sliceSheet(stampsImg, 3);
   return {
-    craft: ships[0],
-    rivalSheets: ships.slice(1),
-    flame: fx[0],
+    roadCars,
+    boost: fx[0],
     spark: fx[1],
     shield: fx[2],
     streak: fx[3],
@@ -132,5 +178,6 @@ export const loadSprites = async (): Promise<HyperSprites> => {
     checker: stamps[1],
     pad: stamps[2],
     terrain,
+    horizons,
   };
 };

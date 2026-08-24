@@ -1,0 +1,125 @@
+{
+  "game": "hyper-circuit",
+  "version": 2,
+  "paletteAndKey": {
+    "palette": "Warm terracotta, olive, mustard, ink, and cream. Gameplay sheets use flat solid colors with no gradients, noise, or paper grain.",
+    "backgroundKey": "#FF00FF exactly; every yaw, FX, and stamp gutter is canonicalized before runtime.",
+    "runtimeKey": "sprites.ts removes only literal #FF00FF, preventing broad purple removal from erasing paint, tires, or lamps."
+  },
+  "budget": {
+    "gameplayArtBytes": 377497,
+    "keyArtBytes": 312223,
+    "totalRasterBytesIncludingKeyArt": 689720,
+    "limitBytes": 1048576,
+    "metadataExcluded": true
+  },
+  "files": [
+    {
+      "path": "player-yaw.png",
+      "bytes": 24908,
+      "dimensions": [640, 256],
+      "grid": "5 columns x 2 rows, 128px cells",
+      "promptSummary": "Burnt-orange compact touring car with a broad cream roof and bumper, mustard rear panel, ink glass and tires, bright taillights, and no sci-fi elements."
+    },
+    {
+      "path": "rally-yaw.png",
+      "bytes": 28724,
+      "dimensions": [640, 256],
+      "grid": "5 columns x 2 rows, 128px cells",
+      "promptSummary": "Olive wedge rally coupe with a cream roof and window surround, mustard rear panel, ink road tires, and bright taillights."
+    },
+    {
+      "path": "muscle-yaw.png",
+      "bytes": 29977,
+      "dimensions": [640, 256],
+      "grid": "5 columns x 2 rows, 128px cells",
+      "promptSummary": "Mustard muscle car with a cream roof, bumper, and rear panel, terracotta side stripe, ink tires, and red lamps."
+    },
+    {
+      "path": "endurance-yaw.png",
+      "bytes": 26991,
+      "dimensions": [640, 256],
+      "grid": "5 columns x 2 rows, 128px cells",
+      "promptSummary": "Cream and ink endurance coupe with a mustard roof band, terracotta rear panel, clear rear glass, road tires, and red lamps."
+    },
+    {
+      "path": "tuner-yaw.png",
+      "bytes": 28920,
+      "dimensions": [640, 256],
+      "grid": "5 columns x 2 rows, 128px cells",
+      "promptSummary": "Charcoal and terracotta boxy tuner with a cream roof and bumper, mustard rear panel accent, ink tires, and red lamps."
+    },
+    {
+      "path": "fx-road.png",
+      "bytes": 2708,
+      "dimensions": [640, 320],
+      "grid": "Four horizontally gap-sliced frames: twin exhaust boost, tire sparks, shield arc, speed streak.",
+      "promptSummary": "Road-racing FX in cream, mustard, terracotta, and ink; boost is a twin exhaust burst only, with no cruise flame."
+    },
+    {
+      "path": "stamps-road.png",
+      "bytes": 13078,
+      "dimensions": [640, 320],
+      "grid": "Three horizontally gap-sliced frames: asphalt guardrail, checker strip, painted boost lane.",
+      "promptSummary": "Grounded asphalt, guardrail, checker, and painted chevrons with no space-rune language."
+    },
+    {
+      "path": "terrain-scrub.png",
+      "bytes": 8820,
+      "dimensions": [256, 256],
+      "grid": "Tileable terrain detail.",
+      "promptSummary": "Salt and scrub ground detail supporting the warm roadside palette."
+    },
+    {
+      "path": "alkali-flats.png",
+      "bytes": 80271,
+      "dimensions": [640, 320],
+      "grid": "Wide opaque horizon band.",
+      "promptSummary": "Sun-bleached street circuit beyond salt shoulders, low terracotta mesas, and olive scrub."
+    },
+    {
+      "path": "terrace-canyon.png",
+      "bytes": 66326,
+      "dimensions": [640, 256],
+      "grid": "Wide opaque horizon band.",
+      "promptSummary": "Cut rock terraces with real asphalt guardrails, road signage, and deep cliff shadow."
+    },
+    {
+      "path": "basalt-rim.png",
+      "bytes": 66774,
+      "dimensions": [640, 213],
+      "grid": "Wide opaque horizon band.",
+      "promptSummary": "Dark volcanic ridge road with olive scrub under a mustard dusk."
+    },
+    {
+      "path": "../hyper-circuit.png",
+      "bytes": 312223,
+      "dimensions": [768, 768],
+      "grid": "Single catalog image.",
+      "promptSummary": "Street race cars on a road in the warm catalog visual language.",
+      "keyArt": true
+    }
+  ],
+  "carFrameContract": {
+    "columnOrder": ["hard-left", "left", "straight", "right", "hard-right"],
+    "rowOrder": ["base suspension", "loaded suspension with brake lamps and steered-wheel pose"],
+    "runtimeFrameOrder": "yaw * 2 + motion",
+    "visibleBoundsByYaw": ["108x68", "102x68", "88x68", "102x68", "108x68"],
+    "anchor": "Every visible car bbox is centered in its 128px cell with a 16px lower key gutter. render.ts compensates that exact 16/128 inset so the tire bbox, rather than the cell edge, lands on the shared road-contact point.",
+    "normalization": "All five models and both motion rows use the exact same visible bbox per yaw. This preserves natural yaw foreshortening without model-size or motion-frame jitter.",
+    "timing": "Player alternates base/loaded at 10 fps; rivals alternate at 8 fps. Yaw is visual-only steering or relative-heading selection."
+  },
+  "wiring": {
+    "slicing": "sprites.ts uses the exact sliceCarGrid 5x2 slicer for cars; compact FX and stamps retain gap slicing.",
+    "player": "render.ts draws the player at a 68px canvas width with a bright livery; this is render-only.",
+    "rivals": "render.ts keeps shared visual world width 14 and a 92px visual cap for legible perspective-scaled rivals; player and rivals use the same 16/128 tire-contact compensation and no engine values change.",
+    "motion": "The renderer removed hover bob and only draws the twin exhaust burst when engine boost is active.",
+    "courses": "The panorama at engine circuitIndex is cropped as a horizon-only band behind the Mode-7 playable road, preventing a doubled-road seam.",
+    "physics": "No course geometry, tuning, collisions, AI, scoring, or balance values were changed."
+  },
+  "validation": {
+    "gridProbe": "Every yaw sheet passes scripts/probe-sprite-grid.py with 5 columns, 2 rows, and a 4px minimum margin. The final report gives identical 108x68, 102x68, 88x68, 102x68, 108x68 bounds for every car and both rows.",
+    "fxProbe": "fx-road.png passes a 4-by-1 4px-gutter probe; FX and stamp sheets contain no near-magenta violet-family pixels.",
+    "playtest": "Fresh 8080 local captures covered the countdown grid, straight running, left steering, and right steering at cabinet scale."
+  }
+}
