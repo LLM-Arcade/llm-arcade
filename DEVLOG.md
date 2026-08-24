@@ -357,3 +357,55 @@ still the only cabinet, upload pipeline untested with real traffic. Next:
 run a Track-B game through the full pipeline (second account → wizard →
 queue → approve → floor), then Phase 5 (chat) / Phase 6 (Track-A games,
 Munch Maze first) — Track-B agent briefs can now point at the real wizard.
+
+## Session 11 — Phase 6 begins: Munch Maze 🌳
+
+**User decision:** skip the second-account pipeline test entirely and jump
+the phase order — games now, chat later. Phase 5 formally deferred; noted
+in the plan's progress tracker.
+
+**Shipped: Munch Maze**, the first Track-A cabinet (`src/games/munch-maze/`,
+registered in the previously-empty `gameRegistry`). Published with 7 seeded
+achievements (`first-maze`, `full-course`, `untouchable`, `ghost-hunter`,
+`seed-baron`, `deep-runner`, `maze-legend` — slugs mirror the engine's
+`achieve()` calls).
+
+**Design decisions**
+- **Original 19×21 maze** (not the classic layout — IP hygiene), defined as
+  legend strings in `maze.ts`. Hand-checked: no dead ends, tunnel row wraps,
+  4 power acorns, 158 seeds, ghost house with one-way door.
+- **Engine as a framework-free class** with an event queue the React shell
+  drains once per frame (sfx / achievements / gameover→onScore). Center-
+  snapped grid movement: turns only at tile centers, instant reversals,
+  capped dt so nothing tunnels through walls.
+- **Ghost AI = classic target-tile model, renamed personalities:** Rusty
+  (direct chase), Sprig (4 ahead), Marigold (mirrors Rusty through a point
+  2 ahead), Bramble (shy — retreats inside 8 tiles). 7s scatter / 20s chase;
+  frightened pauses the mode clock; staggered house releases at 0/2.5/5.5/
+  8.5s.
+- **Eaten ghosts fade out and respawn in the house** instead of returning as
+  "eyes" — eyes would have required drawn art, which the no-programmatic-art
+  rule bans. Fade + respawn reads fine and keeps the rule intact.
+- **Sprite pipeline evolved for Track A:** same magenta-key generation
+  recipe, but same-origin means runtime `getImageData` is legal — no data-
+  URI inlining. New trick: single-generation **multi-frame sheets** (2-frame
+  muncher chomp, 5-ghost row incl. frightened cream variant, 3-item row)
+  keep style consistent across frames; slicing detects transparent gaps and
+  falls back to equal columns; every frame gets bbox-trimmed. Walls are the
+  generated hedge texture as a canvas pattern.
+- **Palette conformance in-game:** frightened state is pale cream (not the
+  classic blue — blue is banned), ground is dark soil, HUD/overlays use the
+  site's mustard/olive/terra chips. WebAudio synth blips (original, no
+  samples), M mute / P pause / auto-pause on tab hide, swipe steering on
+  touch.
+- Berry bonus at 60/120 seeds eaten spawns below the house (300 + 100·level
+  capped). Ghost combos 200→1600. Fright duration 7.5s shrinking to 2s by
+  maze 6; ghost speed +0.25 tiles/s per maze, capped just above player
+  speed.
+
+**State for session 12:** Munch Maze is **untested by a human** — engine
+logic was desk-checked only. First action: playtest it (tuning constants
+live at the top of `engine.ts`; watch for sprite-sheet slicing artifacts —
+regenerate sheets with clearer spacing if frames clip). Then keep shipping
+Phase 6 games (Rune & Ruin next per spec order) and circle back to the
+pipeline test + Phase 5 chat eventually.

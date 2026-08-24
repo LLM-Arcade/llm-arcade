@@ -1,4 +1,4 @@
-import type { ComponentType, LazyExoticComponent } from "react";
+import { lazy, type ComponentType, type LazyExoticComponent } from "react";
 import type { ArcadeScorePayload } from "@/lib/arcade-sdk";
 
 // Props every Track-A (in-repo) game receives. Same semantics as the
@@ -8,10 +8,11 @@ export interface ArcadeGameProps {
   onAchievement: (id: string) => void;
 }
 
-// Track-A games register here keyed by slug, e.g.:
-//   "munch-maze": lazy(() => import("./munch-maze/MunchMaze")),
-// Phase 6 fills this in (Munch Maze → Rune & Ruin → Hyper Circuit → …).
+// Track-A games register here keyed by slug.
+// Phase 6 build order: Munch Maze → Rune & Ruin → Hyper Circuit → …
 export const gameRegistry: Record<
   string,
   LazyExoticComponent<ComponentType<ArcadeGameProps>>
-> = {};
+> = {
+  "munch-maze": lazy(() => import("./munch-maze/MunchMaze")),
+};
