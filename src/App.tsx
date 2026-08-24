@@ -13,6 +13,9 @@ import Login from "./pages/Login";
 import Settings from "./pages/Settings";
 import Faq from "./pages/Faq";
 import Playtest from "./pages/Playtest";
+import Upload from "./pages/Upload";
+import MyUploads from "./pages/MyUploads";
+import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -42,6 +45,9 @@ const App = () => (
             <Route path="/settings" element={<Settings />} />
             <Route path="/faq" element={<Faq />} />
             <Route path="/playtest" element={<Playtest />} />
+            <Route path="/upload" element={<Upload />} />
+            <Route path="/uploads" element={<MyUploads />} />
+            <Route path="/admin" element={<Admin />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

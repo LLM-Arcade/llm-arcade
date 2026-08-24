@@ -1,6 +1,5 @@
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useSiteSettings } from "@/hooks/useSiteSettings";
 import Landing from "@/pages/Landing";
 
 /**
@@ -10,20 +9,7 @@ import Landing from "@/pages/Landing";
  */
 const LaunchGate = ({ children }: { children: React.ReactNode }) => {
   const { profile, loading: authLoading } = useAuth();
-
-  const { data, isLoading } = useQuery({
-    queryKey: ["site-settings"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("site_settings")
-        .select("launched")
-        .eq("id", 1)
-        .single();
-      if (error) throw error;
-      return data;
-    },
-    staleTime: 60_000,
-  });
+  const { data, isLoading } = useSiteSettings();
 
   if (isLoading || authLoading) {
     return (

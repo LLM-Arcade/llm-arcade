@@ -10,163 +10,166 @@ and Google OAuth origins use it.
 
 ## Current state
 
-**Phase 3 complete (progression).** Achievements engine (server-validated
-against approved manifests), XP/levels/streaks, badges, activity feed +
-follows, creator profiles, and the real Arcade Home are live on top of the
-Phase 2 platform. Site still gated (`site_settings.launched = false`) —
-but the gate now only applies to **guests** (they see the Landing);
-**any signed-in user gets the Arcade Home** with a preview banner
-(user decision, session 8). **First signup → admin.**
+**Phase 4 complete (upload pipeline + admin).** The first live playtest also
+happened and the whole progression loop verified green server-side (session
+10): signup → admin role, achievement unlock, score → daily/score XP,
+first-coin + chart-topper badges, top-rank event, 220 XP = level 3, streak 1
+— ledger math exact. Site still gated (`site_settings.launched = false`,
+guests → Landing, signed-in → Arcade Home + preview banner). **1 account
+(the admin), 1 published cabinet (Flap Hero).**
 
 | Route | Page | Notes |
 |---|---|---|
-| `/` | `LaunchGate` → `Landing` (guests) or `Home` (signed-in) | Home = real Arcade Home: Spotlight hero, ScoreTicker, rails, streak card, global activity |
-| `/games` | `Games` (**open pre-launch**) | Era chips, tile grid |
-| `/game/:slug` | `GameDetail` (**open pre-launch**) | Tabs: Leaderboard · **Achievements** · Comments · About |
-| `/creator/:username` | `CreatorProfile` (open) | Level ring, stats, badge case, follow, Top scores/Achievements/Activity tabs |
-| `/login` + `/signup` | `Login` | Separate routes, one component (mode from URL, session 9). **Fresh browsers hitting `/login` redirect to `/signup`** (localStorage `na-known-player`, set in AuthContext, survives sign-out); toggle link opts out via location state, so `?next=` links can all point at `/login` |
-| `/settings`, `/faq`, `/playtest` | unchanged | Settings no longer writes `updated_at` (trigger does) |
+| `/` | `LaunchGate` → `Landing` (guests) or `Home` (signed-in) | Spotlight hero honors the admin pick (`site_settings.spotlight_game_id`), falls back to featured/most-played |
+| `/games`, `/game/:slug` | open pre-launch | unchanged |
+| `/creator/:username` | `CreatorProfile` | unchanged |
+| `/login` + `/signup` | `Login` | sign-up-first via `na-known-player`; all CTAs via `authCta()` |
+| `/upload` | `Upload` (auth-gated) | 3-step wizard: metadata + manifest editor → files → **test flight** (srcDoc sandbox + SDK checklist; submit needs READY + SCORE) |
+| `/uploads` | `MyUploads` (auth-gated) | status chips, rejection reasons verbatim, "Upload new version" / "Fix & resubmit" (carries prior submission via location state) |
+| `/admin` | `Admin` (admin role only) | Review queue (badge count) · Games · Players · Signups · Site |
+| `/settings`, `/faq`, `/playtest` | unchanged | |
 
-**State at handoff:** still **zero accounts** (next signup = admin), Google
-provider still disabled (email/password works), Flap Hero the only published
-cabinet — its 6 manifest achievements are now seeded and unlockable. No
-scores/unlocks/activity data yet: **the first real playtest of the whole
-loop (play → score → XP → achievement toast → badge → activity) is next.**
+## The upload pipeline (implemented)
 
-## The progression engine (implemented, all server-side)
+1. Creator runs the wizard: manifest edited as a form (max 12, slugs
+   auto-kebab), HTML ≤5 MB validated client-side, key art required for new
+   games (optional on versions — keeps current art), test flight boots the
+   file with `srcDoc` + `sandbox="allow-scripts"` and records the checklist
+   (ready/score/achievement/save + invalid slug warnings).
+2. Files upload to the **public `games` Storage bucket** (5 MB cap,
+   html/png/jpg/webp only; INSERT policy restricts to `<uid>/…` folder; no
+   client update/delete — files immutable per version). Row inserted into
+   `game_submissions` (`pending`; RLS: own+admin SELECT, own INSERT only —
+   max 3 pending, manifest must be array ≤12).
+3. Admin reviews in `/admin`: sandbox preview straight from Storage,
+   **manifest diff** vs the approved `achievements` set (+/~/− with a
+   "removed = unlocks deleted" warning), submit-time checklist chips.
+4. `admin_review_submission` RPC (SECURITY DEFINER): reject stores the
+   reason verbatim; approve validates the manifest server-side, creates or
+   updates the `games` row (track B, published, `html_path`/`art_url` =
+   full Storage public URLs), **syncs `achievements` by (game_id, slug)**
+   (upsert + prune, prune cascades user_achievements), awards the
+   **Creator badge** (idempotent), stamps the submission.
 
-Client never writes progression tables — everything flows through SECURITY
-DEFINER functions + triggers:
+## Admin console (all writes via SECURITY DEFINER RPCs, `is_admin()` inside)
 
-- **Achievements** — games fire `ARCADE_ACHIEVEMENT {id}` → client calls
-  `unlock_achievement(game_id, slug)` RPC (authenticated only). It validates
-  the slug against the `achievements` table (the approved manifest) for a
-  *published* game, inserts once, grants the achievement's XP, logs activity,
-  checks the Completionist badge. Unknown/duplicate slugs are no-ops.
-  Guests: unlocks are NOT recorded (only the held score is claimable);
-  the Achievements tab says so.
-- **XP** — ledger in `xp_events`; `grant_xp()` (internal-only) updates
-  `profiles.xp/level` and logs `level_up` activity. Economy: score +10
-  (capped 200/day), first play of the day +25, achievement = its `xp`,
-  badge by rarity (bronze 25 / silver 50 / gold 100 / neon 200), #1 takeover
-  +50. **Level = min(50, floor(sqrt(xp/40)) + 1)** — duplicated client-side
-  in `src/lib/progression.ts`; keep both in sync.
-- **Streaks** — UTC-day based, updated by the score trigger: consecutive
-  days with ≥1 submitted score. `profiles.streak_days/best_streak/
-  last_play_date`. Freeze token: deferred.
-- **Badges** — seeded 7: first-coin, era-tourist (gated until ≥5 eras have a
-  published game), regular (7d), chart-topper, completionist, all-nighter
-  (30d), playtester (auto-awarded by trigger when role → playtester).
-  `award_badge()` is idempotent; awards XP + activity.
-- **Trigger** `on_score_progression` (AFTER INSERT on scores) does: streak +
-  daily XP, capped score XP, first-coin, chart-topper detection (only when
-  taking #1 from someone else or posting the first score), era-tourist.
-- **Activity feed** (`activity_events`, public read): achievement / badge /
-  top_rank / level_up. Rendered on Home (global, with actor) and profiles.
-- **Follows** — plain table, follow/unfollow own rows via RLS.
+`admin_review_submission` · `admin_wipe_scores` (returns count) ·
+`admin_set_role` (can't change own role; playtester badge auto-fires via
+existing trigger) · `admin_update_game` (status/featured) ·
+`admin_set_spotlight` (published-only, NULL = automatic) ·
+`admin_set_launched` · `admin_review_playtest` (approve → sets profile role
+to playtester by email match iff current role is player). EXECUTE revoked
+from PUBLIC/anon, granted to authenticated; the role check is server-side.
+
+## The progression engine (Phase 3, unchanged)
+
+Client never writes progression tables — SECURITY DEFINER functions +
+triggers: `unlock_achievement` RPC (manifest-validated, published games
+only), XP ledger (`xp_events`, score +10 capped 200/day, first play +25,
+badge rarity 25/50/100/200, #1 takeover +50), **level =
+min(50, floor(sqrt(xp/40))+1)** (mirrored in `src/lib/progression.ts` —
+change both!), UTC streaks in the score trigger, 8 badges seeded (7 + new
+`creator`), activity feed, follows.
 
 ## Stack
 
 - Vite + React + TS + React Router (routes in `src/App.tsx`), Tailwind +
   customized shadcn/ui, TanStack Query, lucide-react
-- Supabase: Postgres + RLS (client at `src/integrations/supabase/client.ts`)
-- Design system "down to earth" v3 — see `AI_RULES.md` hard rules. Tokens in
-  `src/globals.css`; Bricolage Grotesque / Inter / JetBrains Mono.
+- Supabase: Postgres + RLS (client at `src/integrations/supabase/client.ts`),
+  Storage bucket `games`
+- Design system "down to earth" v3 — see `AI_RULES.md` hard rules.
 
 ## Database (Supabase)
 
-All tables RLS + explicit grants; `service_role` full access everywhere.
+All tables RLS + **explicit grants only** — session 10 revoked the blanket
+Supabase default grants from every table AND changed default privileges so
+new tables start with zero client grants (see Gotchas).
 **Never write to `supabase/migrations/` — schema changes via the SQL tool.**
 
-| Table | Access | Purpose |
+| Table | Client access | Purpose |
 |---|---|---|
-| `profiles` | public SELECT; own UPDATE **(column grant: username/display_name/avatar_url/bio ONLY; leftover client INSERT grant revoked session 9 — see Gotchas)** + streak/xp/level columns | signup trigger, first user → admin |
-| `games`, `scores`, `ratings`, `favorites`, `comments`, `waitlist`, `playtest_applications`, `site_settings` | unchanged from Phase 2 | scores now fire the progression trigger |
-| `achievements` | public SELECT; writes service_role | per-game manifest defs (slug unique per game, xp, hint) — Flap Hero's 6 seeded |
-| `user_achievements` | public SELECT; **no client writes** (RPC only) | unlocks |
-| `xp_events` | own SELECT; no client writes | XP ledger (daily-cap queries) |
-| `badges` / `user_badges` | public SELECT; no client writes | 7 seeded defs / earned (detail = earn story) |
-| `follows` | public SELECT; own INSERT/DELETE | social graph |
-| `activity_events` | public SELECT; no client writes | feed events |
+| `profiles` | SELECT all; UPDATE column-grant (username/display_name/avatar_url/bio) | first signup → admin |
+| `games` | SELECT only (admin writes via RPC) | + `art_url` (Storage art for uploads; `gameArt()` helper falls back to `/assets/games/<slug>.png`) |
+| `scores` | SELECT + INSERT (RLS: cap, rate limit) | wipes via RPC |
+| `ratings` | SELECT + INSERT/UPDATE/DELETE own | |
+| `favorites`, `comments`, `follows` | SELECT + INSERT/DELETE own | |
+| `waitlist`, `playtest_applications` | INSERT (anon+auth); SELECT admin-only policy | admin Signups panel |
+| `site_settings` | SELECT | + `spotlight_game_id` |
+| `achievements`, `badges`, `user_badges`, `user_achievements`, `activity_events` | SELECT only | |
+| `xp_events` | SELECT own | |
+| `game_submissions` | SELECT own+admin; INSERT own (pending only, ≤3 in queue) | upload pipeline |
 
-**Functions:** `get_leaderboard`, `increment_play_count`, `handle_new_user`
-(Phase 2) · `level_for_xp` · `grant_xp` + `award_badge` (**EXECUTE revoked
-from clients**) · `unlock_achievement` (authenticated only) ·
-`get_game_achievements(game_id)` (defs + unlock counts + player count) ·
-`get_user_top_scores(user_id)` (best + rank per game) ·
-`handle_score_progression` / `handle_role_badges` / `touch_updated_at`
-(triggers).
+**Functions:** Phase 2/3 set (`get_leaderboard`, `increment_play_count`,
+`handle_new_user`, `level_for_xp`, `grant_xp`/`award_badge` internal-only,
+`unlock_achievement`, `get_game_achievements`, `get_user_top_scores`,
+triggers) + `is_admin()` + the 7 `admin_*` RPCs above.
 
 ## Key files
 
 ```
 src/
-  lib/progression.ts             level curve (mirror of DB!), badge icons, timeAgo
-  lib/known-player.ts            device flag + authCta() — ALL logged-out auth
-                                 CTAs (verb + /login vs /signup) go through it
-  hooks/useAchievements.ts       defs+stats, my unlocks, unlock mutation (toast)
-  hooks/useProgression.ts        profile-by-username, badges, top scores, unlocks,
-                                 activity, ticker scores, follows
-  pages/CreatorProfile.tsx       /creator/:username
-  pages/Home.tsx                 real Arcade Home (behind gate)
-  components/progression/        AchievementsPanel, AchievementToast (stamp anim),
-                                 LevelRing, BadgeCase, ActivityFeed, StreakCard
-  components/arcade/ScoreTicker.tsx  marquee (animates only with ≥5 scores)
-  components/arcade/GamePlayer.tsx   now wires onAchievement → unlock RPC
-public/games/flap-hero.html      fires the 6 seeded achievement slugs
+  hooks/useSiteSettings.ts       shared settings hook (gate + Home + admin)
+  hooks/useSubmissions.ts        my submissions, submit mutation (Storage upload)
+  hooks/useAdmin.ts              admin queries + RPC mutations (toasts inside)
+  pages/Upload.tsx               3-step wizard
+  pages/MyUploads.tsx            status/rejections/new-version
+  pages/Admin.tsx                section chips + role guard
+  components/upload/             ManifestEditor (kebab/validation), TestFlight
+  components/admin/              ReviewQueue (manifest diff), GamesPanel,
+                                 UsersPanel, SignupsPanel, SitePanel
+  hooks/useGames.ts              Game type + gameArt() art resolver
 ```
 
 ## Asset pipeline
 
-Unchanged — see AI_RULES + DEVLOG session 6: AI-generated key art
-(`public/assets/games/<slug>.png`, flat vector earthy prompt template) and
-real in-game sprites (magenta-key + data-URI trick for alpha in sandboxed
-iframes). Track-B cap 5 MB.
+Unchanged (AI_RULES + DEVLOG session 6). Uploaded games: key art lives in
+Storage (`games` bucket) via `games.art_url`; in-repo games keep
+`public/assets/games/<slug>.png`. Track-B cap 5 MB, sprites inlined as data
+URIs (sandbox can't read external images back).
 
 ## Next up (per spec §9)
 
-1. **Verify the full loop live** — sign up (becomes admin), play Flap Hero,
-   confirm: score XP + streak, achievement toasts, first-coin/chart-topper
-   badges, activity feed, profile stats, ticker.
-2. **Phase 4 — Upload wizard + Admin**: review queue (manifest diff →
-   seeds `achievements`), Storage hosting, score wipes, role grants
-   (playtester badge auto-fires), spotlight picker (Home currently uses
-   featured/most-played published game).
-3. **Phase 5 — Chat.** **Phase 6 — Track-A games** (Munch Maze first).
-   **Phase 7 — flip `launched`.**
+1. **Live-test the upload pipeline** — submit a small Track-B game through
+   `/upload` as a second (non-admin) account, review it in `/admin`,
+   confirm: publish, achievements seeded, Creator badge, art on tiles,
+   playable from Storage URL.
+2. **Phase 5 — Chat** (realtime room, presence, mod tools, system
+   achievement announcements, `slow_mode_seconds` already in settings).
+3. **Phase 6 — Games**: Track-A (Munch Maze first); **Track-B briefs can now
+   be dispatched through the real pipeline** (the wizard is the agent
+   brief's submission path; Flap Hero is the reference implementation).
+4. **Phase 7 — flip `launched`** (button exists in `/admin` → Site).
 
-**Deferred:** avatar upload (Storage), `ARCADE_SAVE/LOAD`, friend filter +
-board virtualization, mod comment deletion, streak freeze token, seasonal
-badges/weekly Spotlight prize, Warm Seat/Dynasty/Founding Player badges
-(need playtime tracking / cron / launch date).
+**Deferred:** avatar upload, `ARCADE_SAVE/LOAD` persistence, friend filter +
+board virtualization, mod comment deletion, streak freeze, seasonal badges /
+weekly Spotlight prize + anomaly flags (spec §4.10), Warm Seat / Dynasty /
+Founding Player badges, in-browser thumbnail cropping.
 
 ## Gotchas
 
-- **`profiles` column-grant regression (fixed session 7):** full-table
-  UPDATE had been granted to anon+authenticated, letting any user set their
-  own `role/xp/level`. Now: REVOKE + column grant on the 4 safe columns.
-  Session 9 also revoked a leftover full-column INSERT grant (not
-  exploitable — no INSERT policy — but clients never insert profiles; the
-  signup trigger does). **After any `ALTER TABLE profiles`, re-verify
-  `information_schema.column_privileges`.** `updated_at` is set by the
-  `touch_updated_at` trigger — clients must NOT include it in updates
-  (permission denied).
-- The level curve lives in TWO places: `public.level_for_xp` and
-  `src/lib/progression.ts`. Change both or rings/labels lie.
-- Streak days are **UTC** dates; daily/weekly boards remain rolling windows.
-- `unlock_achievement` trusts the client like scores do (accepted risk) but
-  only for slugs in the approved manifest of a published game.
-- Chart-topper/top_rank fires only when #1 changes hands (self-beats are
-  silent) — don't "fix" the activity spam by removing that guard.
-- ScoreTicker marquee needs ≥5 rows; below that it renders static (and a
-  copy strip when empty). Reduced-motion users get the static version free
-  via the global media query.
-- `--radius` is 1rem; gate wraps only `/` and now only gates **guests**
-  (signed-in = Arcade Home + banner); sandbox stays `allow-scripts`-only;
-  score-submit "security" string check = rate limit.
-- Sign-up-first default is device-level (`na-known-player` in localStorage) —
-  intentionally never cleared on sign-out. It's enforced as a redirect:
-  `/login` → `/signup` on fresh devices, bypassed when the player explicitly
-  clicks the "Sign in" toggle (location state `manual`). **Every logged-out
-  CTA renders via `authCta()`** (label "Sign up"/"Sign in" + matching route)
-  — never hardcode `/login` links or "Sign in" copy in components.
+- **Grants are now explicit everywhere (session 10).** Supabase's default
+  `GRANT ALL` to anon/authenticated was revoked on every table and via
+  `ALTER DEFAULT PRIVILEGES` for future tables. **After CREATE TABLE you
+  MUST add grants yourself** or every request 42501s — that's by design.
+  RLS remains the row boundary; grants are the verb boundary.
+- `admin_review_submission` **prunes achievements** missing from the new
+  manifest — cascades `user_achievements` deletes. The review UI warns, but
+  don't "optimize" the prune away: manifest = approved set is the contract.
+- Uploaded games get **full Storage public URLs** in `games.html_path` /
+  `art_url`; dev-hosted cabinets (Flap Hero) keep relative paths. Use
+  `gameArt(game)` for art everywhere — never `gameArtPath` directly for DB
+  games.
+- The profiles column-grant rule stands: after ANY `ALTER TABLE profiles`,
+  re-verify `information_schema.column_privileges`. `updated_at` is
+  trigger-set; clients must not write it.
+- Level curve in TWO places (`level_for_xp` + `src/lib/progression.ts`).
+- Chart-topper fires only when #1 changes hands; ScoreTicker needs ≥5 rows
+  to animate; streaks are UTC days; sandbox stays `allow-scripts`-only
+  (test flight uses `srcDoc` = same opaque-origin guarantee).
+- `authCta()` for every logged-out CTA — never hardcode `/login` or
+  "Sign in" copy. `na-known-player` flag is device-level, never cleared.
+- Slug inputs sanitize to `[a-z0-9-]` on keystroke but must NOT run
+  `kebab()` per keystroke (it strips trailing hyphens — you couldn't type
+  one). `kebab()` is only for deriving slugs from names/titles.
+- Google provider still disabled in the dashboard (email/password works;
+  the login button probes and fails friendly).

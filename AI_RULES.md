@@ -30,7 +30,7 @@ read these three docs:
 ## Naming conventions
 
 - Pages & components: `PascalCase.tsx` (`src/pages/`, `src/components/<domain>/`)
-- Component domains: `layout/`, `arcade/`, `progression/` (later: `chat/`, `admin/`)
+- Component domains: `layout/`, `arcade/`, `progression/`, `upload/`, `admin/` (later: `chat/`)
 - Non-component modules: `kebab-case.ts` (`src/data/launch-lineup.ts`)
 - Hooks: `useCamelCase.ts` in `src/hooks/`
 - Assets: `public/assets/brand/` and `public/assets/games/<slug>.png` —
@@ -54,9 +54,17 @@ read these three docs:
   to `/signup` via the `na-known-player` localStorage flag, and every
   logged-out CTA goes through `authCta()` in `src/lib/known-player.ts` —
   never hardcode `/login` links or "Sign in" copy (session 9)
+- `/upload` + `/uploads` (creator pipeline, auth-gated) and `/admin`
+  (admin role only); all admin writes go through `admin_*` SECURITY DEFINER
+  RPCs — never direct table writes (session 10)
 - Tailwind CSS everywhere; shadcn/ui components are installed — always
   customize their styling (never ship default shadcn look)
 - lucide-react for icons; TanStack Query for server state
 - Supabase (client at `src/integrations/supabase/client.ts`): Postgres with
   RLS + explicit role grants on every table; schema changes via the SQL tool
   only — NEVER write to `supabase/migrations/`
+- Default privileges were revoked (session 10): **new tables get ZERO client
+  grants automatically** — always GRANT exactly what anon/authenticated
+  need after CREATE TABLE, or every request fails with permission denied
+- Game art: use `gameArt(game)` from `src/hooks/useGames.ts` for DB games
+  (Storage `art_url` for uploads, `/assets/games/<slug>.png` fallback)

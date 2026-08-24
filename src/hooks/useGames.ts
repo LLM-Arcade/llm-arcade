@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import type { Era } from "@/data/launch-lineup";
+import { gameArtPath, type Era } from "@/data/launch-lineup";
 
 export interface Game {
   id: string;
@@ -18,9 +18,14 @@ export interface Game {
   score_label: string;
   score_cap: number;
   html_path: string | null;
+  art_url: string | null;
   created_by: string | null;
   created_at: string;
 }
+
+/** Key art: Storage-hosted for uploaded games, /assets convention otherwise. */
+export const gameArt = (game: Pick<Game, "slug" | "art_url">) =>
+  game.art_url ?? gameArtPath(game.slug);
 
 export const useGames = () =>
   useQuery({

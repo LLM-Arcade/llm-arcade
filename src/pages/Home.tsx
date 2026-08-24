@@ -5,8 +5,8 @@ import GameTile from "@/components/arcade/GameTile";
 import ScoreTicker from "@/components/arcade/ScoreTicker";
 import StreakCard from "@/components/progression/StreakCard";
 import ActivityFeed from "@/components/progression/ActivityFeed";
-import { useGames, type Game } from "@/hooks/useGames";
-import { gameArtPath } from "@/data/launch-lineup";
+import { gameArt, useGames, type Game } from "@/hooks/useGames";
+import { useSiteSettings } from "@/hooks/useSiteSettings";
 import { Play } from "lucide-react";
 
 const Rail = ({ title, games }: { title: string; games: Game[] }) => {
@@ -28,14 +28,18 @@ const Rail = ({ title, games }: { title: string; games: Game[] }) => {
 /** Post-launch Arcade Home (visible pre-launch to gate-bypass roles). */
 const Home = () => {
   const { data: games } = useGames();
+  const { data: settings } = useSiteSettings();
 
   const published = (games ?? []).filter((g) => g.status === "published");
   const comingSoon = (games ?? []).filter((g) => g.status === "coming_soon");
+  // Admin-picked spotlight first, automatic featured/most-played fallback
   const spotlight =
+    published.find((g) => g.id === settings?.spotlight_game_id) ??
     [...published].sort(
       (a, b) =>
         Number(b.featured) - Number(a.featured) || b.play_count - a.play_count,
-    )[0] ?? null;
+    )[0] ??
+    null;
   const floorRail = published.filter((g) => g.id !== spotlight?.id);
 
   return (
@@ -74,7 +78,7 @@ const Home = () => {
                 className="group relative block min-h-[240px] md:min-h-[320px]"
               >
                 <img
-                  src={gameArtPath(spotlight.slug)}
+                  src={gameArt(spotlight)}
                   alt={spotlight.title}
                   className="absolute inset-0 h-full w-full object-cover transition-transform duration-200 group-hover:scale-[1.02]"
                 />

@@ -8,8 +8,7 @@ import { authCta } from "@/lib/known-player";
 import { gameRegistry } from "@/games/registry";
 import { useLeaderboard } from "@/hooks/useLeaderboard";
 import { useUnlockAchievement } from "@/hooks/useAchievements";
-import { gameArtPath } from "@/data/launch-lineup";
-import type { Game } from "@/hooks/useGames";
+import { gameArt, type Game } from "@/hooks/useGames";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { showError, showSuccess } from "@/utils/toast";
@@ -199,7 +198,7 @@ const GamePlayer = ({ game }: { game: Game }) => {
     return (
       <div className="relative overflow-hidden rounded-2xl ring-1 ring-foreground/10">
         <img
-          src={gameArtPath(game.slug)}
+          src={gameArt(game)}
           alt={game.title}
           className="h-[320px] w-full object-cover sm:h-[420px]"
         />
@@ -228,7 +227,7 @@ const GamePlayer = ({ game }: { game: Game }) => {
         {phase === "idle" ? (
           <>
             <img
-              src={gameArtPath(game.slug)}
+              src={gameArt(game)}
               alt={game.title}
               className="h-full w-full object-cover opacity-80"
             />

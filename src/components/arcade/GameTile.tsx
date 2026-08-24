@@ -1,7 +1,6 @@
 import { Link } from "react-router-dom";
 import { Play } from "lucide-react";
-import { gameArtPath } from "@/data/launch-lineup";
-import type { Game } from "@/hooks/useGames";
+import { gameArt, type Game } from "@/hooks/useGames";
 
 const GameTile = ({ game, index }: { game: Game; index: number }) => (
   <Link
@@ -10,7 +9,7 @@ const GameTile = ({ game, index }: { game: Game; index: number }) => (
     style={{ animationDelay: `${Math.min(index, 11) * 50}ms` }}
   >
     <img
-      src={gameArtPath(game.slug)}
+      src={gameArt(game)}
       alt={game.title}
       loading="lazy"
       className="aspect-square w-full object-cover transition-transform duration-200 group-hover:scale-[1.03]"

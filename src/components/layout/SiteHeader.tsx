@@ -10,7 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { LogOut, Settings, UserRound } from "lucide-react";
+import { LogOut, Settings, ShieldCheck, UploadCloud, UserRound } from "lucide-react";
 
 const navLinkClass = ({ isActive }: { isActive: boolean }) =>
   `rounded-full px-3.5 py-2 text-sm font-medium transition-colors ${
@@ -76,11 +76,25 @@ const SiteHeader = () => {
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild className="cursor-pointer rounded-xl py-2.5 font-medium">
+                  <Link to="/uploads">
+                    <UploadCloud className="h-4 w-4" />
+                    My uploads
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild className="cursor-pointer rounded-xl py-2.5 font-medium">
                   <Link to="/settings">
                     <Settings className="h-4 w-4" />
                     Settings
                   </Link>
                 </DropdownMenuItem>
+                {profile.role === "admin" && (
+                  <DropdownMenuItem asChild className="cursor-pointer rounded-xl py-2.5 font-medium">
+                    <Link to="/admin">
+                      <ShieldCheck className="h-4 w-4" />
+                      Admin
+                    </Link>
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuItem
                   onClick={() => void signOut()}
                   className="cursor-pointer rounded-xl py-2.5 font-medium"

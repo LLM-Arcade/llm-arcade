@@ -14,6 +14,19 @@ export type Era =
   | "Mobile"
   | "Original";
 
+export const ERAS: Era[] = [
+  "Arcade",
+  "Atari",
+  "NES",
+  "SNES",
+  "Genesis",
+  "Amiga",
+  "DOS",
+  "PS1",
+  "Mobile",
+  "Original",
+];
+
 export interface RevealedGame {
   slug: string;
   title: string;

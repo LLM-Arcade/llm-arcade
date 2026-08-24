@@ -7,8 +7,7 @@ import CommentsPanel from "@/components/arcade/CommentsPanel";
 import RatingWidget from "@/components/arcade/RatingWidget";
 import FavoriteButton from "@/components/arcade/FavoriteButton";
 import AchievementsPanel from "@/components/progression/AchievementsPanel";
-import { useGame, useGames } from "@/hooks/useGames";
-import { gameArtPath } from "@/data/launch-lineup";
+import { gameArt, useGame, useGames } from "@/hooks/useGames";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Bot, Gamepad2, Loader2 } from "lucide-react";
 
@@ -181,7 +180,7 @@ const GameDetail = () => {
                       className="group flex items-center gap-3 rounded-xl p-1.5 transition-colors hover:bg-secondary/70"
                     >
                       <img
-                        src={gameArtPath(g.slug)}
+                        src={gameArt(g)}
                         alt=""
                         loading="lazy"
                         className="h-12 w-12 rounded-xl object-cover ring-1 ring-foreground/10"

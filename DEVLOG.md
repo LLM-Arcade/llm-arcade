@@ -295,3 +295,65 @@ authorized JS origin; the redirect URI stays the Supabase callback.
 
 **Next:** the human playtest itself (sign up → play → score/XP/streak →
 toasts → badges → feed → profile → ticker), then Phase 4.
+
+## Session 10 — Playtest verified + Phase 4: Upload pipeline & Admin ✅
+
+**Playtest happened.** First account signed up (→ admin) and played Flap
+Hero. Verified server-side, ledger math exact: first-flight unlock (+10),
+daily +25 / score +10, first-coin (+25), chart-topper (+100, correctly
+treated the first-ever score as a takeover), top-rank +50 → **220 XP =
+level 3**, streak 1, six activity events incl. two level-ups. Zero
+anomalies — the Phase 3 engine works on real traffic.
+
+**Security first — the grants story was fiction.** The audit revealed
+Supabase's platform default grants ALL on every table to anon+authenticated
+(the sessions 7/9 fixes had only patched `profiles`). Not exploitable —
+RLS default-denies writes without policies — but the "explicit grants"
+convention existed only on paper. Fixed for real: `REVOKE ALL` on every
+public table, explicit re-grants matching the RLS policy map exactly
+(xp_events auth-SELECT only, waitlist/playtest INSERT-only + new
+admin-read policies, etc.), plus `ALTER DEFAULT PRIVILEGES` so **future
+tables start with zero client grants — CREATE TABLE now requires explicit
+GRANTs or requests fail**. New `is_admin()` helper (SECURITY DEFINER).
+
+**Phase 4 schema:** `game_submissions` (pending/approved/rejected, manifest
++ checklist jsonb, versioning; own+admin SELECT, own INSERT ≤3 pending),
+`games.art_url`, `site_settings.spotlight_game_id`, `creator` badge
+(silver, 8 total), public `games` Storage bucket (5 MB, html+images,
+uploads locked to `<uid>/…` folders, files immutable).
+
+**Admin RPCs** (all SECURITY DEFINER + internal `is_admin()`):
+`admin_review_submission` — reject-with-reason or approve → validates
+manifest server-side, creates/updates the `games` row (Storage public URLs
+in `html_path`/`art_url`), **syncs `achievements` by (game_id, slug) with
+prune** (manifest = the approved set; removals cascade unlocks — surfaced
+in the review UI, intentional), Creator badge, all in one transaction ·
+`admin_wipe_scores` · `admin_set_role` (self-change blocked; playtester
+badge auto-fires) · `admin_update_game` (status/featured) ·
+`admin_set_spotlight` (published-only, NULL = automatic) ·
+`admin_set_launched` · `admin_review_playtest` (email-match role grant,
+only upgrades plain players).
+
+**UI:** `/upload` 3-step wizard (manifest form editor with auto-kebab
+slugs; 5 MB/2 MB client validation; slug-taken + already-queued checks;
+**test flight** = srcDoc iframe in the production sandbox with a live SDK
+checklist — submit requires READY + SCORE, unknown achievement slugs get a
+red callout), `/uploads` (status chips, rejection reasons verbatim,
+new-version/resubmit via location state), `/admin` (section chips: Review
+queue with pending-count badge + sandbox preview + manifest diff (+/~/−),
+Games (status/featured/spotlight/wipe with confirms), Players (search +
+role select), Signups (playtest approve/decline + waitlist CSV export),
+Site (launch flag behind a scary confirm). Header menu: My uploads for
+everyone, Admin for admins. Home spotlight honors the admin pick with the
+old automatic fallback; `gameArt()` resolves Storage art vs the /assets
+convention everywhere.
+
+**Craft note:** slug inputs sanitize per keystroke to `[a-z0-9-]` but must
+not run `kebab()` per keystroke — it strips trailing hyphens, which makes
+typing one impossible. Caught and fixed in both slug fields.
+
+**Session close — state for session 11:** 1 account (admin), Flap Hero
+still the only cabinet, upload pipeline untested with real traffic. Next:
+run a Track-B game through the full pipeline (second account → wizard →
+queue → approve → floor), then Phase 5 (chat) / Phase 6 (Track-A games,
+Munch Maze first) — Track-B agent briefs can now point at the real wizard.
