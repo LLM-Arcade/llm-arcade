@@ -124,3 +124,14 @@ role/xp/level.
 
 **Deferred:** avatar upload (needs Storage), SAVE/LOAD persistence, friend
 filter, board virtualization, mod deletion of comments.
+
+**Addendum (user decisions):**
+- Landing header now links to Games + Sign in (there was no door in).
+- **Game floor opened to guests pre-launch** — user asked to "just play as
+  guest". `LaunchGate` now wraps only `/`; `/games` + `/game/:slug` are
+  public. Guest interception (play → held score → sign in to claim) is now
+  fully testable pre-launch. Revisit gating at Phase 7 if secrecy matters.
+- Google OAuth attempt surfaced `validation_failed: provider is not enabled`
+  (raw JSON from the authorize endpoint — supabase-js builds the URL
+  client-side, so no catchable pre-redirect error). Needs dashboard setup;
+  email/password remains the working path.

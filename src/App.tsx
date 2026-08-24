@@ -32,22 +32,9 @@ const App = () => (
                 </LaunchGate>
               }
             />
-            <Route
-              path="/games"
-              element={
-                <LaunchGate>
-                  <Games />
-                </LaunchGate>
-              }
-            />
-            <Route
-              path="/game/:slug"
-              element={
-                <LaunchGate>
-                  <GameDetail />
-                </LaunchGate>
-              }
-            />
+            {/* Open pre-launch: guests can play; scores require sign-in */}
+            <Route path="/games" element={<Games />} />
+            <Route path="/game/:slug" element={<GameDetail />} />
             <Route path="/login" element={<Login />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/faq" element={<Faq />} />

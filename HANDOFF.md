@@ -15,8 +15,8 @@ site is still gated (`site_settings.launched = false`) — but signed-in
 | Route | Page | Notes |
 |---|---|---|
 | `/` | `LaunchGate` → `Landing` or `Home` | Home links to `/games` |
-| `/games` | `Games` (gated) | Era filter chips, tile grid, PLAY/SOON chips |
-| `/game/:slug` | `GameDetail` (gated) | Player + Leaderboard/Comments/About tabs, rating/favorite sidebar |
+| `/games` | `Games` (**open pre-launch**) | Era filter chips, tile grid, PLAY/SOON chips |
+| `/game/:slug` | `GameDetail` (**open pre-launch**) | Guests can play; scores require sign-in (interception) |
 | `/login` | `Login` | Google OAuth + email/password, `?next=` redirect |
 | `/settings` | `Settings` | Username (inline uniqueness), display name, bio, sign out |
 | `/faq`, `/playtest` | public | unchanged |
@@ -115,8 +115,11 @@ persistence, leaderboard friend filter + virtualization, mod comment deletion.
 ## Gotchas
 
 - `--radius` is 1rem; shadcn components inherit it — don't hardcode radii.
-- The gate wraps `/`, `/games`, `/game/:slug`. `/login`, `/settings`, `/faq`,
-  `/playtest` are reachable pre-launch by design.
+- The gate only wraps `/` now — the user decided the game floor is open
+  pre-launch (guest play drives waitlist/testing). Revisit at Phase 7.
+- Google OAuth still needs enabling (Supabase → Authentication → Providers →
+  Google); until then its error surfaces as raw JSON from the authorize
+  endpoint — email/password is the working path.
 - Score submit failures whose message contains "security" are shown as
   rate-limit feedback (RLS denial) — keep that string check in mind if
   policies change.

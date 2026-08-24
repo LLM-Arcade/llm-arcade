@@ -42,10 +42,10 @@ read these three docs:
 
 - React + TypeScript + Vite; React Router — KEEP routes in `src/App.tsx`
 - Pages in `src/pages/`, components in `src/components/`
-- Pre-launch gate: `/`, `/games`, `/game/:slug` render through `LaunchGate`
-  (reads `site_settings.launched`, currently `false`; playtester/mod/admin
-  bypass with preview banner); `/faq`, `/playtest`, `/login`, `/settings`
-  are public
+- Pre-launch gate: only `/` renders through `LaunchGate` (reads
+  `site_settings.launched`, currently `false`; playtester/mod/admin bypass
+  with preview banner). `/games` and `/game/:slug` are OPEN pre-launch —
+  guests can play, scores require sign-in (user decision, session 6)
 - Tailwind CSS everywhere; shadcn/ui components are installed — always
   customize their styling (never ship default shadcn look)
 - lucide-react for icons; TanStack Query for server state
