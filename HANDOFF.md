@@ -20,7 +20,11 @@ games before chat).** Shipped so far: **Munch Maze** (A,
 **Hyper Circuit** (A, `src/games/hyper-circuit/`, 7 ach) is built and
 agent-playtested but runs on STAND-IN art (Zo image generation down), so
 its row stays `coming_soon` until the art set is regenerated.
-**User-set queue for the next builds: Run 'n Gunner.** The Phase-4 pipeline test with a
+**TypeStorm** (B, `public/games/typestorm.html`, 8 ach) is built and
+tuned but has NO games row on purpose: it goes through the upload
+wizard as the pipeline's first real submission, and the approval RPC
+creates its rows. **User-set queue for the next builds: Run 'n
+Gunner.** The Phase-4 pipeline test with a
 second account was explicitly skipped (user decision) — the upload
 wizard/admin queue remain untested with real traffic. Site still gated
 (`site_settings.launched = false`, guests → Landing, signed-in → Arcade
