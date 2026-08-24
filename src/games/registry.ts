@@ -20,4 +20,5 @@ export const gameRegistry: Record<
   "hyper-circuit": lazy(() => import("./hyper-circuit/HyperCircuit")),
   "run-n-gunner": lazy(() => import("./run-n-gunner/RunNGunner")),
   brickstorm: lazy(() => import("./brickstorm/Brickstorm")),
+  "gem-columns": lazy(() => import("./gem-columns/GemColumns")),
 };
