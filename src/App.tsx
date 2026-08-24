@@ -16,6 +16,7 @@ import Playtest from "./pages/Playtest";
 import Upload from "./pages/Upload";
 import MyUploads from "./pages/MyUploads";
 import Admin from "./pages/Admin";
+import DevGame from "./pages/DevGame";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -48,6 +49,8 @@ const App = () => (
             <Route path="/upload" element={<Upload />} />
             <Route path="/uploads" element={<MyUploads />} />
             <Route path="/admin" element={<Admin />} />
+            {/* Dev-only playtest route for unlaunched Track-A cabinets */}
+            {import.meta.env.DEV && <Route path="/dev/:slug" element={<DevGame />} />}
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
