@@ -251,5 +251,17 @@ column-grant fix. Not exploitable today (profiles has no INSERT policy), but
 clients never insert profiles — revoked. Grants now: SELECT all columns,
 UPDATE on the 4 safe columns only, no INSERT.
 
+**Addendum — split auth routes (user request):** `/login` and `/signup` are
+now separate routes rendering the one `Login` component (mode derived from
+the URL — truthful, shareable, back-button-friendly). The session-8
+sign-up-first default survives as a redirect: fresh devices (no
+`na-known-player` flag) hitting `/login` are `Navigate`d to `/signup` with
+the query string preserved, so every existing `/login?next=…` link in the
+app keeps working unchanged. The mode toggle is now a real `<Link>` between
+the routes (carries `?next=`, sets location state `manual` so an explicit
+"Sign in" choice on a fresh device isn't bounced straight back). The two
+routes swap without remounting, so a mode-change effect clears stale
+error/notice copy.
+
 **Next:** the human playtest itself (sign up → play → score/XP/streak →
 toasts → badges → feed → profile → ticker), then Phase 4.

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, Navigate, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { isKnownPlayer } from "@/lib/known-player";
@@ -21,7 +21,11 @@ type Mode = "signin" | "signup";
 const Login = () => {
   const { session } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [params] = useSearchParams();
+
+  // Mode comes from the route: /signup = sign-up, /login = sign-in.
+  const mode: Mode = location.pathname === "/signup" ? "signup" : "signin";
 
   const next = useMemo(() => {
     const raw = params.get("next") ?? "/";
@@ -33,11 +37,6 @@ const Login = () => {
     [],
   );
 
-  // Fresh browsers default to sign-up; devices that have held a session
-  // before (localStorage flag, survives sign-out) default to sign-in.
-  const [mode, setMode] = useState<Mode>(() =>
-    isKnownPlayer() ? "signin" : "signup",
-  );
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
@@ -47,6 +46,28 @@ const Login = () => {
   useEffect(() => {
     if (session) navigate(next, { replace: true });
   }, [session, navigate, next]);
+
+  // Switching between /login and /signup keeps the component mounted —
+  // clear stale messages when the mode changes.
+  useEffect(() => {
+    setError(null);
+    setNotice(null);
+  }, [mode]);
+
+  // Fresh browsers default to sign-up (session-8 decision): hitting /login
+  // on a device that never held a session redirects to /signup — unless the
+  // player explicitly chose "Sign in" via the toggle link (location state).
+  const choseSignin = Boolean(
+    (location.state as { manual?: boolean } | null)?.manual,
+  );
+  if (mode === "signin" && !choseSignin && !isKnownPlayer()) {
+    return (
+      <Navigate
+        to={{ pathname: "/signup", search: location.search }}
+        replace
+      />
+    );
+  }
 
   const signInWithGoogle = async () => {
     setError(null);
@@ -187,14 +208,13 @@ const Login = () => {
           </Button>
         </form>
 
-        <button
-          type="button"
-          onClick={() => {
-            setMode(mode === "signin" ? "signup" : "signin");
-            setError(null);
-            setNotice(null);
+        <Link
+          to={{
+            pathname: mode === "signin" ? "/signup" : "/login",
+            search: location.search,
           }}
-          className="mt-4 w-full text-center text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+          state={{ manual: true }}
+          className="mt-4 block w-full text-center text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
         >
           {mode === "signin" ? (
             <>
@@ -205,7 +225,7 @@ const Login = () => {
               Already a player? <span className="text-terra">Sign in</span>
             </>
           )}
-        </button>
+        </Link>
       </div>
 
       <Link

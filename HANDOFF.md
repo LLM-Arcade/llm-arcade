@@ -20,7 +20,7 @@ but the gate now only applies to **guests** (they see the Landing);
 | `/games` | `Games` (**open pre-launch**) | Era chips, tile grid |
 | `/game/:slug` | `GameDetail` (**open pre-launch**) | Tabs: Leaderboard · **Achievements** · Comments · About |
 | `/creator/:username` | `CreatorProfile` (open) | Level ring, stats, badge case, follow, Top scores/Achievements/Activity tabs |
-| `/login` | `Login` | **Defaults to sign-up on fresh browsers**; devices that ever held a session (localStorage `na-known-player`, set in AuthContext, survives sign-out) default to sign-in |
+| `/login` + `/signup` | `Login` | Separate routes, one component (mode from URL, session 9). **Fresh browsers hitting `/login` redirect to `/signup`** (localStorage `na-known-player`, set in AuthContext, survives sign-out); toggle link opts out via location state, so `?next=` links can all point at `/login` |
 | `/settings`, `/faq`, `/playtest` | unchanged | Settings no longer writes `updated_at` (trigger does) |
 
 **State at handoff:** still **zero accounts** (next signup = admin), Google
@@ -158,5 +158,7 @@ badges/weekly Spotlight prize, Warm Seat/Dynasty/Founding Player badges
 - `--radius` is 1rem; gate wraps only `/` and now only gates **guests**
   (signed-in = Arcade Home + banner); sandbox stays `allow-scripts`-only;
   score-submit "security" string check = rate limit.
-- Login mode detection is device-level (`na-known-player` in localStorage) —
-  intentionally never cleared on sign-out.
+- Sign-up-first default is device-level (`na-known-player` in localStorage) —
+  intentionally never cleared on sign-out. It's enforced as a redirect:
+  `/login` → `/signup` on fresh devices, bypassed when the player explicitly
+  clicks the "Sign in" toggle (location state `manual`).
