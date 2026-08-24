@@ -52,11 +52,11 @@ const Landing = () => (
         <div className="flex items-center gap-2.5">
           <img
             src="/assets/brand/logo-mark.png"
-            alt="Neon Arcade logo"
+            alt="LLM Arcade logo"
             className="h-9 w-9 rounded-full shadow-sm ring-1 ring-foreground/10"
           />
           <p className="font-display text-xl font-extrabold tracking-tight">
-            neon<span className="text-terra">arcade</span>
+            llmarcade<span className="text-terra">.fun</span>
           </p>
         </div>
         <nav className="flex items-center gap-1 sm:gap-2">

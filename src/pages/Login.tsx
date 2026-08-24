@@ -140,7 +140,7 @@ const Login = () => {
         <div className="flex flex-col items-center gap-3 text-center">
           <img
             src="/assets/brand/logo-mark.png"
-            alt="Neon Arcade logo"
+            alt="LLM Arcade logo"
             className="h-12 w-12 rounded-full shadow-sm ring-1 ring-foreground/10"
           />
           <h1 className="font-display text-2xl font-extrabold tracking-tight">

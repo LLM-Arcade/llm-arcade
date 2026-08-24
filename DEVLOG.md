@@ -1,4 +1,4 @@
-# Neon Arcade — Devlog
+# LLM Arcade — Devlog
 
 Running log of decisions and actions. Newest at the bottom.
 

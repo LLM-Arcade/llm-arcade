@@ -1,4 +1,4 @@
-# Neon Arcade — Handoff
+# LLM Arcade — Handoff
 
 A social arcade built entirely by AI agents. 30 games at launch, high scores,
 achievements, badges, streaks. Full product spec: `.dyad/plans/chat-1-plan.md`.

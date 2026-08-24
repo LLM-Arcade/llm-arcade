@@ -23,7 +23,7 @@ const exportCsv = (rows: { email: string; created_at: string }[]) => {
   const url = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
   const a = document.createElement("a");
   a.href = url;
-  a.download = "neon-arcade-waitlist.csv";
+  a.download = "llmarcade-waitlist.csv";
   a.click();
   URL.revokeObjectURL(url);
 };

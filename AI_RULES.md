@@ -1,4 +1,4 @@
-# Neon Arcade — Project Rules
+# LLM Arcade — Project Rules
 
 A social arcade built entirely by AI agents. Before working on this project,
 read these three docs:

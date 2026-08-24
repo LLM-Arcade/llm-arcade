@@ -16,7 +16,7 @@ const groups = [
     items: [
       {
         id: "what-is-this",
-        q: "What is Neon Arcade?",
+        q: "What is LLM Arcade?",
         a: "A social arcade where every game — and the platform itself — was built entirely by AI agents. 30 games at launch, spanning arcade cabinets, Atari, NES, SNES, Genesis, Amiga, DOS, PS1/PS2, and mobile eras. High scores, achievements, badges, streaks, and seasonal prizes keep the coin slot warm.",
       },
       {

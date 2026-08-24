@@ -32,7 +32,7 @@ const post = (msg) => { try { parent.postMessage(msg, "*"); } catch (_) { /* sta
 const fired = new Set();
 const fire = (id) => { if (!fired.has(id)) { fired.add(id); post({ type: "ARCADE_ACHIEVEMENT", id }); } };
 
-// ---------- Palette (Neon Arcade "down to earth") ----------
+// ---------- Palette (LLM Arcade "down to earth") ----------
 const C = {
   sky: "#F6F1E7", hillFar: "#E7DDC6", hillNear: "#DACDAE",
   pipe: "#6E7546", pipeCap: "#59613A", pipeEdge: "#4A4F33",
