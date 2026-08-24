@@ -1,0 +1,995 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<title>TypeStorm</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #241E18;
+    --paper: #F6F1E7;
+    --dim: rgba(246,241,231,.42);
+    --faint: rgba(246,241,231,.62);
+    --terra: #C44721;
+    --olive: #6E7546;
+    --mustard: #E6A518;
+    --rule: rgba(246,241,231,.14);
+    --wfs: 20px;
+  }
+
+  html, body {
+    margin: 0; padding: 0; height: 100%; overflow: hidden;
+    background: var(--bg); color: var(--paper);
+    font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    -webkit-text-size-adjust: 100%;
+  }
+  * { box-sizing: border-box; }
+
+  #app { position: fixed; inset: 0; display: flex; flex-direction: column; }
+
+  /* ---------- HUD ---------- */
+  #hud {
+    flex: 0 0 auto; height: 44px; display: flex; align-items: center;
+    padding: 0 14px; gap: 14px;
+    font-size: 11px; letter-spacing: .16em; text-transform: uppercase;
+    color: var(--faint);
+  }
+  .cell { display: flex; align-items: center; gap: 6px; white-space: nowrap; }
+  .cell b { font-weight: 700; color: var(--paper); font-variant-numeric: tabular-nums; }
+  #vMult { color: var(--faint); transition: color .22s ease; }
+  #vMult.up { color: var(--mustard); }
+  .sh { color: var(--dim); transition: color .22s ease; }
+  .sh.on { color: var(--olive); }
+  #hud button {
+    font-family: inherit; font-size: 10px; letter-spacing: .16em; text-transform: uppercase;
+    color: var(--paper); background: transparent;
+    border: 1px solid var(--rule); border-radius: 999px;
+    padding: 5px 11px; cursor: pointer; white-space: nowrap;
+    touch-action: manipulation;
+    -webkit-appearance: none; appearance: none;
+  }
+  #hud button:active { background: rgba(246,241,231,.08); }
+  #btnPause { margin-left: auto; }
+
+  /* ---------- Storm break meter ---------- */
+  #chargebar { flex: 0 0 auto; height: 3px; background: var(--rule); }
+  #chargefill { height: 100%; width: 0%; background: var(--mustard); transition: width .18s linear, background .22s ease; }
+  #chargefill.full { background: var(--terra); }
+  #chargeready {
+    flex: 0 0 auto; height: 14px; line-height: 14px; text-align: center;
+    font-size: 10px; letter-spacing: .2em; color: var(--terra);
+    visibility: hidden;
+  }
+  #chargeready.on { visibility: visible; }
+
+  /* ---------- Field ---------- */
+  #field { flex: 1; position: relative; overflow: hidden; }
+
+  #line { position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: var(--rule); transition: background .22s ease; }
+  #line.hit { background: var(--terra); }
+  #linelabel { position: absolute; right: 10px; bottom: 7px; font-size: 9px; letter-spacing: .3em; color: var(--dim); pointer-events: none; }
+
+  .w {
+    position: absolute; left: 0; top: 0;
+    font-size: var(--wfs); font-weight: 700; letter-spacing: .06em;
+    white-space: nowrap; padding: 2px 6px; border-radius: 6px;
+    will-change: transform;
+    transition: opacity .22s ease, color .22s ease;
+  }
+  /* Typed letters recede instead of taking a color, because a mustard prefix
+     is invisible on a mustard fast word. */
+  .w > .done { color: var(--dim); }
+  .w > .rest { color: inherit; }
+  .w.lock { background: rgba(246,241,231,.08); box-shadow: inset 0 0 0 1px var(--rule); }
+  .w.danger > .rest { color: var(--terra) !important; }
+  .w.gone { opacity: 0; }
+
+  .pop {
+    position: absolute; left: 0; top: 0;
+    font-size: 12px; font-weight: 700; color: var(--mustard);
+    pointer-events: none;
+    transition: transform .62s ease-out, opacity .62s ease-out;
+  }
+
+  /* ---------- Overlay ---------- */
+  #overlay {
+    position: absolute; inset: 0; display: none;
+    flex-direction: column; align-items: center; justify-content: center;
+    gap: 10px; padding: 18px; text-align: center;
+    background: rgba(36,30,24,.86);
+  }
+  .otitle { font-size: 30px; font-weight: 700; letter-spacing: .14em; color: var(--paper); }
+  .oflavor { font-size: 12px; color: var(--faint); max-width: 34ch; line-height: 1.6; }
+  .ostat { font-size: 13px; color: var(--paper); letter-spacing: .12em; font-variant-numeric: tabular-nums; }
+  .obig { font-size: 34px; font-weight: 700; color: var(--mustard); font-variant-numeric: tabular-nums; }
+  .ohint { font-size: 11px; letter-spacing: .2em; text-transform: uppercase; color: var(--faint); }
+  .okeys { font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: var(--dim); max-width: 40ch; line-height: 1.9; }
+
+  /* ---------- Touch input row ---------- */
+  #type {
+    flex: 0 0 auto; display: none; gap: 8px; align-items: center;
+    padding: 8px 12px calc(8px + env(safe-area-inset-bottom));
+    border-top: 1px solid var(--rule);
+  }
+  #tf {
+    flex: 1; min-width: 0; font-family: inherit; font-size: 16px;
+    color: var(--paper); background: transparent;
+    border: 1px solid var(--rule); border-radius: 999px;
+    padding: 9px 14px; outline: none;
+  }
+  #tf::placeholder { color: var(--dim); }
+  #btnBurst {
+    font-family: inherit; font-size: 11px; letter-spacing: .16em; text-transform: uppercase;
+    color: var(--paper); background: transparent;
+    border: 1px solid var(--rule); border-radius: 999px;
+    padding: 10px 16px; touch-action: manipulation;
+    -webkit-appearance: none; appearance: none;
+  }
+  #btnBurst:active { background: rgba(246,241,231,.08); }
+  @media (pointer: coarse) { #type { display: flex; } }
+
+  @media (max-width: 600px) {
+    #hud { height: 38px; padding: 0 10px; gap: 8px; font-size: 10px; }
+    .lbl { display: none; }
+    .otitle { font-size: 24px; }
+    .obig { font-size: 28px; }
+  }
+</style>
+<!-- Arcade manifest: the approved copy is validated server-side -->
+<script type="application/json" id="arcade-manifest">
+{
+  "achievements": [
+    { "id": "first-word",   "name": "First Word",   "hint": "Destroy your first word." },
+    { "id": "chain-ten",    "name": "Ten Chain",    "hint": "Land ten flawless words in a row." },
+    { "id": "storm-break",  "name": "Storm Break",  "hint": "Charge the meter and clear the sky." },
+    { "id": "clean-wave",   "name": "Clean Wave",   "hint": "Clear a wave with nothing crossing the line." },
+    { "id": "long-hauler",  "name": "Long Hauler",  "hint": "Type a nine-letter word with no mistakes." },
+    { "id": "deep-storm",   "name": "Deep Storm",   "hint": "Reach wave 5." },
+    { "id": "sharp-keys",   "name": "Sharp Keys",   "hint": "End a run at 95% accuracy over 40 words." },
+    { "id": "storm-legend", "name": "Storm Legend", "hint": "Score 20,000 in a single run." }
+  ]
+}
+</script>
+</head>
+<body>
+<div id="app">
+  <div id="hud">
+    <span class="cell">Score <b id="vScore">0</b></span>
+    <span class="cell">Wave <b id="vWave">1</b></span>
+    <span class="cell" id="vMult">x1</span>
+    <span class="cell"><span class="lbl">Shield</span><span id="vShield"><span class="sh on">#</span><span class="sh on">#</span><span class="sh on">#</span></span></span>
+    <button id="btnPause" type="button">Pause</button>
+    <button id="btnSound" type="button">Sound</button>
+  </div>
+
+  <div id="chargebar"><div id="chargefill"></div></div>
+  <div id="chargeready">ENTER = STORM BREAK</div>
+
+  <div id="field">
+    <div id="linelabel">THE LINE</div>
+    <div id="line"></div>
+    <div id="overlay"></div>
+  </div>
+
+  <div id="type">
+    <input id="tf" type="text" inputmode="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="done" aria-label="Type here" placeholder="type here">
+    <button id="btnBurst" type="button">Burst</button>
+  </div>
+</div>
+<script>
+"use strict";
+
+// ---------- Arcade SDK ----------
+const post = (msg) => { try { parent.postMessage(msg, "*"); } catch (_) { /* standalone */ } };
+const fired = new Set();
+const unlock = (id) => { if (!fired.has(id)) { fired.add(id); post({ type: "ARCADE_ACHIEVEMENT", id }); } };
+
+// ---------- Balance knobs ----------
+const TUNE = {
+  fallBase: 0.092,          // fraction of field height per second at wave 1
+  fallPerWave: 0.013,       // added fraction/s per wave
+  fallMax: 0.30,            // hard ceiling, fraction/s
+  spawnGapBase: 2.30,       // s between spawns at wave 1
+  spawnGapPerWave: 0.13,    // s removed per wave
+  spawnGapMin: 0.78,        // s floor
+  spawnRetry: 0.15,         // s to wait when the concurrent cap blocks a spawn
+  spawnIdle: 0.5,           // s between checks once the wave quota is spent
+  spawnLead: 0.25,          // s from the end of a breather to the first spawn
+  spawnXTries: 6,           // candidate x positions weighed per spawn
+  drawTries: 8,             // redraws allowed to avoid an ambiguous first letter
+  spawnY: -0.05,            // fraction of the lane a word starts above the field
+  crowdY: 0.35,             // only words above this fraction count as crowding a spawn
+  concurrentBase: 3,        // words allowed on screen at wave 1
+  concurrentPerWave: 0.5,   // added per wave (floored)
+  concurrentMax: 7,         // hard ceiling
+  quotaBase: 8,             // words spawned in wave 1
+  quotaPerWave: 2,          // added per wave
+  quotaMax: 26,             // hard ceiling
+  breather: 1.9,            // s of wave-banner pause between waves
+  shields: 3,               // breaches allowed
+  dangerZone: 0.18,         // last fraction of the fall that turns a word terracotta
+  perLetter: 10,            // points per correct letter, before multipliers
+  flawlessBonus: 5,         // extra points per letter when a word takes no typos
+  comboStep: 4,             // flawless words per +1 to the multiplier
+  multMax: 8,               // multiplier ceiling
+  waveClear: 250,           // points per wave, times the wave number
+  noBreachBonus: 500,       // extra points for clearing a wave with no breach
+  chargeWords: 10,          // flawless words to fill the storm-break meter
+  chargePenalty: 0.08,      // fraction of the meter lost on a typo
+  burstValue: 0.5,          // fraction of base value awarded per word cleared by a burst
+  mendChance: 0.10,         // chance a spawn is a mending word, from wave 2
+  fastChance: 0.22,         // chance a spawn is a fast word, from wave 3
+  heavyChance: 0.20,        // chance a spawn is a heavy word, from wave 4
+  gameOverHold: 0.8,        // s before a restart key is accepted
+  lenFactorBase: 1.15,      // start of the length speed taper
+  lenFactorStep: 0.03,      // taper removed per letter
+  lenFactorMin: 0.70,       // slowest a long word may fall
+  lenFactorMax: 1.10,       // fastest a short word may fall
+  keyBaseHz: 300,           // pitch of a correct keystroke
+  keyComboHz: 11,           // Hz added per point of chain
+  keyComboMax: 24,          // chain points that still raise the pitch
+  popRise: 34,              // px a score pop drifts upward
+  popLife: 700,             // ms before a score pop is removed
+  fadeLife: 220,            // ms a destroyed word stays in the DOM while it fades
+  breachFlash: 320,         // ms the line stays terracotta after a breach
+  wordGap: 8,               // px kept between a resting word and the line
+  wfsDivisor: 34,           // field width per word font size unit
+  wfsMin: 15,               // px floor for the word font size
+  wfsMax: 26,               // px ceiling for the word font size
+};
+
+const LEGEND_SCORE = 20000;   // storm-legend
+const DEEP_WAVE = 5;          // deep-storm
+const CHAIN_TARGET = 10;      // chain-ten
+const SHARP_ACC = 95;         // sharp-keys, percent
+const SHARP_WORDS = 40;       // sharp-keys, minimum words
+const LONG_LEN = 9;           // long-hauler
+const SCORE_CAP = 250000;     // matches the games row score_cap
+
+// ---------- Palette ----------
+const C = {
+  bg: "#241E18",
+  paper: "#F6F1E7",
+  dim: "rgba(246,241,231,.42)",
+  faint: "rgba(246,241,231,.62)",
+  terra: "#C44721",
+  olive: "#6E7546",
+  mustard: "#E6A518",
+  rule: "rgba(246,241,231,.14)",
+};
+
+// ---------- Elements ----------
+const root = document.documentElement;
+const field = document.getElementById("field");
+const overlay = document.getElementById("overlay");
+const lineEl = document.getElementById("line");
+const vScore = document.getElementById("vScore");
+const vWave = document.getElementById("vWave");
+const vMult = document.getElementById("vMult");
+const vShield = document.getElementById("vShield");
+const chargefill = document.getElementById("chargefill");
+const chargeready = document.getElementById("chargeready");
+const btnPause = document.getElementById("btnPause");
+const btnSound = document.getElementById("btnSound");
+const btnBurst = document.getElementById("btnBurst");
+const tf = document.getElementById("tf");
+const shieldPips = vShield.querySelectorAll(".sh");
+
+// ---------- Word bank ----------
+const BAND1 = [
+  "oak", "elm", "fig", "pear", "plum", "lime", "corn", "bean", "mint", "sage",
+  "kite", "boat", "raft", "sail", "tide", "wave", "dune", "sand", "reed", "moss",
+  "fern", "leaf", "bark", "root", "seed", "stem", "twig", "vine", "pine", "lake",
+  "pond", "rain", "mist", "haze", "snow", "wind", "gust", "calm", "warm", "cool",
+  "glow", "beam", "dawn", "dusk", "noon", "hour", "week", "year", "pace", "walk",
+  "hike", "trek", "path", "road", "lane", "gate", "door", "roof", "wall", "room",
+  "desk", "lamp", "book", "page", "word", "note", "song", "tune", "drum", "harp",
+  "bell", "clay", "wool", "silk", "yarn", "cake", "bowl", "dish", "fork", "coin",
+  "gift", "card", "flag", "star",
+];
+const BAND2 = [
+  "apple", "berry", "lemon", "melon", "olive", "peach", "grape", "wheat", "maple", "cedar",
+  "willow", "aspen", "clover", "meadow", "valley", "ridge", "river", "creek", "ocean", "island",
+  "harbor", "beach", "pebble", "marble", "copper", "silver", "timber", "thread", "fabric", "cotton",
+  "button", "pocket", "jacket", "ribbon", "basket", "bottle", "kettle", "spoon", "plate", "saucer",
+  "candle", "mirror", "window", "garden", "fence", "ladder", "bridge", "tunnel", "wagon", "saddle",
+  "paddle", "anchor", "pencil", "letter", "poster", "banner", "ticket", "folder", "canvas", "guitar",
+  "violin", "melody", "rhythm", "chorus", "singer", "dancer", "artist", "writer", "baker", "farmer",
+  "sailor", "hiker", "runner", "walker", "gentle", "sunny", "breeze", "summer", "winter", "spring",
+  "autumn",
+];
+const BAND3 = [
+  "lantern", "compass", "orchard", "morning", "evening", "blossom", "journey", "harvest", "pasture", "thicket",
+  "hillside", "seashore", "sunlight", "moonrise", "daylight", "twilight", "rainfall", "snowfall", "cascade", "current",
+  "channel", "estuary", "plateau", "terrace", "cottage", "kitchen", "cabinet", "cupboard", "hallway", "balcony",
+  "doorway", "chimney", "stairway", "walkway", "pathway", "roadway", "railway", "station", "platform", "luggage",
+  "satchel", "blanket", "cushion", "curtain", "drapery", "bedding", "biscuit", "pancake", "oatmeal", "pudding",
+  "custard", "crumpet", "noodles", "lettuce", "spinach", "cabbage", "parsnip", "apricot", "avocado", "coconut",
+  "pumpkin", "cucumber", "chestnut", "almonds", "currant", "rhubarb", "saffron", "vanilla", "caramel", "treacle",
+  "popcorn", "drummer", "pianist", "teacher", "student", "explorer", "gardener", "engineer", "traveler", "painter",
+];
+const BAND4 = [
+  "adventure", "afternoon", "cloudberry", "butterfly", "carpenter", "chocolate", "clementine", "cranberry", "dandelion", "dragonfly",
+  "evergreen", "friendship", "gathering", "gentleness", "gooseberry", "grapefruit", "greenhouse", "harmonica", "highlands", "homestead",
+  "lighthouse", "marmalade", "microscope", "mountains", "navigator", "nectarine", "newspaper", "nightfall", "orchestra", "pineapple",
+  "pomegranate", "porcelain", "raspberry", "riverbank", "sandcastle", "saxophone", "shoreline", "snowdrift", "staircase", "starlight",
+  "strawberry", "sunflower", "telescope", "tangerine", "tablecloth", "trampoline", "understand", "vegetable", "waterfall", "watermelon",
+  "wheelbarrow", "whirlpool", "windmills", "wildflower", "woodlands", "workbench", "yesterday", "afterglow", "apartment", "appetizer",
+  "architect", "astronomer", "backpacker", "basketball", "binoculars", "blackberry", "bookshelf", "breakfast", "buttercup", "calendars",
+  "cartwheel", "celebrate", "chandelier", "clockwork", "companion", "courtyard", "crossroads", "cultivate", "handlebars", "landscape",
+];
+const BANDS = [BAND1, BAND2, BAND3, BAND4];
+
+// Band mix for a plain word. The first row whose maxWave covers the wave wins.
+const PLAIN_MIX = [
+  { maxWave: 2, weights: [70, 30, 0, 0] },
+  { maxWave: 5, weights: [20, 55, 25, 0] },
+  { maxWave: Infinity, weights: [5, 40, 45, 10] },
+];
+
+const WAVE_HINTS = [
+  "Take the word closest to the line first.",
+  "A word typed with no mistakes builds your chain.",
+  "Mustard words fall quicker than the rest.",
+  "Green words hand a shield back.",
+  "Fill the meter, then press Enter to clear the sky.",
+];
+
+// ---------- Word kinds ----------
+const KINDS = {
+  plain: { color: C.paper, speedMul: 1.00, valueMul: 1.0 },
+  fast: { color: C.mustard, speedMul: 1.65, valueMul: 1.5 },
+  heavy: { color: C.terra, speedMul: 0.80, valueMul: 2.0 },
+  mend: { color: C.olive, speedMul: 0.90, valueMul: 1.0 },
+};
+
+// ---------- Helpers ----------
+const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+const pick = (arr) => arr[(Math.random() * arr.length) | 0];
+
+// ---------- Audio ----------
+let AC = null;
+let muted = false;
+
+function audio() {
+  if (!AC) {
+    try { AC = new (window.AudioContext || window.webkitAudioContext)(); } catch (_) { AC = null; }
+  }
+  if (AC && AC.state === "suspended") { try { AC.resume(); } catch (_) { /* ignore */ } }
+  return AC;
+}
+
+function blip(freq, dur, type, vol, slide) {
+  if (muted) return;
+  const ac = audio();
+  if (!ac) return;
+  const t = ac.currentTime;
+  const o = ac.createOscillator();
+  const g = ac.createGain();
+  o.type = type || "square";
+  o.frequency.setValueAtTime(freq, t);
+  if (slide) o.frequency.exponentialRampToValueAtTime(Math.max(40, slide), t + dur);
+  g.gain.setValueAtTime(vol || 0.04, t);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  o.connect(g); g.connect(ac.destination);
+  o.start(t); o.stop(t + dur + 0.02);
+}
+
+function sfxKey() { blip(TUNE.keyBaseHz + Math.min(combo, TUNE.keyComboMax) * TUNE.keyComboHz, 0.04, "square", 0.03); }
+function sfxTypo() { blip(150, 0.10, "sawtooth", 0.05, 90); }
+function sfxDone() {
+  blip(520, 0.07, "triangle", 0.045);
+  setTimeout(() => blip(700, 0.09, "triangle", 0.04), 65);
+}
+function sfxMend() {
+  blip(880, 0.08, "triangle", 0.04);
+  setTimeout(() => blip(1180, 0.11, "triangle", 0.035), 80);
+}
+function sfxWave() {
+  blip(330, 0.09, "triangle", 0.04);
+  setTimeout(() => blip(440, 0.09, "triangle", 0.04), 110);
+  setTimeout(() => blip(560, 0.14, "triangle", 0.04), 220);
+}
+function sfxBurst() { blip(920, 0.60, "triangle", 0.055, 130); }
+
+function sfxBreach() {
+  if (muted) return;
+  const ac = audio();
+  if (!ac) return;
+  const t = ac.currentTime;
+  const len = Math.floor(ac.sampleRate * 0.20);
+  const buf = ac.createBuffer(1, len, ac.sampleRate);
+  const data = buf.getChannelData(0);
+  for (let i = 0; i < len; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / len);
+  const src = ac.createBufferSource();
+  src.buffer = buf;
+  const filt = ac.createBiquadFilter();
+  filt.type = "lowpass";
+  filt.frequency.setValueAtTime(240, t);
+  const g = ac.createGain();
+  g.gain.setValueAtTime(0.06, t);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + 0.20);
+  src.connect(filt); filt.connect(g); g.connect(ac.destination);
+  src.start(t); src.stop(t + 0.22);
+}
+
+// ---------- Run state ----------
+let mode = "attract";
+let paused = false;
+let fieldW = 1;
+let fieldH = 1;
+
+let wave = 1;
+let waveSpawned = 0;
+let waveQuota = 0;
+let waveBreached = false;
+let breather = 0;
+let spawnTimer = 0;
+let words = [];
+let locked = null;
+let shields = TUNE.shields;
+let score = 0;
+let combo = 0;
+let bestCombo = 0;
+let charge = 0;
+let typedOk = 0;
+let typedBad = 0;
+let wordsDone = 0;
+let scorePosted = false;
+let gameOverTimer = 0;
+
+let hudCache = {};
+
+function quotaFor(w) { return Math.min(TUNE.quotaBase + (w - 1) * TUNE.quotaPerWave, TUNE.quotaMax); }
+function capFor(w) { return Math.min(Math.floor(TUNE.concurrentBase + (w - 1) * TUNE.concurrentPerWave), TUNE.concurrentMax); }
+function gapFor(w) { return Math.max(TUNE.spawnGapBase - (w - 1) * TUNE.spawnGapPerWave, TUNE.spawnGapMin); }
+function multNow() { return Math.min(1 + Math.floor(combo / TUNE.comboStep), TUNE.multMax); }
+function accuracy() {
+  const total = typedOk + typedBad;
+  return total === 0 ? 100 : Math.round((typedOk / total) * 100);
+}
+function addScore(n) { score = Math.min(score + n, SCORE_CAP); }
+
+function resetRun() {
+  const stale = field.querySelectorAll(".w, .pop");
+  for (let i = 0; i < stale.length; i++) stale[i].remove();
+  words = [];
+  locked = null;
+  wave = 1;
+  waveSpawned = 0;
+  waveQuota = quotaFor(1);
+  waveBreached = false;
+  breather = TUNE.breather;
+  spawnTimer = 0;
+  shields = TUNE.shields;
+  score = 0;
+  combo = 0;
+  bestCombo = 0;
+  charge = 0;
+  typedOk = 0;
+  typedBad = 0;
+  wordsDone = 0;
+  scorePosted = false;
+  gameOverTimer = 0;
+  fired.clear();
+  hudCache = {};
+}
+
+// ---------- Spawning ----------
+function rollKind() {
+  if (wave >= 2 && Math.random() < TUNE.mendChance && shields < TUNE.shields) {
+    let hasMend = false;
+    for (const w of words) if (w.kind === "mend") hasMend = true;
+    if (!hasMend) return "mend";
+  }
+  if (wave >= 3 && Math.random() < TUNE.fastChance) return "fast";
+  if (wave >= 4 && Math.random() < TUNE.heavyChance) return "heavy";
+  return "plain";
+}
+
+function bandFor(kind) {
+  if (kind === "fast") return BAND1;
+  if (kind === "mend") return BAND2;
+  if (kind === "heavy") return wave >= 7 ? BAND4 : BAND3;
+  let row = PLAIN_MIX[PLAIN_MIX.length - 1];
+  for (const r of PLAIN_MIX) { if (wave <= r.maxWave) { row = r; break; } }
+  let total = 0;
+  for (const n of row.weights) total += n;
+  let roll = Math.random() * total;
+  for (let i = 0; i < row.weights.length; i++) {
+    roll -= row.weights[i];
+    if (roll < 0) return BANDS[i];
+  }
+  return BAND2;
+}
+
+// Two untyped words sharing a first letter make lock-on ambiguous, so redraw.
+function ambiguous(text) {
+  for (const w of words) {
+    if (w.text === text) return true;
+    if (w.i === 0 && w.text[0] === text[0]) return true;
+  }
+  return false;
+}
+function drawText(kind) {
+  const band = bandFor(kind);
+  let text = pick(band);
+  for (let tries = 0; tries < TUNE.drawTries && ambiguous(text); tries++) text = pick(band);
+  return text;
+}
+
+function pickX(wf) {
+  const span = Math.max(0, 1 - wf);
+  let best = 0;
+  let bestGap = -1;
+  for (let n = 0; n < TUNE.spawnXTries; n++) {
+    const cand = Math.random() * span;
+    let gap = 2;
+    for (const o of words) if (o.y < TUNE.crowdY) gap = Math.min(gap, Math.abs(o.x - cand));
+    if (gap > bestGap) { bestGap = gap; best = cand; }
+  }
+  return best;
+}
+
+function spawnWord() {
+  const kind = rollKind();
+  const text = drawText(kind);
+
+  const el = document.createElement("div");
+  el.className = "w";
+  el.style.color = KINDS[kind].color;
+  const doneEl = document.createElement("span");
+  doneEl.className = "done";
+  const restEl = document.createElement("span");
+  restEl.className = "rest";
+  restEl.textContent = text;
+  el.appendChild(doneEl);
+  el.appendChild(restEl);
+  el.style.transform = "translate3d(0,-300px,0)";
+  field.appendChild(el);
+
+  const wf = el.offsetWidth / fieldW;
+  const base = Math.min(TUNE.fallBase + (wave - 1) * TUNE.fallPerWave, TUNE.fallMax);
+  const lengthFactor = clamp(
+    TUNE.lenFactorBase - text.length * TUNE.lenFactorStep,
+    TUNE.lenFactorMin,
+    TUNE.lenFactorMax
+  );
+
+  words.push({
+    text: text,
+    kind: kind,
+    i: 0,
+    x: pickX(wf),
+    y: TUNE.spawnY,
+    speed: base * KINDS[kind].speedMul * lengthFactor,
+    flawless: true,
+    el: el,
+    doneEl: doneEl,
+    restEl: restEl,
+    wf: wf,
+    hpx: el.offsetHeight,
+    danger: false,
+  });
+  waveSpawned++;
+}
+
+function wordTop(w) { return w.y * Math.max(0, fieldH - w.hpx - TUNE.wordGap); }
+
+function removeWord(w) {
+  const idx = words.indexOf(w);
+  if (idx >= 0) words.splice(idx, 1);
+  if (locked === w) locked = null;
+  w.el.classList.add("gone");
+  const el = w.el;
+  setTimeout(() => { if (el.parentNode) el.parentNode.removeChild(el); }, TUNE.fadeLife);
+}
+
+function popScore(w, pts) {
+  const el = document.createElement("div");
+  el.className = "pop";
+  el.textContent = "+" + pts;
+  const tx = w.x * fieldW;
+  const ty = wordTop(w);
+  el.style.transform = "translate3d(" + tx.toFixed(1) + "px," + ty.toFixed(1) + "px,0)";
+  field.appendChild(el);
+  requestAnimationFrame(() => {
+    el.style.transform = "translate3d(" + tx.toFixed(1) + "px," + (ty - TUNE.popRise).toFixed(1) + "px,0)";
+    el.style.opacity = "0";
+  });
+  setTimeout(() => { if (el.parentNode) el.parentNode.removeChild(el); }, TUNE.popLife);
+}
+
+// ---------- Waves ----------
+function endWave() {
+  addScore(wave * TUNE.waveClear);
+  if (!waveBreached) {
+    addScore(TUNE.noBreachBonus);
+    unlock("clean-wave");
+  }
+  if (score >= LEGEND_SCORE) unlock("storm-legend");
+  wave++;
+  if (wave >= DEEP_WAVE) unlock("deep-storm");
+  breather = TUNE.breather;
+  waveSpawned = 0;
+  waveBreached = false;
+  waveQuota = quotaFor(wave);
+  locked = null;
+  sfxWave();
+}
+
+// ---------- Scoring ----------
+function completeWord(w) {
+  const len = w.text.length;
+  const mult = multNow();
+  const base = len * TUNE.perLetter + (w.flawless ? len * TUNE.flawlessBonus : 0);
+  let pts = Math.round(base * KINDS[w.kind].valueMul * mult);
+
+  if (w.kind === "mend") {
+    if (shields < TUNE.shields) { shields++; sfxMend(); }
+    else pts += pts;
+  }
+
+  addScore(pts);
+
+  if (w.flawless) {
+    combo++;
+    bestCombo = Math.max(bestCombo, combo);
+    charge = Math.min(1, charge + 1 / TUNE.chargeWords);
+    if (combo >= CHAIN_TARGET) unlock("chain-ten");
+    if (len >= LONG_LEN) unlock("long-hauler");
+  }
+
+  wordsDone++;
+  unlock("first-word");
+  if (score >= LEGEND_SCORE) unlock("storm-legend");
+  sfxDone();
+  popScore(w, pts);
+  removeWord(w);
+}
+
+function stormBreak() {
+  if (mode !== "play" || paused || breather > 0 || charge < 1) return;
+  if (words.length === 0) return;
+  const swept = words.slice();
+  for (const w of swept) {
+    const base = w.text.length * TUNE.perLetter;
+    const pts = Math.round(base * KINDS[w.kind].valueMul * TUNE.burstValue);
+    addScore(pts);
+    wordsDone++;
+    popScore(w, pts);
+    removeWord(w);
+  }
+  locked = null;
+  charge = 0;
+  if (swept.length > 0) unlock("first-word");
+  unlock("storm-break");
+  if (score >= LEGEND_SCORE) unlock("storm-legend");
+  sfxBurst();
+}
+
+function endRun() {
+  mode = "gameover";
+  gameOverTimer = 0;
+  if (!scorePosted) {
+    scorePosted = true;
+    const acc = accuracy();
+    if (acc >= SHARP_ACC && wordsDone >= SHARP_WORDS) unlock("sharp-keys");
+    post({
+      type: "ARCADE_SCORE",
+      score: Math.min(score, SCORE_CAP),
+      stats: { waves: wave, words: wordsDone, best_combo: bestCombo, accuracy: acc + "%" },
+    });
+  }
+}
+
+function breachWord(w) {
+  removeWord(w);
+  shields--;
+  waveBreached = true;
+  combo = 0;
+  lineEl.classList.add("hit");
+  setTimeout(() => lineEl.classList.remove("hit"), TUNE.breachFlash);
+  sfxBreach();
+  if (shields <= 0) endRun();
+}
+
+// ---------- Typing ----------
+function advance(w) {
+  w.i++;
+  typedOk++;
+  w.doneEl.textContent = w.text.slice(0, w.i);
+  w.restEl.textContent = w.text.slice(w.i);
+  sfxKey();
+  if (w.i >= w.text.length) completeWord(w);
+}
+
+function registerTypo(w) {
+  if (w) w.flawless = false;
+  typedBad++;
+  combo = 0;
+  charge = Math.max(0, charge - TUNE.chargePenalty);
+  sfxTypo();
+}
+
+function typeChar(ch) {
+  if (mode !== "play" || paused) return;
+  if (locked) {
+    if (locked.text[locked.i] === ch) advance(locked);
+    else registerTypo(locked);
+    return;
+  }
+  let best = null;
+  for (const w of words) {
+    if (w.i === 0 && w.text[0] === ch && (!best || w.y > best.y)) best = w;
+  }
+  if (best) {
+    locked = best;
+    best.el.classList.add("lock");
+    advance(best);
+  } else if (words.length > 0) {
+    registerTypo(null);
+  }
+}
+
+// ---------- Mode control ----------
+function focusInput() {
+  try { tf.focus({ preventScroll: true }); } catch (_) { /* no soft keyboard here */ }
+}
+
+function startRun() {
+  if (mode === "play") return;
+  if (mode === "gameover" && gameOverTimer < TUNE.gameOverHold) return;
+  resetRun();
+  mode = "play";
+  paused = false;
+  audio();
+  sfxWave();
+  focusInput();
+}
+
+function togglePause() {
+  if (mode !== "play") return;
+  paused = !paused;
+  if (!paused) focusInput();
+}
+
+function toggleMute() { muted = !muted; }
+
+// ---------- Input ----------
+// P and M are ordinary typing letters during a run, so they only act as
+// commands when nothing is being typed. The HUD chips are the path that
+// always works, in every mode and on every pointer type.
+window.addEventListener("keydown", (e) => {
+  if (e.code === "Space" || e.code === "Enter" || e.code === "Tab") e.preventDefault();
+  if (e.repeat) return;
+  audio();
+
+  const idle = paused || mode === "attract" || mode === "gameover";
+
+  if (e.key === "Escape") { togglePause(); return; }
+  if (e.code === "KeyP" && idle) { togglePause(); return; }
+  if (e.code === "KeyM" && (idle || e.ctrlKey || e.altKey)) { toggleMute(); return; }
+  if (paused) return;
+
+  if (e.code === "Enter") {
+    if (mode === "play") stormBreak(); else startRun();
+    return;
+  }
+  if (e.code === "Space") {
+    if (mode !== "play") startRun();
+    return;
+  }
+  if (mode !== "play") return;
+  if (e.target === tf) return;
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
+  if (e.key.length === 1 && /^[a-z]$/i.test(e.key)) typeChar(e.key.toLowerCase());
+});
+
+tf.addEventListener("input", () => {
+  const value = tf.value;
+  tf.value = "";
+  audio();
+  for (const ch of value) {
+    if (/^[a-z]$/i.test(ch)) typeChar(ch.toLowerCase());
+  }
+});
+
+const startTap = () => {
+  audio();
+  if (mode === "attract" || mode === "gameover") startRun();
+  else focusInput();
+};
+field.addEventListener("pointerdown", startTap);
+overlay.addEventListener("pointerdown", startTap);
+
+btnPause.addEventListener("click", (e) => { e.preventDefault(); audio(); togglePause(); btnPause.blur(); });
+btnSound.addEventListener("click", (e) => { e.preventDefault(); audio(); toggleMute(); btnSound.blur(); });
+btnBurst.addEventListener("click", (e) => { e.preventDefault(); audio(); stormBreak(); focusInput(); });
+
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden) {
+    if (mode === "play") paused = true;
+    if (AC) { try { AC.suspend(); } catch (_) { /* ignore */ } }
+  } else if (AC) {
+    try { AC.resume(); } catch (_) { /* ignore */ }
+  }
+});
+
+function measure() {
+  const rect = field.getBoundingClientRect();
+  fieldW = Math.max(1, rect.width);
+  fieldH = Math.max(1, rect.height);
+  root.style.setProperty("--wfs", clamp(fieldW / TUNE.wfsDivisor, TUNE.wfsMin, TUNE.wfsMax).toFixed(1) + "px");
+  for (const w of words) {
+    w.hpx = w.el.offsetHeight;
+    w.wf = w.el.offsetWidth / fieldW;
+    w.x = Math.min(w.x, Math.max(0, 1 - w.wf));
+  }
+}
+window.addEventListener("resize", measure);
+
+// ---------- Update ----------
+function update(dt) {
+  if (mode === "gameover") { gameOverTimer += dt; return; }
+  if (mode !== "play") return;
+
+  if (breather > 0) {
+    breather -= dt;
+    if (breather <= 0) { breather = 0; spawnTimer = TUNE.spawnLead; }
+    return;
+  }
+
+  spawnTimer -= dt;
+  if (spawnTimer <= 0) {
+    if (waveSpawned >= waveQuota) {
+      spawnTimer = TUNE.spawnIdle;
+    } else if (words.length < capFor(wave)) {
+      spawnWord();
+      spawnTimer = gapFor(wave);
+    } else {
+      spawnTimer = TUNE.spawnRetry;
+    }
+  }
+
+  for (let i = words.length - 1; i >= 0; i--) {
+    const w = words[i];
+    w.y += w.speed * dt;
+    if (w.y >= 1) {
+      breachWord(w);
+      // The last shield ends the run, so a second crossing in the same frame
+      // must not drive the count negative or restamp the game-over timer.
+      if (mode !== "play") return;
+    }
+  }
+
+  if (waveSpawned >= waveQuota && words.length === 0) endWave();
+}
+
+// ---------- Render ----------
+function overlayKey() {
+  if (mode === "attract") return "attract";
+  if (paused) return "paused";
+  if (mode === "gameover") return "over" + (gameOverTimer >= TUNE.gameOverHold ? "R" : "");
+  if (breather > 0) return "wave" + wave;
+  return "";
+}
+
+function overlayHtml(key) {
+  if (key === "attract") {
+    return '<div class="otitle">TYPESTORM</div>' +
+      '<div class="oflavor">Words fall out of the weather. Type them before they reach the line.</div>' +
+      '<div class="ohint">Press Enter to start</div>' +
+      '<div class="ohint">Tap to start</div>' +
+      '<div class="okeys">Type a first letter to lock on. Enter fires a storm break. Esc pauses. M mutes.</div>';
+  }
+  if (key === "paused") {
+    return '<div class="otitle">PAUSED</div>' +
+      '<div class="ohint">Esc or P to resume</div>';
+  }
+  if (key.indexOf("over") === 0) {
+    return '<div class="otitle">STORM OVER</div>' +
+      '<div class="obig">' + score + '</div>' +
+      '<div class="ostat">WAVE ' + wave + '</div>' +
+      '<div class="ostat">' + wordsDone + ' WORDS</div>' +
+      '<div class="ostat">BEST CHAIN ' + bestCombo + '</div>' +
+      '<div class="ostat">' + accuracy() + '% ACCURACY</div>' +
+      (key === "overR" ? '<div class="ohint">Press Enter or tap to type again</div>' : '');
+  }
+  if (key.indexOf("wave") === 0) {
+    return '<div class="otitle">WAVE ' + wave + '</div>' +
+      '<div class="oflavor">' + WAVE_HINTS[(wave - 1) % WAVE_HINTS.length] + '</div>';
+  }
+  return "";
+}
+
+function render() {
+  for (const w of words) {
+    const tx = w.x * fieldW;
+    const ty = wordTop(w);
+    w.el.style.transform = "translate3d(" + tx.toFixed(1) + "px," + ty.toFixed(1) + "px,0)";
+    const hot = w.y >= 1 - TUNE.dangerZone;
+    if (hot !== w.danger) { w.danger = hot; w.el.classList.toggle("danger", hot); }
+  }
+
+  if (hudCache.score !== score) { hudCache.score = score; vScore.textContent = String(score); }
+  if (hudCache.wave !== wave) { hudCache.wave = wave; vWave.textContent = String(wave); }
+
+  const mult = multNow();
+  if (hudCache.mult !== mult) {
+    hudCache.mult = mult;
+    vMult.textContent = "x" + mult;
+    vMult.classList.toggle("up", mult > 1);
+  }
+
+  if (hudCache.shields !== shields) {
+    hudCache.shields = shields;
+    for (let i = 0; i < shieldPips.length; i++) {
+      const live = i < shields;
+      shieldPips[i].textContent = live ? "#" : ".";
+      shieldPips[i].classList.toggle("on", live);
+    }
+  }
+
+  const pct = Math.round(charge * 1000) / 10;
+  const ready = charge >= 1 && mode === "play" && !paused;
+  if (hudCache.charge !== pct || hudCache.ready !== ready) {
+    hudCache.charge = pct;
+    hudCache.ready = ready;
+    chargefill.style.width = pct + "%";
+    chargefill.classList.toggle("full", charge >= 1);
+    chargeready.classList.toggle("on", ready);
+  }
+
+  if (hudCache.sound !== muted) {
+    hudCache.sound = muted;
+    btnSound.textContent = muted ? "Muted" : "Sound";
+  }
+  if (hudCache.paused !== paused) {
+    hudCache.paused = paused;
+    btnPause.textContent = paused ? "Resume" : "Pause";
+  }
+
+  const key = overlayKey();
+  if (hudCache.overlay !== key) {
+    hudCache.overlay = key;
+    if (key === "") {
+      overlay.style.display = "none";
+      overlay.innerHTML = "";
+    } else {
+      overlay.innerHTML = overlayHtml(key);
+      overlay.style.display = "flex";
+    }
+  }
+}
+
+// ---------- Main loop ----------
+let last = 0;
+function frame(ts) {
+  const dt = Math.min((ts - last) / 1000 || 0, 0.033);
+  last = ts;
+  if (!paused) update(dt);
+  render();
+  requestAnimationFrame(frame);
+}
+
+// ---------- Boot ----------
+try {
+  resetRun();
+  mode = "attract";
+  measure();
+  render();
+  requestAnimationFrame(frame);
+  post({ type: "ARCADE_READY" });
+} catch (err) {
+  post({ type: "ARCADE_READY" });
+  overlay.innerHTML = '<div class="otitle">TYPESTORM</div>' +
+    '<div class="oflavor">This cabinet failed to boot. Reload to try again.</div>';
+  overlay.style.display = "flex";
+}
+</script>
+</body>
+</html>
