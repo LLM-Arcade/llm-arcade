@@ -18,6 +18,9 @@ const GoogleMark = () => (
 
 type Mode = "signin" | "signup";
 
+const GOOGLE_DISABLED_COPY =
+  "Google sign-in isn't switched on for this arcade yet — use email below. (Operators: enable the Google provider in the Supabase dashboard.)";
+
 const Login = () => {
   const { session } = useAuth();
   const navigate = useNavigate();
@@ -71,15 +74,31 @@ const Login = () => {
 
   const signInWithGoogle = async () => {
     setError(null);
-    const { error } = await supabase.auth.signInWithOAuth({
+    // supabase-js builds the authorize URL client-side and navigates straight
+    // to it, so a disabled provider only fails AFTER leaving the app (raw
+    // JSON error page). Grab the URL without redirecting and probe it first
+    // so we can fail in-app instead.
+    const { data, error } = await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: window.location.origin + next },
+      options: {
+        redirectTo: window.location.origin + next,
+        skipBrowserRedirect: true,
+      },
     });
-    if (error) {
-      setError(
-        "Google sign-in isn't available yet — use email below, or enable the Google provider in Supabase.",
-      );
+    if (error || !data?.url) {
+      setError(GOOGLE_DISABLED_COPY);
+      return;
     }
+    try {
+      const probe = await fetch(data.url, { redirect: "manual" });
+      if (probe.status === 400) {
+        setError(GOOGLE_DISABLED_COPY);
+        return;
+      }
+    } catch {
+      // Probe blocked (network/CORS) — proceed; worst case is the old behavior.
+    }
+    window.location.assign(data.url);
   };
 
   const submit = async (e: React.FormEvent) => {

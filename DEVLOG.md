@@ -276,5 +276,16 @@ Settings auth redirect. Login's held-score banner copy is mode-aware now
 too. **Rule going forward: never hardcode `/login`/`/signup` links or
 "Sign in" copy in components — always `authCta()`.**
 
+**Addendum 3 — Google button fails in-app now:** user hit the session-6
+`validation_failed: provider is not enabled` raw-JSON page again. The
+provider still needs dashboard setup (Google Cloud OAuth client + enable in
+Supabase Auth providers — can't be done via SQL). Code-side fix: the Google
+button now calls `signInWithOAuth` with `skipBrowserRedirect: true`, probes
+the authorize URL with `fetch(..., { redirect: "manual" })`, and only
+navigates when the endpoint doesn't answer 400 — a disabled provider shows a
+friendly in-app error instead of dumping the player on raw JSON. Probe
+failures (CORS/network) fall through to navigation, so a working provider
+is never blocked.
+
 **Next:** the human playtest itself (sign up → play → score/XP/streak →
 toasts → badges → feed → profile → ticker), then Phase 4.
