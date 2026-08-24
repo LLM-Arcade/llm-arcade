@@ -502,3 +502,39 @@ Queue next: **Rockbuster** (B, Arcade, Asteroids homage) → Boulder Rush
 (B, DOS) → Hyper Circuit (A, SNES, Mode-7 showpiece). Track-B builds must
 respect the asset diet — flat sprites, small sheets, no fat panoramas.
 Pipeline live-test + Phase 5 chat still deferred.
+
+## Session 14 — Rockbuster ☄ (first Track-B on the asset diet)
+
+**Shipped #5: Rockbuster** (`public/games/rockbuster.html`, Track B,
+Arcade shelf, 7 achievements) — the Asteroids homage, dev-hosted like
+Flap Hero/Trailbound, published via SQL (teaser row UPDATEd, not
+inserted).
+
+- **Asset diet proof for Track B:** two flat sheets (ships/fx 436 KB,
+  rocks 514 KB) inlined as data URIs → **1.26 MB total HTML** vs
+  Trailbound's 4.48 MB. Sheets prompted flat-solid-color/no-grain on
+  magenta; runtime chroma-key + gap-based column slicing with
+  equal-column fallback + per-sprite bbox trim (the Munch Maze recipe,
+  rewritten inline for the sandbox).
+- **Instancing everywhere:** ONE rock sheet (3 variants) drawn at 3
+  scales for L/M/S; saucer sprite at 2 scales for big/small; the spark
+  sprite quadruple-duties as starfield, explosion debris, saucer bullets,
+  and hyperspace flash. 5 + 3 sprites render the whole game.
+- Classic loop: wraparound physics, rocks split L→2M→4S (20/50/100 pts),
+  max-4 bullets with ship-velocity inheritance, big saucer (200, random
+  fire) vs small saucer (1000, aimed with error shrinking as score
+  grows), Shift/H hyperspace with 14% jump-death risk, extra ship every
+  10k, safe-spot respawn check. Fields grow 4→11 rocks, speed scales
+  with field number. Balance knobs in `TUNE` at the top of the script.
+- Touch: on-screen pads (rotate/thrust/fire/hyper) shown via
+  `pointer: coarse`; tap-to-start; auto-pause on tab hide; M mute;
+  WebAudio synth (fire blip, filtered-noise booms by size, thrust
+  rumble loop, two-tone saucer warble, extra-life jingle).
+- Achievement slugs (seeded + fired): `first-blast`, `clean-sweep`,
+  `saucer-down`, `dead-eye`, `untouchable`, `deep-space` (field 5),
+  `rock-legend` (15k). One `ARCADE_SCORE` per run on game over with
+  stats (field, rocks_busted, saucers_downed, accuracy).
+
+**State for session 15:** FIVE unplaytested cabinets. Queue next:
+**Boulder Rush** (B, DOS, Boulder Dash homage) → Hyper Circuit (A, SNES).
+Pipeline live-test + Phase 5 chat still deferred.
