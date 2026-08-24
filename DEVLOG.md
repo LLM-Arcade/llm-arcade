@@ -770,3 +770,27 @@ until the user signs in on llmarcade.fun in the driven browser.
   four rivals rendered. A 120-frame stress sample measured 6.95 ms average,
   7.3 ms p95, 7.9 ms max, and zero frames over 25 ms; the Hyper harness and
   TypeScript gate remained green without physics or balance changes.
+
+## Session 19 — Run 'n Gunner animation quality pass
+
+- Generated `foes-motion.png`, a flat-color magenta-keyed companion row with
+  alternate poses for the existing runner, turret, lobber, drone, and boss.
+  The source prompt preserved the original silhouettes and rust/olive/cream
+  palette while asking for stride, recoil, brace, rotor, and cannon motion.
+  Cleanup left exactly five gap-sliced frames with no detached fragments.
+- Paired each base foe with its alternate at role-specific frame rates. The
+  gunner's existing run and jump poses now use the same stable foot anchor;
+  grounded foes and bosses cannot sink, hop, or clip through the floor when
+  differently proportioned frames alternate. Pickup sway, orb pulse, muzzle
+  recoil, and restrained airborne lean add feedback without changing rules.
+- Real keyboard play exercised movement, jumping, firing, damage, and enemy
+  encounters. Controlled side-by-side staging of all five foe classes showed
+  fixed ground contact and separated silhouettes. A 120-frame move-and-fire
+  sample measured 6.88 ms average, 7.4 ms p95, 7.7 ms max, and zero frames
+  over 25 ms, with no browser errors or missing assets.
+- Fixed the same mobile canvas stretch found in Hyper Circuit. The 640x360
+  logical frame now renders at 832x468 desktop and 342x192.375 at 390 px
+  mobile width, both exactly 16:9 with no overflow. The new 3,005-byte sheet
+  brings in-game art to 12,955 bytes and total cabinet art to 333,039 bytes,
+  31.76% of the 1 MiB budget. No engine, stage, collision, score, or balance
+  code changed.

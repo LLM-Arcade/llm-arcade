@@ -324,11 +324,14 @@ via Down+jump.
   is a real dodge; boss volleys keep 1.25 s of daylight; bosses never
   fire mid-charge; boss patrol floor `arenaX + 220` so holding distance
   never corners you on the camera wall.
-- `sprites.ts` — the Starfall gap-slicer copy, now loading four original
-  generated sheets: gunner.png (3 frames), foes.png (5), fx.png (5), and
-  pickups.png (3). Deterministic gutters resolve exactly 3/5/5/3 at runtime.
+- `sprites.ts` — the Starfall gap-slicer copy, now loading five original
+  generated sheets: gunner.png (3 frames), foes.png (5), foes-motion.png
+  (5 alternate poses), fx.png (5), and pickups.png (3). Deterministic
+  gutters resolve exactly 3/5/5/5/3 at runtime.
 - `render.ts` — camera-translated sprite placement; ground/platform/ridge
-  flat fills are the Munch Maze level-geometry exception.
+  flat fills are the Munch Maze level-geometry exception. Player, grounded
+  foes, and non-hovering bosses share foot-anchored draw paths so changing
+  frame proportions cannot move them through the floor.
 - `RunNGunner.tsx` — Starfall shell idiom. Touch: run pads left, JUMP +
   FIRE right (`pointer: coarse`). Dev lever: `window.__rg` in DEV builds.
 
@@ -347,11 +350,16 @@ bot completes a full one-life clear, every achievement threshold fires in
 simulation, and the score never exceeds the cap. Exit 0 = PASS. Prints a
 per-stage table per bot.
 
-**Original art proof:** the four palette-quantized in-game sheets total
-9,950 bytes; the 768 px key-art tile is 320,084 bytes; all Run 'n Gunner
-art totals 330,034 bytes (31.47% of the 1 MiB cabinet budget). Real keyboard
+**Original art proof:** the five palette-quantized in-game sheets total
+12,955 bytes; the 768 px key-art tile is 320,084 bytes; all Run 'n Gunner
+art totals 333,039 bytes (31.76% of the 1 MiB cabinet budget). Real keyboard
 play on `/dev/run-n-gunner` covered running, firing, jumping, damage, and
 enemy encounters with no keying fringe or palette clash before publish.
+The animation pass pairs each of the five base foe frames with a generated
+alternate pose: runner stride, turret recoil, lobber brace, drone rotor/fire,
+and boss leg/cannon recoil. A 120-frame move-and-fire stress sample measured
+6.88 ms average / 7.4 ms p95 / 7.7 ms max with zero frames over 25 ms. The
+canvas holds its exact 16:9 ratio at desktop and 390 px mobile widths.
 
 ## The progression engine (Phase 3, unchanged)
 

@@ -7,11 +7,11 @@ const ASSETS = "/assets/games/run-n-gunner";
 
 export interface GunnerSprites {
   soldierFrames: HTMLCanvasElement[];
-  runner: HTMLCanvasElement;
-  turret: HTMLCanvasElement;
-  lobber: HTMLCanvasElement;
-  drone: HTMLCanvasElement;
-  boss: HTMLCanvasElement;
+  runnerFrames: HTMLCanvasElement[];
+  turretFrames: HTMLCanvasElement[];
+  lobberFrames: HTMLCanvasElement[];
+  droneFrames: HTMLCanvasElement[];
+  bossFrames: HTMLCanvasElement[];
   bolt: HTMLCanvasElement;
   orb: HTMLCanvasElement;
   grenade: HTMLCanvasElement;
@@ -116,23 +116,25 @@ const sliceSheet = (img: HTMLImageElement, count: number): HTMLCanvasElement[] =
 };
 
 export const loadSprites = async (): Promise<GunnerSprites> => {
-  const [gunnerImg, foesImg, fxImg, pickupsImg] = await Promise.all([
+  const [gunnerImg, foesImg, foesMotionImg, fxImg, pickupsImg] = await Promise.all([
     loadImage(`${ASSETS}/gunner.png`),
     loadImage(`${ASSETS}/foes.png`),
+    loadImage(`${ASSETS}/foes-motion.png`),
     loadImage(`${ASSETS}/fx.png`),
     loadImage(`${ASSETS}/pickups.png`),
   ]);
   const gunner = sliceSheet(gunnerImg, 3);
   const foes = sliceSheet(foesImg, 5);
+  const foesMotion = sliceSheet(foesMotionImg, 5);
   const fx = sliceSheet(fxImg, 5);
   const pickups = sliceSheet(pickupsImg, 3);
   return {
     soldierFrames: gunner,
-    runner: foes[0],
-    turret: foes[1],
-    lobber: foes[2],
-    drone: foes[3],
-    boss: foes[4],
+    runnerFrames: [foes[0], foesMotion[0]],
+    turretFrames: [foes[1], foesMotion[1]],
+    lobberFrames: [foes[2], foesMotion[2]],
+    droneFrames: [foes[3], foesMotion[3]],
+    bossFrames: [foes[4], foesMotion[4]],
     bolt: fx[0],
     orb: fx[1],
     grenade: fx[2],
