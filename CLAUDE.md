@@ -16,6 +16,7 @@ older docs and DEVLOG entries use that name. The site is gated pre-launch
 |---|---|
 | `HANDOFF.md` | Current state, DB schema, asset pipeline, gotchas, next steps |
 | `AI_RULES.md` | Hard design rules, naming conventions, tech-stack rules |
+| `PATTERNS.md` | Code-level cabinet anatomy and platform conventions, with file references |
 | `DEVLOG.md` | Decision history, including rejected designs |
 | `.dyad/plans/chat-1-plan.md` | Full product spec (pages, progression, 100-game catalog, phases) |
 
