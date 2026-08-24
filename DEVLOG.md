@@ -575,3 +575,53 @@ session-3 lineup batch and was kept).
 is now seriously overdue. Queue next: **Hyper Circuit** (A, SNES, Mode-7
 showpiece) → Run 'n Gunner → flagship trio. Pipeline live-test + Phase 5
 chat still deferred.
+
+## Session 16 — Hyper Circuit 🏁 (Track A, the mode-7 showpiece, stand-in art)
+
+F-Zero homage grand prix at `src/games/hyper-circuit/`: three original
+circuits, four rivals, shield economy (boost spends, rails and bumps
+drain, pit strip refills, zero = blowout DNF), session ghost of your best
+lap replayed translucent at 30 Hz. Registered in the registry but the DB
+row stays `coming_soon`: Zo image generation was down all session, so
+every sprite is a borrowed Starfall/Munch Maze sheet behind a
+`// STAND-IN ART:` comment, and publishing waits on the real art set.
+
+- **Renderer is the flagship piece:** per-pixel mode-7 ground sampler
+  (precomputed row depths, incremental world walk, fog blend, reused
+  ImageData, zero per-frame allocation) over a ground texture composed
+  once per circuit from the same centerline table the physics use. Flat
+  road/terrain fills ride the Munch Maze level-geometry exception;
+  everything else is stamped sprite transforms.
+- **Geometry lessons paid for in blood:** uniform Catmull-Rom cusps on
+  unevenly spaced control points (a designed 145-radius hairpin measured
+  curv·hw 2.47), so courses run centripetal knots, and curvature is
+  Menger on a 96-unit chord because short chords measure spline ripple,
+  not corner radius. A circle-of-known-radius probe separated the
+  measurement bug from a real geometry bug.
+- **Balance found by harness, felt in browser:** brake now beats an
+  active boost burn (before that, a burn carried into the hairpin was an
+  unavoidable 6-hit rail grind), and the rival rubber band tightened from
+  1.06 to 1.03 overspeed because 1.06 glued the pack to the player and
+  bled shield through bumps. Terrace Canyon widened 54→58 and rail base
+  cost 4→3 after the ace bot kept dying there. `boost-artist` relaxed
+  6→5 clean boosts (6 demanded perfect play in a ~33 s race).
+- **Proof:** `node scripts/harness/hyper-circuit.mjs` (committed) checks
+  geometry validity, an ace bot winning circuit 1 and finishing the GP at
+  18,546 of the 40k cap with every achievement, and a cruiser bot proving
+  `clean-circuit`. Browser playtest via the new dev lever: full GP driven
+  by a console autopilot through the real key handlers, all 7 slugs
+  logged, one score payload, pause/mute/touch overlay verified, DNF path
+  exercised, boost flame and speed streaks retuned brighter after the
+  first pass looked timid.
+- **New permanent lever:** `/dev/:slug` (DEV builds only) mounts any
+  registry cabinet with console-log stubs, plus `window.__hc` exposes the
+  engine for autopilot playtests. Future Track-A cabinets get browser
+  playtests before their rows publish.
+- Slugs seeded (via `db/seed-hyper-circuit.sql`, teaser row UPDATE):
+  `first-finish`, `front-runner`, `clean-circuit`, `ghost-chaser`,
+  `boost-artist`, `grand-circuit`, `circuit-legend`.
+
+**State for session 17:** SEVEN cabinets await the human feel-check pass.
+Queue next: **Run 'n Gunner** → flagship trio. Hyper Circuit needs art
+regeneration + row publish when Zo is back. Pipeline live-test + Phase 5
+chat still deferred.

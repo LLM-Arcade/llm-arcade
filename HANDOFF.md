@@ -17,8 +17,10 @@ games before chat).** Shipped so far: **Munch Maze** (A,
 **Starfall Squadron** (A, `src/games/starfall-squadron/`, 7 ach),
 **Rockbuster** (B, `public/games/rockbuster.html`, 7 ach), **Boulder Rush**
 (B, `public/games/boulder-rush.html`, 7 ach) — all published.
-**User-set queue for the next builds: Hyper Circuit (A) →
-Run 'n Gunner.** The Phase-4 pipeline test with a
+**Hyper Circuit** (A, `src/games/hyper-circuit/`, 7 ach) is built and
+agent-playtested but runs on STAND-IN art (Zo image generation down), so
+its row stays `coming_soon` until the art set is regenerated.
+**User-set queue for the next builds: Run 'n Gunner.** The Phase-4 pipeline test with a
 second account was explicitly skipped (user decision) — the upload
 wizard/admin queue remain untested with real traffic. Site still gated
 (`site_settings.launched = false`, guests → Landing, signed-in → Arcade
@@ -211,6 +213,69 @@ cave — beetle farming), `swift-pick` (60+ s left), `deep-digger` (cave 5),
 `rush-legend` (7,500; ≈500–900/cave deep). One `ARCADE_SCORE` at game over
 with stats (cave, gems, bugs_squashed).
 
+## Hyper Circuit (Track A, mode-7 racer, STAND-IN ART, still coming_soon)
+
+`src/games/hyper-circuit/` — F-Zero homage grand prix, fully original.
+Three circuits (Alkali Flats, Terrace Canyon with a 145-radius hairpin,
+Basalt Rim), 3 laps each, four rivals (Saltflat Comet, Basalt Bull, Dust
+Moth, Cinder Fox), player craft the Copperhead. Shield is the one
+resource: manual boost costs 18, rail hits drain 3-12 plus grinding,
+rival bumps 3, the olive pit strip regenerates 28/s, zero = blowout DNF.
+Boost pads on the road give free burns. Best lap per circuit is recorded
+at 30 Hz and replayed as a translucent session ghost ("Ghost times" hook,
+ARCADE_SAVE persistence deferred platform-wide).
+
+- `courses.ts` — control-point loops through a centripetal Catmull-Rom
+  (uniform parameterization cusps on uneven points), arc-length resampled
+  at 4-unit steps, Menger curvature on a 96-unit chord (shorter chords
+  measure spline ripple, not corner radius). Physics and the ground
+  texture share this one table.
+- `engine.ts` — frameless class, event queue, engine time only. Brake
+  beats an active burn (a boost carried into a corner has an out). Rubber
+  band clamps rivals to [0.94, 1.03] of base speed; 1.06 glued the pack
+  to the player and bled shield through bumps.
+- `track-texture.ts` — ground composed once per circuit at 1 texel/unit
+  into a 1536² canvas: flat road/terrain fills (Munch Maze level-geometry
+  exception) plus stamped transforms of borrowed sprites (rails, start
+  checkers, pad chevrons, hedge scrub). Read back once into a Uint32Array.
+- `render.ts` — the mode-7 pass: per-row depth precomputed, incremental
+  world-space walk per pixel into a reused ImageData, nearest sample, fog
+  blend toward the horizon, sprites projected far-to-near through a
+  preallocated slot queue. No per-frame allocation. Logical 400×260,
+  smoothing off.
+- `audio.ts` — Starfall-shape blips plus a continuous engine hum (saw +
+  sub sine through a lowpass) pitched by speed, stopped on pause/mute.
+- `HyperCircuit.tsx` — Starfall shell idiom. Touch: drag steers, hold
+  accelerates, DOM BOOST button on coarse pointers. Dev lever: in DEV
+  builds the engine instance hangs on `window.__hc` so a console
+  autopilot can drive playtests.
+
+**STAND-IN ART:** all sheets borrowed (Starfall ships.png + fx.png, Munch
+Maze hedge.png), zero new asset bytes. Every load site carries a
+`// STAND-IN ART:` comment naming the final sheet to generate when Zo is
+back: craft.png (5 bank frames), rivals.png (4 crafts), fx.png,
+horizon.png, road/terrain tiles. Art regeneration, then flipping the DB
+row to published, is the remaining work.
+
+Balance knobs: `TUNE` at the top of `engine.ts` (all units commented),
+`parLap`/`rivalSpeed`/`halfWidth` per course in `courses.ts`. Scoring:
+positions [4000, 2600, 1800, 1200, 800] + 500 finish + shield·5 + par
+bonus (200/s under par, cap 1200/lap) + 150 per clean boost + 50 per pad.
+Cap 40,000, seeded in `db/seed-hyper-circuit.sql` (UPDATEs the teaser
+row, upserts achievements, status stays coming_soon on purpose).
+
+**Beatability harness (rerun it):** `node scripts/harness/hyper-circuit.mjs`
+proves geometry validity (no self-overlap, curv·halfWidth < 0.5), an ace
+bot finishing and winning, a cruiser bot proving clean-circuit, every
+achievement reachable, cap never exceeded. Exit 0 = PASS. `--calibrate`
+prints par suggestions from ace lap medians. Slugs seeded + fired:
+`first-finish`, `front-runner`, `clean-circuit`, `ghost-chaser`,
+`boost-artist` (5 clean boosts), `grand-circuit`, `circuit-legend` (18k).
+
+**Dev playtest route (permanent lever):** `/dev/:slug` in DEV builds
+(`src/pages/DevGame.tsx`) mounts any registry component with console-log
+stubs, for cabinets whose DB row is still coming_soon.
+
 ## The progression engine (Phase 3, unchanged)
 
 Client never writes progression tables — SECURITY DEFINER functions +
@@ -293,12 +358,14 @@ URIs (sandbox can't read external images back).
    verify sheets slice into 5 + 6 frames, falling/rolling feel (tick
    0.125s), push chance, cave solvability across regenerations, quota/time
    curve, touch D-pad + GRAB; `TUNE` knobs at the top of its `<script>`.
-2. **The user's game queue (session 13): Hyper Circuit (A)**,
-   then Run 'n Gunner → flagship trio. Sprite games follow
-   Munch Maze/Starfall; text-shelf follows Rune & Ruin; self-contained
-   Track-B follows Rockbuster **on the asset diet** (flat sprites, small
-   sheets inlined as data URIs — no fat panoramas). Track-B briefs can
-   also be dispatched through the real wizard anytime.
+2. **The user's game queue (session 13): Run 'n Gunner**, then the
+   flagship trio. Sprite games follow Munch Maze/Starfall; text-shelf
+   follows Rune & Ruin; self-contained Track-B follows Rockbuster **on
+   the asset diet** (flat sprites, small sheets inlined as data URIs — no
+   fat panoramas). Track-B briefs can also be dispatched through the real
+   wizard anytime. Hyper Circuit additionally needs its art set
+   regenerated (Zo image generation was down at build time) and the
+   games row flipped to published via `db/seed-hyper-circuit.sql`.
 3. **Phase 5 — Chat** (deferred behind games by user decision, session 11).
 4. **Phase 7 — flip `launched`** (button exists in `/admin` → Site).
 5. (Whenever convenient) run one Track-B submission through the upload

@@ -17,4 +17,7 @@ export const gameRegistry: Record<
   "munch-maze": lazy(() => import("./munch-maze/MunchMaze")),
   "rune-ruin": lazy(() => import("./rune-ruin/RuneRuin")),
   "starfall-squadron": lazy(() => import("./starfall-squadron/StarfallSquadron")),
+  // Stand-in art throughout; the DB row stays coming_soon until art
+  // regeneration.
+  "hyper-circuit": lazy(() => import("./hyper-circuit/HyperCircuit")),
 };
