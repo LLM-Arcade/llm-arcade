@@ -53,6 +53,10 @@ interface SpriteSlot {
   sy: number;
   w: number;
   alpha: number;
+  bank: number;
+  bob: number;
+  thrust: number;
+  phase: number;
 }
 const slots: SpriteSlot[] = Array.from({ length: 6 }, () => ({
   fwd: 0,
@@ -61,13 +65,18 @@ const slots: SpriteSlot[] = Array.from({ length: 6 }, () => ({
   sy: 0,
   w: 0,
   alpha: 1,
+  bank: 0,
+  bob: 0,
+  thrust: 0,
+  phase: 0,
 }));
 
 export interface Camera {
   heading: number;
+  bank: number;
   initialized: boolean;
 }
-export const createCamera = (): Camera => ({ heading: 0, initialized: false });
+export const createCamera = (): Camera => ({ heading: 0, bank: 0, initialized: false });
 
 const wrapAngle = (a: number) => {
   while (a > Math.PI) a -= Math.PI * 2;
@@ -93,6 +102,39 @@ const drawSprite = (
   ctx.restore();
 };
 
+const drawRacer = (
+  ctx: CanvasRenderingContext2D,
+  craft: HTMLCanvasElement,
+  flame: HTMLCanvasElement,
+  x: number,
+  y: number,
+  w: number,
+  bank: number,
+  alpha: number,
+  thrust: number,
+  phase: number,
+) => {
+  const h = (w * craft.height) / craft.width;
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.translate(x, y);
+  ctx.rotate(bank);
+
+  if (thrust > 0) {
+    const pulse = 0.9 + Math.sin(phase) * 0.1;
+    const flameW = w * (0.12 + thrust * 0.12);
+    const flameH = h * (0.18 + thrust * 0.62) * pulse;
+    ctx.globalAlpha = alpha * (0.38 + thrust * 0.52);
+    ctx.drawImage(flame, -flameW / 2, h * 0.28, flameW, flameH);
+    ctx.globalAlpha = alpha * (0.32 + thrust * 0.48);
+    ctx.drawImage(flame, -flameW / 4, h * 0.3, flameW / 2, flameH * 0.58);
+  }
+
+  ctx.globalAlpha = alpha;
+  ctx.drawImage(craft, -w / 2, -h / 2, w, h);
+  ctx.restore();
+};
+
 export const draw = (
   ctx: CanvasRenderingContext2D,
   eng: Engine,
@@ -108,6 +150,8 @@ export const draw = (
     cam.initialized = true;
   }
   cam.heading += wrapAngle(p.heading - cam.heading) * Math.min(1, 7 * dt);
+  const targetBank = eng.input.steer * 0.22;
+  cam.bank += (targetBank - cam.bank) * Math.min(1, 11 * dt);
 
   const fwdX = Math.cos(cam.heading);
   const fwdY = Math.sin(cam.heading);
@@ -192,8 +236,12 @@ export const draw = (
     slot.img = spr.rivalSheets[rv.spriteIdx];
     slot.sx = halfW + side * k;
     slot.sy = HORIZON + CAM_H * k;
-    slot.w = RIVAL_WORLD_W * k;
+    slot.w = Math.min(72, RIVAL_WORLD_W * k);
     slot.alpha = 1;
+    slot.bank = Math.max(-0.32, Math.min(0.32, wrapAngle(rv.heading - cam.heading) * 0.7));
+    slot.bob = Math.sin(eng.time * 6.5 + i * 1.9) * Math.min(1.4, slot.w * 0.035);
+    slot.thrust = Math.max(0.2, Math.min(0.82, rv.speed / REF_MAX_SPEED));
+    slot.phase = eng.time * 28 + i * 2.1;
   }
   const g = eng.ghostPos();
   if (g) {
@@ -209,6 +257,10 @@ export const draw = (
       slot.sy = HORIZON + CAM_H * k;
       slot.w = GHOST_WORLD_W * k;
       slot.alpha = 0.35;
+      slot.bank = Math.max(-0.28, Math.min(0.28, wrapAngle(g.heading - cam.heading) * 0.65));
+      slot.bob = Math.sin(eng.time * 5.5) * Math.min(1, slot.w * 0.025);
+      slot.thrust = 0;
+      slot.phase = 0;
     }
   }
   // Insertion sort by depth, farthest first. At most 5 entries.
@@ -225,10 +277,18 @@ export const draw = (
     const s = slots[i];
     if (!s.img || s.sx < -80 || s.sx > W + 80 || s.w < 1) continue;
     const h = (s.w * s.img.height) / s.img.width;
-    ctx.save();
-    ctx.globalAlpha = s.alpha;
-    ctx.drawImage(s.img, s.sx - s.w / 2, s.sy - h * 0.85, s.w, h);
-    ctx.restore();
+    drawRacer(
+      ctx,
+      s.img,
+      spr.flame,
+      s.sx,
+      s.sy - h * 0.35 + s.bob,
+      s.w,
+      s.bank,
+      s.alpha,
+      s.thrust,
+      s.phase,
+    );
   }
 
   // Rail sparks: burst sprite scaling out over 0.4 s.
@@ -267,23 +327,26 @@ export const draw = (
 
   // Player craft, screen-fixed with bank, hover bob, and boost flame.
   const lean = Math.max(-10, Math.min(10, p.lat * 0.15));
-  const bank = eng.input.steer * 0.22;
   const bob = Math.sin(eng.time * 6) * 1.5;
   const craftW = 46;
-  const craftH = (craftW * spr.craft.height) / spr.craft.width;
-  ctx.save();
-  ctx.translate(halfW + lean, H - 44 + bob);
-  ctx.rotate(bank);
-  if (eng.isBoosting) {
-    const flicker = 0.78 + 0.2 * Math.sin(eng.time * 47);
-    const flameLen = 34 + Math.sin(eng.time * 31) * 8;
-    ctx.save();
-    ctx.scale(1, -1);
-    ctx.globalAlpha = flicker;
-    ctx.drawImage(spr.flame, -12, -(craftH / 2 + flameLen), 24, flameLen);
-    ctx.drawImage(spr.flame, -6, -(craftH / 2 + flameLen * 0.55), 12, flameLen * 0.55);
-    ctx.restore();
+  const playerX = halfW + lean;
+  const playerY = H - 58 + bob;
+  if (eng.isBoosting || p.shield < 25) {
+    const pulse = 0.72 + Math.sin(eng.time * 9) * 0.08;
+    const alpha = eng.isBoosting ? pulse * 0.24 : pulse * 0.13;
+    drawSprite(ctx, spr.shield, playerX, playerY, 62, eng.time * 0.35, alpha);
   }
-  ctx.drawImage(spr.craft, -craftW / 2, -craftH / 2, craftW, craftH);
-  ctx.restore();
+  const cruiseThrust = Math.max(0.12, Math.min(0.48, speedFrac * 0.5));
+  drawRacer(
+    ctx,
+    spr.craft,
+    spr.flame,
+    playerX,
+    playerY,
+    craftW,
+    cam.bank,
+    1,
+    eng.isBoosting ? 1 : cruiseThrust,
+    eng.time * (eng.isBoosting ? 40 : 22),
+  );
 };

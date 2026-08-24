@@ -751,3 +751,22 @@ until the user signs in on llmarcade.fun in the driven browser.
   changed cabinets must be keyboard-played at `/dev/<slug>` and checked for
   asset failures, frame clipping, sprite overlap, animation jank, console
   errors, and palette cohesion before promotion.
+
+## Session 19 — Hyper Circuit animation quality pass
+
+- Kept the five original craft sprites and made their motion stateful:
+  damped player steering bank, track-heading rival bank, independent hover
+  and thruster phases, capped near-camera rival scale, and animated cruise
+  and boost flames. The previously unused shield asset now pulses behind
+  the craft during boosts and low-shield warnings.
+- Moved every craft/flame composition through one anchored renderer. The
+  first browser pass exposed a boost flame crossing the canvas bottom; the
+  player anchor moved up and the second pass showed the full effect with no
+  edge clipping or sprite distortion.
+- Fixed the cabinet canvas itself after mobile proof found the 400×260
+  render stretched into a 342×362 box. Container-relative sizing now holds
+  1.5385 exactly on desktop and 390 px mobile, with no horizontal overflow.
+- Real keyboard steering/boost proof stayed in the racing phase with all
+  four rivals rendered. A 120-frame stress sample measured 6.95 ms average,
+  7.3 ms p95, 7.9 ms max, and zero frames over 25 ms; the Hyper harness and
+  TypeScript gate remained green without physics or balance changes.

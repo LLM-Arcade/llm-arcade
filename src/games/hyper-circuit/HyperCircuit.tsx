@@ -313,6 +313,7 @@ const HyperCircuit = ({ onScore, onAchievement }: ArcadeGameProps) => {
       {/* Playfield */}
       <div
         className="relative flex min-h-0 flex-1 items-center justify-center px-2 pb-2 pt-1"
+        style={{ containerType: "size" }}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={endPointer}
@@ -322,8 +323,12 @@ const HyperCircuit = ({ onScore, onAchievement }: ArcadeGameProps) => {
           ref={canvasRef}
           width={W}
           height={H}
-          className="h-full w-auto max-w-full rounded-xl ring-1 ring-background/10"
-          style={{ aspectRatio: `${W} / ${H}`, objectFit: "contain", imageRendering: "pixelated" }}
+          className="block h-auto max-h-full max-w-full rounded-xl ring-1 ring-background/10"
+          style={{
+            aspectRatio: `${W} / ${H}`,
+            imageRendering: "pixelated",
+            width: `min(100%, calc(100cqh * ${W / H}))`,
+          }}
         />
 
         {!ready && (
