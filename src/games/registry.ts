@@ -15,4 +15,5 @@ export const gameRegistry: Record<
   LazyExoticComponent<ComponentType<ArcadeGameProps>>
 > = {
   "munch-maze": lazy(() => import("./munch-maze/MunchMaze")),
+  "rune-ruin": lazy(() => import("./rune-ruin/RuneRuin")),
 };

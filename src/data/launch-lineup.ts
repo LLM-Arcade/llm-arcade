@@ -46,6 +46,7 @@ export const LAUNCH_LINEUP: RevealedGame[] = [
     featured: true,
   },
   { slug: "munch-maze", title: "Munch Maze", era: "Arcade", alt: "Round creature eating seeds in a hedge maze" },
+  { slug: "rune-ruin", title: "Rune & Ruin", era: "Original", alt: "Torchlit stone stairwell descending past a glowing runestone" },
   { slug: "brickstorm", title: "Brickstorm", era: "Arcade", alt: "Ball smashing through a wall of bricks" },
   { slug: "rockbuster", title: "Rockbuster", era: "Arcade", alt: "Spaceship drifting among tumbling asteroids" },
   { slug: "boulder-rush", title: "Boulder Rush", era: "DOS", alt: "Miner digging tunnels past boulders and gems" },

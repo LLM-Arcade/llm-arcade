@@ -10,15 +10,17 @@ and Google OAuth origins use it.
 
 ## Current state
 
-**Phase 4 complete; Phase 6 started (session 11, user-directed: games before
-chat).** First Track-A cabinet shipped: **Munch Maze** (`src/games/munch-maze/`),
-published with 7 seeded achievements. The Phase-4 pipeline test with a second
-account was explicitly skipped (user decision) — the upload wizard/admin queue
-remain untested with real traffic. Site still gated
-(`site_settings.launched = false`, guests → Landing, signed-in → Arcade Home
-+ preview banner). **1 account (the admin), 2 published cabinets (Flap Hero
-Track B, Munch Maze Track A). Munch Maze has NOT been playtested by a human
-yet.**
+**Phase 4 complete; Phase 6 in progress (sessions 11–12, user-directed:
+games before chat).** Shipped so far: **Munch Maze** (Track A,
+`src/games/munch-maze/`, 7 achievements), **Rune & Ruin** (Track A,
+`src/games/rune-ruin/`, 8 achievements), **Trailbound** (Track B,
+`public/games/trailbound.html`, 7 achievements) — all published. The
+Phase-4 pipeline test with a second account was explicitly skipped (user
+decision) — the upload wizard/admin queue remain untested with real
+traffic. Site still gated (`site_settings.launched = false`, guests →
+Landing, signed-in → Arcade Home + preview banner). **1 account (the
+admin), 4 published cabinets. The three session-11/12 cabinets have NOT
+been playtested by a human yet.**
 
 | Route | Page | Notes |
 |---|---|---|
@@ -93,6 +95,48 @@ by the engine MUST match the seeded `achievements` rows: `first-maze`,
 `full-course`, `untouchable`, `ghost-hunter`, `seed-baron`, `deep-runner`,
 `maze-legend`.
 
+## Rune & Ruin (Track A, the Text & Originals shelf)
+
+`src/games/rune-ruin/` — classic-Rogue homage, **rendered as a real
+character grid** (JetBrains Mono spans in the DOM — typography, not canvas;
+this is the house style for text-shelf games and sits cleanly inside the
+no-programmatic-art rule). Turn-based: the shell calls
+`engine.playerAct()` per input and drains the same event-queue contract as
+Munch Maze — no rAF loop.
+
+- `dungeon.ts` — 40×22 procgen (scattered rooms + L-corridors + one loop),
+  Bresenham LOS, radius-7.5 FOV with remembered-tile dimming.
+- `content.ts` — 9-monster bestiary (depth-banded, traits: slow/fast/
+  erratic), 5 weapons / 4 armors, the board palette (warm terminal, no blue).
+- `engine.ts` — bump combat, XP levels (×1.7 curve), auto-equip gear,
+  bitterroot tonics (Q), gold/runes, staggered monster wake (LOS + radius 8),
+  regen 1 HP/10 turns, score = descents + kills·3xp + gold + runes·150,
+  cap 200k. Death fires `gameover` → GamePlayer's own RUN OVER panel handles
+  restart (no in-game restart flow needed for turn-based cabinets).
+- `RuneRuin.tsx` — ResizeObserver-fitted glyph grid, HUD (HP bar, tonic
+  button), 3-line message log with tones, touch D-pad with hold-repeat
+  (`pointer: coarse` only), vi keys supported, 80 ms input throttle so held
+  keys walk instead of sprint.
+
+Achievement slugs (must match seeded rows): `first-blood`, `delver`,
+`deep-delver`, `abyss-walker`, `rune-keeper`, `slayer`, `hoarder`,
+`golem-breaker`. Key art: `public/assets/games/rune-ruin.png`.
+
+## Trailbound (Track B, dev-hosted like Flap Hero)
+
+`public/games/trailbound.html` — Oregon Trail homage, single 4.48 MB file
+(under the 5 MB cap), **fully original geography** (Split Creek → Golden
+Valley, 1,120 mi; invented forts/rivers — zero MECC IP). Day-tick travel
+loop (640 ms auto-days), pace × rations × weather, 5-member party HP,
+choice-modal events, fort trading, depth-based river fords, stop-the-marker
+hunt. Survivor score = survivors·500 + health·2 + supplies + speed bonus
+(party wipe → miles·2), cap 10k. Journey panorama pans with trail progress;
+wagon sprite is magenta-keyed at runtime (data URIs aren't origin-tainted
+in the sandbox). Achievement slugs: `wheels-west`, `halfway-there`,
+`river-runner`, `sharp-eye`, `golden-valley`, `swift-wheels`,
+`no-one-left`. Balance knobs: PACES/RATIONS/LANDMARKS/event weights at the
+top of the `<script>`.
+
 ## The progression engine (Phase 3, unchanged)
 
 Client never writes progression tables — SECURITY DEFINER functions +
@@ -161,15 +205,17 @@ URIs (sandbox can't read external images back).
 
 ## Next up
 
-1. **Playtest Munch Maze** — feel check (speeds, fright duration, collision
-   forgiveness are all constants at the top of `engine.ts`), verify sprite
-   sheets sliced cleanly (if a frame looks clipped, regenerate the sheet
-   with clearer spacing — slicing falls back to equal columns), confirm
-   achievements unlock and the score submits.
-2. **More Phase 6 games** (user-directed priority): Track-A order per spec —
-   Rune & Ruin → Hyper Circuit → Starfall Squadron → Run 'n Gunner →
-   flagship trio last. Reuse the Munch Maze patterns (engine class + event
-   queue + sprite pipeline). Track-B briefs can be dispatched through the
+1. **Playtest the three new cabinets** (all desk-checked only). Munch Maze:
+   speed/fright constants top of its `engine.ts`; watch sprite-sheet
+   slicing. Rune & Ruin: Tuning block in its `engine.ts` + `content.ts`;
+   verify the glyph grid fits small screens. Trailbound: PACES/RATIONS/
+   event weights in its `<script>`; verify panorama pan + wagon keying,
+   fort/river/hunt flows, score on arrival AND on party wipe.
+2. **More Phase 6 games** (user-directed priority): remaining Track-A order —
+   Hyper Circuit (Mode-7-style showpiece) → Starfall Squadron →
+   Run 'n Gunner → flagship trio last. Sprite games follow Munch Maze;
+   text-shelf follows Rune & Ruin; self-contained Track-B follows
+   Trailbound/Flap Hero. Track-B briefs can also be dispatched through the
    real wizard anytime.
 3. **Phase 5 — Chat** (deferred behind games by user decision, session 11).
 4. **Phase 7 — flip `launched`** (button exists in `/admin` → Site).
@@ -216,6 +262,21 @@ Founding Player badges, in-browser thumbnail cropping.
   gap-based with equal-column fallback. Transforms (rotate/mirror/fade/
   scale) of generated sprites are fine; *drawing* shapes is not. Eaten
   ghosts respawn via fade instead of "eyes" for exactly that reason.
+- **Text-shelf games render with typography** (session 12 precedent:
+  Rune & Ruin). A DOM glyph grid in JetBrains Mono is fonts, not drawn
+  art — the no-programmatic-art rule targets canvas/SVG shape-drawing.
+  ASCIIBURG and The Undervault should follow this pattern. Each game still
+  needs generated *key art* at `public/assets/games/<slug>.png`.
+- Turn-based Track-A cabinets don't need an in-game restart: fire
+  `onScore` on death and let GamePlayer's RUN OVER panel remount the
+  component (its `key={frameKey}` gives a fresh engine).
+- **`games.era` is CHECK-constrained** — allowed values: Arcade, Atari,
+  NES, SNES, Genesis, Amiga, DOS, PS1, Mobile, Original (no "Amiga/DOS").
+- **Teaser rows already exist** (`status='coming_soon'`) for launch-lineup
+  games, with lineup entries in `src/data/launch-lineup.ts` and key-art
+  slots in `public/assets/games/`. When shipping a catalog game: UPDATE
+  the games row (INSERT hits the slug unique key), check the lineup file
+  before adding, and overwriting the teaser art is expected.
 - Munch Maze scoring: ~15k max/maze early (158 seeds ·10 + 4 acorns ·50 +
   full combos 12k + berries). `seed-baron` 10k / `maze-legend` 30k tuned to
   that — retune both if the economy changes. Score cap 500k.

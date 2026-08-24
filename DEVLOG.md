@@ -409,3 +409,54 @@ live at the top of `engine.ts`; watch for sprite-sheet slicing artifacts —
 regenerate sheets with clearer spacing if frames clip). Then keep shipping
 Phase 6 games (Rune & Ruin next per spec order) and circle back to the
 pipeline test + Phase 5 chat eventually.
+
+## Session 12 — Two more cabinets: Rune & Ruin ⚔ and Trailbound 🐂
+
+**Shipped #2: Rune & Ruin** (`src/games/rune-ruin/`, Track A, 8 seeded
+achievements) — the classic-Rogue homage and the **precedent for the whole
+Text & Originals shelf**: the board is a real DOM character grid (JetBrains
+Mono spans), *typography, not canvas* — fonts are not programmatic art, so
+the no-drawn-art rule stays intact with zero sprites needed.
+
+- 40×22 procgen floors (rooms + L-corridors + one loop), Bresenham LOS,
+  radius-7.5 FOV with remembered-tile dimming.
+- Turn-based engine, same event-queue contract as Munch Maze but **no rAF
+  loop** — the shell runs one engine turn per input. 9-monster depth-banded
+  bestiary (slow/fast/erratic traits), bump combat, ×1.7 XP curve,
+  auto-equip gear, tonics, 1 HP/10-turn regen.
+- Discovery: turn-based cabinets need no in-game restart — fire `onScore`
+  on death and GamePlayer's RUN OVER panel remounts a fresh engine.
+- Vi keys + 80 ms input throttle (held keys walk, don't sprint); touch
+  D-pad with hold-repeat on `pointer: coarse` only.
+
+**Shipped #3: Trailbound** (`public/games/trailbound.html`, **Track B** per
+the catalog — first Track-B cabinet since Flap Hero, dev-hosted). Oregon
+Trail homage with fully original geography (Split Creek → Golden Valley,
+1,120 mi — zero MECC names/assets, invented forts & rivers).
+
+- Day-tick travel loop (640 ms auto-days while "SET OUT"), pace × rations ×
+  weather math, region-based weather (mountains after mile 640), party of
+  five with per-member HP.
+- Choice-modal events (trail fever/axle/riders = decisions; berries/
+  salvage/snakes = flavor), fort trading posts, river crossings
+  (ford-risk-by-depth / ferry / wait-for-lower-water), and a
+  stop-the-marker hunt minigame (perfect center = `sharp-eye`).
+- Survivor score: survivors·500 + health·2 + supplies + speed bonus; total
+  party death submits miles·2 instead. Cap 10k.
+- Art: journey panorama that **pans with trail progress** (whole 1,120 mi
+  mapped across one generated landscape) + magenta-keyed wagon sprite
+  (chroma-keyed at runtime — data URIs aren't origin-tainted even in the
+  sandbox, the documented trick). Final file 4.48 MB, under the 5 MB cap.
+- Gotcha hit: `games.era` is CHECK-constrained (no "Amiga/DOS" combo —
+  it's `Amiga` or `DOS`), and **teaser rows already exist as
+  `coming_soon`** for lineup games (Trailbound's row, lineup entry, and key
+  art slot all pre-existed) — UPDATE, don't INSERT, and check
+  `launch-lineup.ts` before adding entries.
+
+**State for session 13:** THREE unplaytested cabinets now (Munch Maze,
+Rune & Ruin, Trailbound) — a feel-check pass is overdue before the pile
+grows. Balance knobs: Munch Maze top of `engine.ts`, Rune & Ruin Tuning
+block + `content.ts`, Trailbound's PACES/RATIONS/event weights near the top
+of its `<script>`. Then more Phase 6 (spec order: Hyper Circuit → Starfall
+→ Run 'n Gunner → flagship trio; more Track-B catalog picks fair game too).
+Pipeline live-test + Phase 5 chat still deferred.
