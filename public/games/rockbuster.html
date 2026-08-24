@@ -293,6 +293,7 @@ function killShip() {
   burst(ship.x, ship.y, 18, 4);
   boom(3);
   setThrustSound(false);
+  setSaucerSound(false);
   lives--;
   if (lives <= 0) {
     mode = "gameover"; gameOverTimer = 0;
@@ -370,13 +371,19 @@ window.addEventListener("keyup", (e) => { const k = keymap[e.code]; if (k) input
 
 document.querySelectorAll(".pad").forEach((el) => {
   const btn = el.dataset.btn;
+  const active = new Set();
   const down = (e) => {
     e.preventDefault(); audio();
     if (mode === "attract" || mode === "gameover") { startRun(); return; }
     if (paused) return;
+    active.add(e.pointerId);
     if (btn === "hyper") hyperspace(); else input[btn] = true;
   };
-  const up = (e) => { e.preventDefault(); if (btn !== "hyper") input[btn] = false; };
+  const up = (e) => {
+    e.preventDefault();
+    active.delete(e.pointerId);
+    if (btn !== "hyper" && active.size === 0) input[btn] = false;
+  };
   el.addEventListener("pointerdown", down);
   el.addEventListener("pointerup", up);
   el.addEventListener("pointercancel", up);

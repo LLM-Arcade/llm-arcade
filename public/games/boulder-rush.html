@@ -465,20 +465,26 @@ window.addEventListener("keyup", (e) => {
 
 document.querySelectorAll(".pad[data-dir]").forEach((el) => {
   const d = Number(el.dataset.dir);
+  const active = new Set();
   const down = (e) => {
     e.preventDefault(); audio();
     if (mode === "attract" || mode === "gameover") { startRun(); return; }
-    if (!paused) holdDir(d);
+    if (!paused) { active.add(e.pointerId); holdDir(d); }
   };
-  const up = (e) => { e.preventDefault(); dropDir(d); };
+  const up = (e) => {
+    e.preventDefault();
+    active.delete(e.pointerId);
+    if (active.size === 0) dropDir(d);
+  };
   el.addEventListener("pointerdown", down);
   el.addEventListener("pointerup", up);
   el.addEventListener("pointercancel", up);
   el.addEventListener("pointerleave", up);
 });
 const grabpad = document.getElementById("grabpad");
-const grabDown = (e) => { e.preventDefault(); audio(); input.grab = true; };
-const grabUp = (e) => { e.preventDefault(); input.grab = false; };
+const grabActive = new Set();
+const grabDown = (e) => { e.preventDefault(); audio(); grabActive.add(e.pointerId); input.grab = true; };
+const grabUp = (e) => { e.preventDefault(); grabActive.delete(e.pointerId); if (grabActive.size === 0) input.grab = false; };
 grabpad.addEventListener("pointerdown", grabDown);
 grabpad.addEventListener("pointerup", grabUp);
 grabpad.addEventListener("pointercancel", grabUp);

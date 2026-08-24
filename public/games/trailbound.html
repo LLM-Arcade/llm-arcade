@@ -793,6 +793,11 @@ $("btnHunt").onclick = () => { if (!S.over && !S.traveling && !modalOpen()) hunt
 $("btnTrade").onclick = () => { if (S.atFort && !S.over && !modalOpen()) tradeModal(); };
 $("mute").onclick = () => { muted = !muted; $("mute").textContent = muted ? "SOUND OFF" : "SOUND ON"; };
 
+// A hidden tab must not keep burning trail days: a run could end unseen.
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden && S.traveling && !S.over) halt();
+});
+
 window.addEventListener("keydown", (e) => {
   if (e.code === "Space") {
     e.preventDefault();
