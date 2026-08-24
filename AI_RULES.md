@@ -26,6 +26,14 @@ read these three docs:
 - ❌ **NO programmatic canvas/SVG art inside games** — in-game sprites must be
   real generated assets too (pipeline recipe in `HANDOFF.md`, incl. the
   magenta-key + data-URI trick for transparency in sandboxed iframes).
+- ✅ **Asset diet (user-mandated, session 13):** in-game art must be LIGHT.
+  Prompt for **flat solid colors, NO paper grain / noise / gradients** on
+  in-game sprites (noise is what bloats PNGs — grain stays allowed on
+  key-art tiles only), few small sheets over many files, flat-color
+  backgrounds from design tokens, sprite instancing/transforms over extra
+  frames. Target well under ~1 MB of art per game; avoid multi-MB
+  data-URI payloads like Trailbound's (4.5 MB — grandfathered, don't
+  repeat it).
 
 ## Naming conventions
 

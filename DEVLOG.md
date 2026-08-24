@@ -460,3 +460,45 @@ block + `content.ts`, Trailbound's PACES/RATIONS/event weights near the top
 of its `<script>`. Then more Phase 6 (spec order: Hyper Circuit → Starfall
 → Run 'n Gunner → flagship trio; more Track-B catalog picks fair game too).
 Pipeline live-test + Phase 5 chat still deferred.
+
+## Session 13 — Starfall Squadron 🚀 + the asset diet
+
+**User mandates (both recorded in AI_RULES):**
+1. **Game queue reordered:** Starfall Squadron → Rockbuster → Boulder Rush
+   → Hyper Circuit (overrides the spec's Hyper-Circuit-first order).
+2. **Asset diet:** 4–5 MB per game is too heavy for the web. In-game art
+   must be light — the fix that actually works with our PNG-only generator
+   is prompting for **flat solid colors with NO paper grain/noise/
+   gradients** (noise is what defeats PNG compression). Starfall's two
+   sheets landed at **1.18 MB total** vs Munch Maze's 4.3 MB and
+   Trailbound's 4.5 MB inline payload. Grain stays on key-art tiles only.
+
+**Shipped #4: Starfall Squadron** (`src/games/starfall-squadron/`, Track A,
+Arcade shelf, 7 achievements) — the Galaga homage and the second sprite-
+pipeline cabinet.
+
+- 40-enemy formation (4 captors / 16 warriors / 20 drones) with global
+  sway + breathe; staggered bezier entries that blend into live slot
+  positions over the last 18% of the path.
+- Dive scheduler scales with wave (interval 2.1s→0.55s, 1→4 simultaneous
+  divers); divers fire aimed shots at path thresholds; challenge waves
+  every 4th (3 trains × 8, no return fire, perfect = +3000).
+- **The capture mechanic:** captors beam-dive to mid-screen, tractor cone
+  pulses, caught fighter tweens up and docks on the captor. Kill that
+  captor *mid-dive* → the fighter glides back down and docks → dual
+  fighter (4 shots, wider hitbox). Kill it in formation → fighter lost.
+  Beam hit while dual just strips the dual (generous on purpose).
+- Kill chains (<1.3 s apart): ×2 points at 5, ×3 at 10 — feeds Hot Streak /
+  Unbroken achievements.
+- Two sheets only (ships.png 730 KB, fx.png 447 KB), sliced by the reused
+  Munch Maze gap-slicer. Starfield = instanced star sparkle sprite at
+  varied scale/alpha (transforms, not drawn dots). Beam cone = generated
+  sprite stretched to the player row with pulsing alpha.
+- Engine detail: wave-clear breather runs on engine time, not
+  `setTimeout` — pause-safe.
+
+**State for session 14:** FOUR unplaytested cabinets (add Starfall).
+Queue next: **Rockbuster** (B, Arcade, Asteroids homage) → Boulder Rush
+(B, DOS) → Hyper Circuit (A, SNES, Mode-7 showpiece). Track-B builds must
+respect the asset diet — flat sprites, small sheets, no fat panoramas.
+Pipeline live-test + Phase 5 chat still deferred.

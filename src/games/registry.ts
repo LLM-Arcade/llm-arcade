@@ -16,4 +16,5 @@ export const gameRegistry: Record<
 > = {
   "munch-maze": lazy(() => import("./munch-maze/MunchMaze")),
   "rune-ruin": lazy(() => import("./rune-ruin/RuneRuin")),
+  "starfall-squadron": lazy(() => import("./starfall-squadron/StarfallSquadron")),
 };

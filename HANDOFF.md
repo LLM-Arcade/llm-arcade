@@ -10,17 +10,24 @@ and Google OAuth origins use it.
 
 ## Current state
 
-**Phase 4 complete; Phase 6 in progress (sessions 11–12, user-directed:
-games before chat).** Shipped so far: **Munch Maze** (Track A,
-`src/games/munch-maze/`, 7 achievements), **Rune & Ruin** (Track A,
-`src/games/rune-ruin/`, 8 achievements), **Trailbound** (Track B,
-`public/games/trailbound.html`, 7 achievements) — all published. The
-Phase-4 pipeline test with a second account was explicitly skipped (user
-decision) — the upload wizard/admin queue remain untested with real
-traffic. Site still gated (`site_settings.launched = false`, guests →
-Landing, signed-in → Arcade Home + preview banner). **1 account (the
-admin), 4 published cabinets. The three session-11/12 cabinets have NOT
-been playtested by a human yet.**
+**Phase 4 complete; Phase 6 in progress (sessions 11–13, user-directed:
+games before chat).** Shipped so far: **Munch Maze** (A,
+`src/games/munch-maze/`, 7 ach), **Rune & Ruin** (A, `src/games/rune-ruin/`,
+8 ach), **Trailbound** (B, `public/games/trailbound.html`, 7 ach),
+**Starfall Squadron** (A, `src/games/starfall-squadron/`, 7 ach) — all
+published. **User-set queue for the next builds: Rockbuster (B) →
+Boulder Rush (B) → Hyper Circuit (A).** The Phase-4 pipeline test with a
+second account was explicitly skipped (user decision) — the upload
+wizard/admin queue remain untested with real traffic. Site still gated
+(`site_settings.launched = false`, guests → Landing, signed-in → Arcade
+Home + preview banner). **1 account (the admin), 5 published cabinets. The
+four session-11/12/13 cabinets have NOT been playtested by a human yet.**
+
+**⚖️ Asset diet (user-mandated, session 13 — see AI_RULES):** in-game art
+must be light. Prompt sprites as **flat solid color, NO grain/noise/
+gradients** (grain is what bloats PNGs — key-art tiles only), few small
+sheets, flat-color backgrounds, instancing over extra frames. Starfall
+proof: 1.18 MB total vs Munch Maze 4.3 MB / Trailbound 4.5 MB.
 
 | Route | Page | Notes |
 |---|---|---|
@@ -137,6 +144,24 @@ in the sandbox). Achievement slugs: `wheels-west`, `halfway-there`,
 `no-one-left`. Balance knobs: PACES/RATIONS/LANDMARKS/event weights at the
 top of the `<script>`.
 
+## Starfall Squadron (Track A, Arcade shelf)
+
+`src/games/starfall-squadron/` — Galaga homage, second sprite-pipeline
+cabinet, registered lazy in the registry. Portrait 360×560 logical canvas.
+`engine.ts`: 40-enemy formation (sway + breathe), bezier entries/dives,
+dive scheduler scaling by wave, aimed diver shots, challenge waves every
+4th (perfect = +3000), kill chains (×2 at 5, ×3 at 10), extra ship at 30k.
+**Capture loop:** captor beam-dives → tractor cone → captured fighter rides
+the captor; kill it MID-DIVE to rescue → dual fighter; kill it in
+formation → fighter lost. `sprites.ts` is the Munch Maze gap-slicer
+pointed at two flat sheets (`public/assets/games/starfall-squadron/
+{ships,fx}.png`, 1.18 MB total — the asset-diet reference). Starfield and
+beam are instanced/stretched generated sprites. Wave breather runs on
+engine time (pause-safe, no setTimeout). Achievement slugs: `first-sortie`,
+`hot-streak`, `unbroken`, `wingmate`, `perfect-volley`, `squadron-leader`,
+`star-ace`. Balance knobs: difficulty getters (`diveInterval`, `maxDivers`,
+`enemyShotSpeed`) + POINTS/RADII at the top of `engine.ts`.
+
 ## The progression engine (Phase 3, unchanged)
 
 Client never writes progression tables — SECURITY DEFINER functions +
@@ -205,18 +230,20 @@ URIs (sandbox can't read external images back).
 
 ## Next up
 
-1. **Playtest the three new cabinets** (all desk-checked only). Munch Maze:
+1. **Playtest the four new cabinets** (all desk-checked only). Munch Maze:
    speed/fright constants top of its `engine.ts`; watch sprite-sheet
    slicing. Rune & Ruin: Tuning block in its `engine.ts` + `content.ts`;
    verify the glyph grid fits small screens. Trailbound: PACES/RATIONS/
    event weights in its `<script>`; verify panorama pan + wagon keying,
-   fort/river/hunt flows, score on arrival AND on party wipe.
-2. **More Phase 6 games** (user-directed priority): remaining Track-A order —
-   Hyper Circuit (Mode-7-style showpiece) → Starfall Squadron →
-   Run 'n Gunner → flagship trio last. Sprite games follow Munch Maze;
-   text-shelf follows Rune & Ruin; self-contained Track-B follows
-   Trailbound/Flap Hero. Track-B briefs can also be dispatched through the
-   real wizard anytime.
+   fort/river/hunt flows, score on arrival AND on party wipe. Starfall:
+   verify both sheets sliced into 4 + 5 frames (fallback = equal columns
+   shows clipped sprites), beam capture + rescue flow, touch drag.
+2. **The user's game queue (session 13): Rockbuster → Boulder Rush →
+   Hyper Circuit**, then Run 'n Gunner → flagship trio. Sprite games follow
+   Munch Maze/Starfall; text-shelf follows Rune & Ruin; self-contained
+   Track-B follows Trailbound/Flap Hero **but on the asset diet** (flat
+   sprites, small sheets — no fat panoramas). Track-B briefs can also be
+   dispatched through the real wizard anytime.
 3. **Phase 5 — Chat** (deferred behind games by user decision, session 11).
 4. **Phase 7 — flip `launched`** (button exists in `/admin` → Site).
 5. (Whenever convenient) run one Track-B submission through the upload
