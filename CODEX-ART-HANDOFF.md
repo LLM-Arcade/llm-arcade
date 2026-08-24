@@ -112,13 +112,41 @@ in `src/games/hyper-circuit/sprites.ts` and `track-texture.ts`.
    regressed. Screenshot each game mid-play.
 5. Report total art bytes per game against the 1 MB budget.
 6. Commit atomically, one commit per cabinet ("Real art for Hyper
-   Circuit", "Real art for Run 'n Gunner"). Push is allowed once green.
+   Circuit", "Real art for Run 'n Gunner"), and push once green.
+
+## The art bar
+
+Good and fitting beats done. Every sheet must sit in the same visual
+family as the existing key-art tiles in `public/assets/games/` and the
+site's warm editorial look. After integrating, look at the game
+running and judge it: if a sprite reads as clipart, clashes with the
+palette, or breaks the game's mood, regenerate it. Iterating on a
+prompt is cheap. Shipping art that looks pasted-in is the only failure
+mode here.
+
+## Publish each cabinet when its art passes
+
+Publishing is YOUR step, per cabinet, immediately after that cabinet's
+proof passes. For each game, in order:
+
+1. Push and confirm the CI run is green and the Vercel deploy is
+   serving the new art (load the game's page on `llmarcade.fun`).
+2. Run the one-line script for that game against the Supabase project
+   (`db/publish-hyper-circuit.sql` or `db/publish-run-n-gunner.sql`),
+   through the Supabase dashboard SQL editor in your browser or any
+   database access your harness has. The project is
+   `afcqhievsmnepxopetkt` ("Arcadetown").
+3. Verify live: play the game as a guest at
+   `https://llmarcade.fun/game/<slug>`, confirm it boots, sprites key
+   cleanly, and a run reaches game over. Screenshot it.
+
+`/game/:slug` is open pre-launch, so the game is publicly playable the
+moment the row flips.
 
 ## Out of scope
 
-Do not touch the database or `db/*.sql`, do not flip any game status
-(publishing is a separate human step), do not edit
-`src/components/ui/`, and do not change gameplay or balance values.
-Trailbound's extra scene art (forts, rivers, hunt, arrival) is a welcome
-follow-up pass with the same rules, but only after both cabinets above
-are done.
+Do not change gameplay or balance values (the human does edge-case
+fixes after playing), do not edit `src/components/ui/`, and do not
+touch database rows beyond the two publish scripts. Trailbound's extra
+scene art (forts, rivers, hunt, arrival) is a welcome follow-up pass
+with the same rules, but only after both cabinets above are published.
