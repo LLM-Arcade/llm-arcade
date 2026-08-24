@@ -76,7 +76,7 @@ All tables RLS + explicit grants; `service_role` full access everywhere.
 
 | Table | Access | Purpose |
 |---|---|---|
-| `profiles` | public SELECT; own UPDATE **(column grant: username/display_name/avatar_url/bio ONLY — re-verified this session after a regression, see Gotchas)** + streak/xp/level columns | signup trigger, first user → admin |
+| `profiles` | public SELECT; own UPDATE **(column grant: username/display_name/avatar_url/bio ONLY; leftover client INSERT grant revoked session 9 — see Gotchas)** + streak/xp/level columns | signup trigger, first user → admin |
 | `games`, `scores`, `ratings`, `favorites`, `comments`, `waitlist`, `playtest_applications`, `site_settings` | unchanged from Phase 2 | scores now fire the progression trigger |
 | `achievements` | public SELECT; writes service_role | per-game manifest defs (slug unique per game, xp, hint) — Flap Hero's 6 seeded |
 | `user_achievements` | public SELECT; **no client writes** (RPC only) | unlocks |
@@ -136,12 +136,15 @@ badges/weekly Spotlight prize, Warm Seat/Dynasty/Founding Player badges
 
 ## Gotchas
 
-- **`profiles` column-grant regression (fixed this session):** full-table
+- **`profiles` column-grant regression (fixed session 7):** full-table
   UPDATE had been granted to anon+authenticated, letting any user set their
   own `role/xp/level`. Now: REVOKE + column grant on the 4 safe columns.
-  **After any `ALTER TABLE profiles`, re-verify `information_schema.
-  column_privileges`.** `updated_at` is set by the `touch_updated_at`
-  trigger — clients must NOT include it in updates (permission denied).
+  Session 9 also revoked a leftover full-column INSERT grant (not
+  exploitable — no INSERT policy — but clients never insert profiles; the
+  signup trigger does). **After any `ALTER TABLE profiles`, re-verify
+  `information_schema.column_privileges`.** `updated_at` is set by the
+  `touch_updated_at` trigger — clients must NOT include it in updates
+  (permission denied).
 - The level curve lives in TWO places: `public.level_for_xp` and
   `src/lib/progression.ts`. Change both or rings/labels lie.
 - Streak days are **UTC** dates; daily/weekly boards remain rolling windows.

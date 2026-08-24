@@ -224,3 +224,32 @@ seeds `achievements` from manifests, Storage hosting for Track-B files,
 spotlight picker, score wipes, role grants, playtester approvals. Still zero
 accounts: first signup becomes admin and should playtest the full
 progression loop before building on top of it.
+
+## Session 9 — Pre-flight verification of the progression loop
+
+**Goal:** clear the runway for the first live playtest (HANDOFF next-step 1)
+by verifying everything server-side that can be verified without a human.
+
+**Verified green (SQL + code inspection):**
+- Data state: `launched=false`, 0 accounts (next signup → admin, confirmed
+  in `handle_new_user` source), 0 scores/unlocks/activity — clean slate.
+- Seeds: 7 badges, Flap Hero published (`score_cap` 1000) with its 6
+  manifest achievements; slugs in `public/games/flap-hero.html` match the
+  seeded rows exactly (checked via file scan — grep false-negatives on the
+  1.7 MB data-URI lines, don't trust it for that file).
+- Wiring: `GamePlayer` routes `onAchievement` → `unlock_achievement` RPC
+  (signed-in only) and invalidates profile/activity/ticker queries on score
+  submit.
+- Engine plumbing: all 4 triggers present (`on_score_progression`,
+  `on_role_badges`, `on_profiles_touch`, `on_auth_user_created`); EXECUTE
+  correctly revoked on `grant_xp`/`award_badge`, `unlock_achievement`
+  authenticated-only; RLS enabled on all 16 public tables.
+
+**One fix:** `anon`+`authenticated` still held a leftover **full-column
+INSERT grant on `profiles`** (incl. role/xp/level) from before the session-7
+column-grant fix. Not exploitable today (profiles has no INSERT policy), but
+clients never insert profiles — revoked. Grants now: SELECT all columns,
+UPDATE on the 4 safe columns only, no INSERT.
+
+**Next:** the human playtest itself (sign up → play → score/XP/streak →
+toasts → badges → feed → profile → ticker), then Phase 4.
