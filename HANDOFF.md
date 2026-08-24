@@ -10,6 +10,16 @@ and Google OAuth origins use it.
 
 ## Current state
 
+**Local art and game-development handoff (session 20):**
+`feature/catalog-art-local` contains uncommitted replacement art for Hyper
+Circuit, Run 'n Gunner, and Trailbound plus wire-ready packs for Brickstorm,
+Gem Columns, Sky Defense, Kickflip City, and The Undervault. All eight scoped
+games pass the 1 MiB art gate. The two deterministic cabinet harnesses,
+Trailbound browser and asset probes, and full `pnpm run ci` gate are green.
+Nothing from this local branch has been pushed,
+merged, deployed, or published. `GAME-DEVELOPMENT-HANDOFF.md` defines the
+one-game worktree procedure and starts implementation with Brickstorm.
+
 **Branch and release contract (session 19):** `dev` is the default
 integration branch, `prod` is the only production release branch, and
 legacy `main` is frozen. Cabinet work uses one
@@ -429,7 +439,12 @@ URIs (sandbox can't read external images back).
 
 ## Next up
 
-1. **Playtest the six new cabinets** (all desk-checked only). Munch Maze:
+1. **Build the five art-ready cabinets one at a time.** Follow
+   `GAME-DEVELOPMENT-HANDOFF.md`. Start Brickstorm on
+   `feature/brickstorm-game` from `origin/dev` in a sibling worktree. Copy only
+   Brickstorm's finished art. Stop before remote Git, deployment, or Supabase
+   writes until Jeff approves the local cabinet.
+2. **Playtest the six earlier cabinets** (all desk-checked only). Munch Maze:
    speed/fright constants top of its `engine.ts`; watch sprite-sheet
    slicing. Rune & Ruin: Tuning block in its `engine.ts` + `content.ts`;
    verify the glyph grid fits small screens. Trailbound: PACES/RATIONS/
@@ -443,14 +458,14 @@ URIs (sandbox can't read external images back).
    verify sheets slice into 5 + 6 frames, falling/rolling feel (tick
    0.125s), push chance, cave solvability across regenerations, quota/time
    curve, touch D-pad + GRAB; `TUNE` knobs at the top of its `<script>`.
-2. **The user's game queue: the flagship trio.** Sprite games follow Munch Maze/Starfall;
+3. **The user's later game queue: the flagship trio.** Sprite games follow Munch Maze/Starfall;
    text-shelf follows Rune & Ruin; self-contained Track-B follows
    Rockbuster **on the asset diet** (flat sprites, small sheets inlined
    as data URIs — no fat panoramas). Track-B briefs can also be
    dispatched through the real wizard anytime.
-3. **Phase 5 — Chat** (deferred behind games by user decision, session 11).
-4. **Phase 7 — flip `launched`** (button exists in `/admin` → Site).
-5. (Whenever convenient) run one Track-B submission through the upload
+4. **Phase 5 — Chat** (deferred behind games by user decision, session 11).
+5. **Phase 7 — flip `launched`** (button exists in `/admin` → Site).
+6. (Whenever convenient) run one Track-B submission through the upload
    pipeline end-to-end — it's still untested with real traffic.
 
 **Deferred:** avatar upload, `ARCADE_SAVE/LOAD` persistence, friend filter +

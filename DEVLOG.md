@@ -794,3 +794,18 @@ until the user signs in on llmarcade.fun in the driven browser.
   brings in-game art to 12,955 bytes and total cabinet art to 333,039 bytes,
   31.76% of the 1 MiB budget. No engine, stage, collision, score, or balance
   code changed.
+
+## Session 20: Game development handoff
+
+- Added `GAME-DEVELOPMENT-HANDOFF.md` for the five catalog games whose full art
+  packs now exist: Brickstorm, Gem Columns, Sky Defense, Kickflip City, and The
+  Undervault. The document fixes the build order, Track A architecture, exact
+  asset contracts, controls, core loops, harness requirements, SQL deliverables,
+  browser proof, and release gates.
+- Preserved branch discipline around the dirty local art lab. The gameplay owner
+  starts each `feature/<slug>-game` branch from `origin/dev` in a sibling
+  worktree and copies only that game's finished assets. The first target is
+  Brickstorm. No gameplay belongs on `feature/catalog-art-local`.
+- Kept remote Git, Vercel, and Supabase work behind Jeff's local approval. The
+  pickup prompt stops before commit, push, PR, merge, deployment, or database
+  writes and requests one next approval gate.

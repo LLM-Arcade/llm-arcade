@@ -75,28 +75,33 @@ what `src/games/run-n-gunner/sprites.ts` slices.
 Files go to `public/assets/games/hyper-circuit/`. Match the load sites
 in `src/games/hyper-circuit/sprites.ts` and `track-texture.ts`.
 
-1. `ships.png`: "Flat vector sprite sheet, 5 frames in a horizontal row
-   on solid magenta #FF00FF: five small top-down anti-gravity racing
-   craft seen from behind at a slight overhead angle, one cream-and-
-   terracotta player craft plus four rival craft in olive, mustard,
-   rust, and ink, each a distinct silhouette, flat solid colors, no
-   gradients, no noise, no text." Adjust the frame count to what
-   `sprites.ts` slices.
-2. `fx.png`: "Flat vector sprite sheet, 4 frames in a horizontal row on
+1. Five directional car sheets, one per driver. Each is a 5-column by
+   2-row grid on solid magenta #FF00FF: authored hard-left, left,
+   straight, right, and hard-right rear-quarter street-car views in the
+   first row, with matching suspension/wheel motion poses in the second.
+   The player is a terracotta touring car; rivals are an olive rally
+   coupe, mustard muscle car, cream endurance coupe, and ink boxy tuner.
+   Every frame visibly has road tires, windows, rear bumper, and
+   taillights, with the same tire-contact anchor. No spacecraft,
+   anti-gravity craft, wings, thrusters, front views, gradients, noise,
+   or text. The renderer selects the nearest authored steering view; it
+   does not rotate one straight sprite to fake a turn.
+2. `fx-road.png`: "Flat vector sprite sheet, 4 frames in a horizontal row on
    solid magenta #FF00FF: a boost flame teardrop, a small rail spark
    burst, a shield shimmer arc, a speed streak dash, warm cream amber
    and terracotta, flat solid colors, no gradients, no noise, no text."
 3. `terrain-scrub.png` (tileable, no magenta): "Flat vector seamless
    tile of sparse desert scrub on sun-baked flats, olive dots and dashes
    on warm sand, flat solid colors, no gradients, no noise, no text."
-4. Track stamps sheet `stamps.png` (magenta row): rail segment, start-
+4. Track stamps sheet `stamps-road.png` (magenta row): rail segment, start-
    line checker block, pit-pad glyph. "Flat vector sprite sheet, 3
    frames in a horizontal row on solid magenta #FF00FF: a short
    terracotta guard-rail segment bar, a two-tone cream and ink checker
    block, a rounded olive pit-pad arrow glyph, flat solid colors, no
    gradients, no noise, no text."
-5. Optional sky band replacing the flat haze fills in `render.ts` if it
-   reads better in play.
+5. Three course horizon bands: salt-flat street circuit, terracotta
+   canyon road, and basalt ridge road. Keep any baked road below the
+   visible horizon so it cannot overlap the Mode-7 track.
 
 ## Integration and proof
 
