@@ -10,6 +10,15 @@ and Google OAuth origins use it.
 
 ## Current state
 
+**Branch and release contract (session 19):** `dev` is the default
+integration branch, `prod` is the only production release branch, and
+legacy `main` is frozen. Cabinet work uses one
+`feature/<game>-<scope>` branch per game, opened from `dev`; CI must pass
+before PR merge to `dev`, and again on the `dev → prod` release PR.
+GitHub protection requires the `check` job and pull requests for admins too.
+The gate is `pnpm run ci` (lint, typecheck, build, Hyper Circuit harness,
+Run 'n Gunner harness). Full procedure: `docs/BRANCH-WORKFLOW.md`.
+
 **Phase 4 complete; Phase 6 in progress (sessions 11–18, user-directed:
 games before chat).** Shipped so far: **Munch Maze** (A,
 `src/games/munch-maze/`, 7 ach), **Rune & Ruin** (A, `src/games/rune-ruin/`,

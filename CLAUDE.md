@@ -30,18 +30,21 @@ pnpm build      # production build
 pnpm lint       # eslint
 pnpm typecheck  # tsc over app + node configs
 pnpm check      # the CI gate: lint + typecheck + build
+pnpm test:games # deterministic Hyper Circuit + Run 'n Gunner harnesses
+pnpm run ci     # protected gate: check + game harnesses
 ```
 
-CI runs locally. GitHub-hosted Actions don't run on this account, so the
-pre-push hook in `.githooks/` is the enforcement point. Enable it once per
-clone with `git config core.hooksPath .githooks`. The
-`.github/workflows/ci.yml` workflow mirrors `pnpm check` and activates if
-the repo ever moves to an org with working billing. Vercel builds and
-deploys on push (CD).
+GitHub Actions and the local pre-push hook both run `pnpm run ci`. Enable
+the hook once per clone with `git config core.hooksPath .githooks`.
+`dev`, `prod`, and legacy `main` are protected: changes require a pull
+request and the `check` job, including for admins. Feature branches start
+from `dev`; release PRs promote `dev` to `prod`. Vercel production deploys
+from `prod`. See `docs/BRANCH-WORKFLOW.md`.
 
-There is no test suite. Verification means running the app and playing the
-game. New cabinets are not done until a human playtest passes, and HANDOFF
-tracks which cabinets still need one.
+The deterministic cabinet harnesses are necessary but not sufficient.
+New or changed cabinets are not done until local browser play on
+`/dev/<slug>` passes without broken assets, clipping, console errors, or
+animation jank; release verification repeats the guest flow in production.
 
 ## Stack
 

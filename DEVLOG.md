@@ -732,3 +732,21 @@ until the user signs in on llmarcade.fun in the driven browser.
   live, deployed through Vercel, and was opened to guests with
   `db/publish-run-n-gunner.sql`; a fresh guest run reached game over on the
   production route and was screenshotted.
+
+## Session 19 — Protected dev/prod delivery workflow
+
+- Replaced direct-to-main delivery with a two-stage branch model: game
+  feature branches start from `dev` and merge by green PR; releases promote
+  `dev` to `prod` through a second green PR. Legacy `main` is frozen.
+- Expanded the single CI contract to `pnpm run ci`: lint, typecheck,
+  production build, Hyper Circuit harness, and Run 'n Gunner harness. The
+  local pre-push hook and GitHub Actions run the same command.
+- Added repeatable GitHub protection configuration with strict required
+  checks, pull-request-only changes, linear history, conversation
+  resolution, no force pushes/deletions, and admin enforcement. Vercel's
+  production branch is `prod`; preview deployments remain available for
+  feature and `dev` branches.
+- Visual acceptance is an explicit gate, not something CI can infer:
+  changed cabinets must be keyboard-played at `/dev/<slug>` and checked for
+  asset failures, frame clipping, sprite overlap, animation jank, console
+  errors, and palette cohesion before promotion.
