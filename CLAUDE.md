@@ -38,8 +38,9 @@ GitHub Actions and the local pre-push hook both run `pnpm run ci`. Enable
 the hook once per clone with `git config core.hooksPath .githooks`.
 `dev`, `prod`, and legacy `main` are protected: changes require a pull
 request and the `check` job, including for admins. Feature branches start
-from `dev`; release PRs promote `dev` to `prod`. Vercel production deploys
-from `prod`. See `docs/BRANCH-WORKFLOW.md`.
+from `dev`; release PRs promote `dev` to `prod`. Vercel must be configured
+to deploy production from `prod` before the first promotion; verify that
+setting rather than inferring it from GitHub. See `docs/BRANCH-WORKFLOW.md`.
 
 The deterministic cabinet harnesses are necessary but not sufficient.
 New or changed cabinets are not done until local browser play on

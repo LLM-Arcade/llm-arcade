@@ -2,7 +2,8 @@
 
 ## Branch roles
 
-- `prod` is the production source of truth and Vercel production branch.
+- `prod` is the production source of truth. Vercel must explicitly use it
+  as the production branch before any release promotion.
 - `dev` is the default integration branch. It should always be releasable.
 - `main` is a frozen legacy branch. Do not target new work at it.
 - `feature/<game>-<scope>` contains one cabinet's work and starts from `dev`.
@@ -29,11 +30,13 @@ to `dev`, `prod`, or `main`.
 
 ## Production promotion
 
-1. Open a release PR from `dev` to `prod`; do not add unrelated commits.
-2. Wait for the protected `check` job and inspect the Vercel preview.
-3. Merge the PR, wait for the production deployment, then play changed
+1. Confirm Vercel's project setting names `prod` as the production branch.
+   A GitHub default-branch change is not proof of this setting.
+2. Open a release PR from `dev` to `prod`; do not add unrelated commits.
+3. Wait for the protected `check` job and inspect the Vercel preview.
+4. Merge the PR, wait for the production deployment, then play changed
    public routes as a fresh guest and capture proof.
-4. Confirm `prod` is clean and the deployed commit matches the merged SHA.
+5. Confirm `prod` is clean and the deployed commit matches the merged SHA.
 
 Deterministic harnesses prove engine contracts. They do not prove feel,
 rendering, responsive fit, asset integrity, or animation quality; browser

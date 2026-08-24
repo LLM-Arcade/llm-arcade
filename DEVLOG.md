@@ -743,9 +743,10 @@ until the user signs in on llmarcade.fun in the driven browser.
   local pre-push hook and GitHub Actions run the same command.
 - Added repeatable GitHub protection configuration with strict required
   checks, pull-request-only changes, linear history, conversation
-  resolution, no force pushes/deletions, and admin enforcement. Vercel's
-  production branch is `prod`; preview deployments remain available for
-  feature and `dev` branches.
+  resolution, no force pushes/deletions, and admin enforcement. The target
+  Vercel production branch is `prod`, but that external setting remains a
+  release gate: the local Vercel session is logged out, and GitHub's
+  deployment records confirm Vercel still ignores `dev` and `prod` pushes.
 - Visual acceptance is an explicit gate, not something CI can infer:
   changed cabinets must be keyboard-played at `/dev/<slug>` and checked for
   asset failures, frame clipping, sprite overlap, animation jank, console
