@@ -10,7 +10,8 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit -p tsconfig.app.json && tsc --noEmit -p tsconfig.node.json",
     "check": "pnpm lint && pnpm typecheck && pnpm build",
-    "test:games": "node scripts/harness/hyper-circuit.mjs && node scripts/harness/run-n-gunner.mjs",
+    "test:games": "node scripts/harness/hyper-circuit.mjs && node scripts/harness/run-n-gunner.mjs && node scripts/harness/gem-columns.mjs",
+    "art:budget": "node scripts/art-budget.mjs",
     "ci": "pnpm check && pnpm test:games",
     "preview": "vite preview"
   },

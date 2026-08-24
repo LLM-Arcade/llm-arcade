@@ -794,3 +794,35 @@ until the user signs in on llmarcade.fun in the driven browser.
   brings in-game art to 12,955 bytes and total cabinet art to 333,039 bytes,
   31.76% of the 1 MiB budget. No engine, stage, collision, score, or balance
   code changed.
+
+## Session 21 — Gem Columns 💎 (Track A, falling-triad puzzle)
+
+- **Gem Columns** (A, `src/games/gem-columns/`, 7 ach): falling-triad puzzle
+  over the session-20 art pack. Three wells (Artisan Foundry, Conservatory,
+  Archaeological Archive), each drawing six of the ten authored gem
+  identities; matches run horizontal, vertical, and both diagonals with
+  cascades. One `Int8Array` grid (3 hidden spawn rows + 13 visible), every
+  rule a pure function (`simulateDrop`, `findMatches`, `applyGravity`) shared
+  verbatim by the harness ace bot, seeded PRNG, framework-free.
+- **Economy depth pass (review finding):** the first build's spread between a
+  bare finish (3,885 floor) and a perfect run (4,140) was 6 percent, which
+  flattens the leaderboard, and gem-legend at 3,500 fired below the victory
+  floor. Now chains pay x3 then x6, cells past three in one step earn +20
+  each, and each well pays a speed bonus of 8/s under a 90 s par capped at
+  600. Ace seed spread became 5,996 to 6,159 and gem-legend sits at 5,000:
+  finishing alone cannot reach it, speed and cascades can.
+- **Render polish from headless frames:** next-triad preview laid out
+  horizontally to match the authored three-slot frame, score digits in ink on
+  the cream plaque band, danger meter clamped at 0 FREE, and the falling
+  piece clipped to a 44 px well-mouth window so spawning gems no longer
+  float over the surround's crown art. The Brickstorm magenta despill is
+  ported; a full-canvas spill scan counts zero magenta-leaning pixels.
+- **Harness** `node scripts/harness/gem-columns.mjs` (in `test:games`):
+  greedy ace victory on six seeds via the engine's own `simulateDrop`,
+  stacker loss path, same-seed determinism, and staged proofs for diagonal
+  matches, overlap counted once plus the big-clear bonus, three-step cascade
+  multipliers, spawn blocking, danger-dancer, and the 60,000 cap.
+- Headless browser proof: assets 200, zero console errors, engine step plus
+  full draw 0.13 ms avg / 0.6 ms max, frames captured for all three wells.
+  Seed row era corrected to Genesis to match `launch-lineup.ts`. Human play
+  on `/dev/gem-columns` still pending approval. Seed/publish SQL not run.
