@@ -135,3 +135,13 @@ filter, board virtualization, mod deletion of comments.
   (raw JSON from the authorize endpoint — supabase-js builds the URL
   client-side, so no catchable pre-redirect error). Needs dashboard setup;
   email/password remains the working path.
+- **In-game art must be real generated assets, not programmatic canvas
+  shapes** (user: vector-drawn bird = "low quality"). Flap Hero now renders
+  4 AI-generated sprites: parallax valley backdrop, carved pillar texture
+  (cap = top 16% of the texture, mirrored for the top pipe), scrolling
+  ground strip, and the bird. The bird is generated on solid magenta,
+  inlined as a data URI (1.3 MB → 1.7 MB HTML, under the 5 MB Track-B cap)
+  and chroma-keyed + trimmed at runtime — data URIs dodge canvas tainting
+  inside the opaque-origin sandbox, where URL-loaded images can't be read
+  back. Vector drawing kept only as a silent fallback. This is now part of
+  the Track-B agent brief: ship real art, inline anything needing pixel work.

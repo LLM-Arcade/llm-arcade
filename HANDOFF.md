@@ -85,7 +85,11 @@ src/
   data/launch-lineup.ts          landing wall data + gameArtPath()
 public/
   assets/brand/logo-mark.png · assets/games/<slug>.png (12 pieces)
+  assets/games/flap-hero/        in-game sprites (backdrop, pipe, ground)
   games/flap-hero.html           Track-B game file (dev hosting; Storage later)
+                                 — bird sprite is INLINED as a data URI and
+                                 magenta-keyed at runtime (sandboxed iframes
+                                 can't read pixels from URL-loaded images)
 ```
 
 ## Asset pipeline (game key art)
