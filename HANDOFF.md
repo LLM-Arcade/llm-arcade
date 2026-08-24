@@ -9,16 +9,19 @@ Decision history: `DEVLOG.md`.
 **Phase 3 complete (progression).** Achievements engine (server-validated
 against approved manifests), XP/levels/streaks, badges, activity feed +
 follows, creator profiles, and the real Arcade Home are live on top of the
-Phase 2 platform. Site still gated (`site_settings.launched = false`);
-playtester/mod/admin bypass with a preview banner. **First signup → admin.**
+Phase 2 platform. Site still gated (`site_settings.launched = false`) —
+but the gate now only applies to **guests** (they see the Landing);
+**any signed-in user gets the Arcade Home** with a preview banner
+(user decision, session 8). **First signup → admin.**
 
 | Route | Page | Notes |
 |---|---|---|
-| `/` | `LaunchGate` → `Landing` or `Home` | Home = real Arcade Home: Spotlight hero, ScoreTicker, rails, streak card, global activity |
+| `/` | `LaunchGate` → `Landing` (guests) or `Home` (signed-in) | Home = real Arcade Home: Spotlight hero, ScoreTicker, rails, streak card, global activity |
 | `/games` | `Games` (**open pre-launch**) | Era chips, tile grid |
 | `/game/:slug` | `GameDetail` (**open pre-launch**) | Tabs: Leaderboard · **Achievements** · Comments · About |
 | `/creator/:username` | `CreatorProfile` (open) | Level ring, stats, badge case, follow, Top scores/Achievements/Activity tabs |
-| `/login`, `/settings`, `/faq`, `/playtest` | unchanged | Settings no longer writes `updated_at` (trigger does) |
+| `/login` | `Login` | **Defaults to sign-up on fresh browsers**; devices that ever held a session (localStorage `na-known-player`, set in AuthContext, survives sign-out) default to sign-in |
+| `/settings`, `/faq`, `/playtest` | unchanged | Settings no longer writes `updated_at` (trigger does) |
 
 **State at handoff:** still **zero accounts** (next signup = admin), Google
 provider still disabled (email/password works), Flap Hero the only published
@@ -149,5 +152,8 @@ badges/weekly Spotlight prize, Warm Seat/Dynasty/Founding Player badges
 - ScoreTicker marquee needs ≥5 rows; below that it renders static (and a
   copy strip when empty). Reduced-motion users get the static version free
   via the global media query.
-- `--radius` is 1rem; gate wraps only `/`; sandbox stays
-  `allow-scripts`-only; score-submit "security" string check = rate limit.
+- `--radius` is 1rem; gate wraps only `/` and now only gates **guests**
+  (signed-in = Arcade Home + banner); sandbox stays `allow-scripts`-only;
+  score-submit "security" string check = rate limit.
+- Login mode detection is device-level (`na-known-player` in localStorage) —
+  intentionally never cleared on sign-out.

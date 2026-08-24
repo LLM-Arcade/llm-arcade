@@ -8,6 +8,7 @@ import {
 import type { Session, User } from "@supabase/supabase-js";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { markKnownPlayer } from "@/lib/known-player";
 
 export type Role = "player" | "playtester" | "moderator" | "admin";
 
@@ -45,11 +46,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session);
+      if (data.session) markKnownPlayer();
       setSessionLoading(false);
     });
 
     const { data } = supabase.auth.onAuthStateChange((_event, newSession) => {
       setSession(newSession);
+      if (newSession) markKnownPlayer();
       setSessionLoading(false);
       if (!newSession) {
         queryClient.removeQueries({ queryKey: ["profile"] });

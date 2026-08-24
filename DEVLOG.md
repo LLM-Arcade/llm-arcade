@@ -200,3 +200,27 @@ runtime-tested against real data (type checks clean, RPCs smoke-tested in
 SQL). **First action next session: sign up and run the whole loop** — score
 → XP/streak → toasts → badges → feed → profile — then start Phase 4
 (upload wizard + admin, incl. spotlight picker and playtester approvals).
+
+## Session 8 — Sign-up default + Arcade Home for all players
+
+**User feedback:** sign-up should be the default for browsers without an
+account, and "we don't even have a home page yet" — the Arcade Home existed
+but was invisible: the gate only showed it to playtester/mod/admin, and with
+zero accounts everyone was stuck on the Landing.
+
+**Decisions**
+- **`na-known-player` localStorage flag** (`src/lib/known-player.ts`), set in
+  AuthContext whenever a session exists (covers email, OAuth, restored
+  sessions) and deliberately **never cleared on sign-out**. Login defaults:
+  fresh browser → "Join the arcade" (sign-up), known device → "Welcome back"
+  (sign-in). Toggle link unchanged; storage failures fail open to sign-up.
+- **Gate loosened (user decision):** pre-launch, guests still get the
+  Landing (waitlist front door), but **any signed-in user** now gets the
+  real Arcade Home with a "PRE-LAUNCH PREVIEW · SCORES & STREAKS ALREADY
+  COUNT" banner. Role-only bypass is gone; revisit at Phase 7 if needed.
+
+**Next: Phase 4 (upload wizard + admin) in a new chat** — review queue that
+seeds `achievements` from manifests, Storage hosting for Track-B files,
+spotlight picker, score wipes, role grants, playtester approvals. Still zero
+accounts: first signup becomes admin and should playtest the full
+progression loop before building on top of it.

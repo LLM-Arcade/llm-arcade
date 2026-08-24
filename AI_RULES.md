@@ -46,9 +46,11 @@ read these three docs:
 - React + TypeScript + Vite; React Router — KEEP routes in `src/App.tsx`
 - Pages in `src/pages/`, components in `src/components/`
 - Pre-launch gate: only `/` renders through `LaunchGate` (reads
-  `site_settings.launched`, currently `false`; playtester/mod/admin bypass
-  with preview banner). `/games` and `/game/:slug` are OPEN pre-launch —
-  guests can play, scores require sign-in (user decision, session 6)
+  `site_settings.launched`, currently `false`). Guests see the Landing;
+  **any signed-in user gets the Arcade Home** with a preview banner
+  (session 8). `/games` and `/game/:slug` are OPEN pre-launch — guests can
+  play, scores require sign-in (session 6). Login defaults to sign-up on
+  fresh browsers via the `na-known-player` localStorage flag
 - Tailwind CSS everywhere; shadcn/ui components are installed — always
   customize their styling (never ship default shadcn look)
 - lucide-react for icons; TanStack Query for server state

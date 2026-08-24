@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { isKnownPlayer } from "@/lib/known-player";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Loader2, Trophy } from "lucide-react";
@@ -32,7 +33,11 @@ const Login = () => {
     [],
   );
 
-  const [mode, setMode] = useState<Mode>("signin");
+  // Fresh browsers default to sign-up; devices that have held a session
+  // before (localStorage flag, survives sign-out) default to sign-in.
+  const [mode, setMode] = useState<Mode>(() =>
+    isKnownPlayer() ? "signin" : "signup",
+  );
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
@@ -99,10 +104,12 @@ const Login = () => {
             className="h-12 w-12 rounded-full shadow-sm ring-1 ring-foreground/10"
           />
           <h1 className="font-display text-2xl font-extrabold tracking-tight">
-            Player sign-in
+            {mode === "signin" ? "Welcome back" : "Join the arcade"}
           </h1>
           <p className="text-sm text-muted-foreground">
-            Claim scores, climb boards, keep streaks.
+            {mode === "signin"
+              ? "Sign in to your player card."
+              : "Free player card — claim scores, climb boards, keep streaks."}
           </p>
         </div>
 

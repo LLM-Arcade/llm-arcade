@@ -3,12 +3,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import Landing from "@/pages/Landing";
 
-const BYPASS_ROLES = ["playtester", "moderator", "admin"];
-
 /**
- * Pre-launch gate: shows the Coming Soon landing until
- * site_settings.launched is flipped. Playtesters, moderators and
- * admins bypass the gate and see a preview banner.
+ * Pre-launch gate: guests see the Coming Soon landing until
+ * site_settings.launched is flipped. Any signed-in player gets the real
+ * Arcade Home with a preview banner — the floor is already open to them.
  */
 const LaunchGate = ({ children }: { children: React.ReactNode }) => {
   const { profile, loading: authLoading } = useAuth();
@@ -39,11 +37,11 @@ const LaunchGate = ({ children }: { children: React.ReactNode }) => {
 
   if (data?.launched) return <>{children}</>;
 
-  if (profile && BYPASS_ROLES.includes(profile.role)) {
+  if (profile) {
     return (
       <>
         <div className="bg-mustard py-1.5 text-center font-mono text-[10px] font-medium tracking-widest text-foreground">
-          PRE-LAUNCH PREVIEW · VISIBLE TO {profile.role.toUpperCase()}S ONLY
+          PRE-LAUNCH PREVIEW · SCORES &amp; STREAKS ALREADY COUNT
         </div>
         {children}
       </>
