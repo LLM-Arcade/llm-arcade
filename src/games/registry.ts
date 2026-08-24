@@ -20,4 +20,6 @@ export const gameRegistry: Record<
   // Stand-in art throughout; the DB row stays coming_soon until art
   // regeneration.
   "hyper-circuit": lazy(() => import("./hyper-circuit/HyperCircuit")),
+  // Stand-in art as well; coming_soon until its sheets are generated.
+  "run-n-gunner": lazy(() => import("./run-n-gunner/RunNGunner")),
 };

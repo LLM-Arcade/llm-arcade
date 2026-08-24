@@ -666,3 +666,32 @@ until the user signs in on llmarcade.fun in the driven browser.
 
 **DB:** Hyper Circuit teaser row updated (cap 40k, coming_soon) and its
 7 achievements seeded through the Supabase dashboard SQL editor.
+
+## Session 17 — Run 'n Gunner 🔫 (Track A, run-and-gun, stand-in art)
+
+- **Run 'n Gunner** (A, `src/games/run-n-gunner/`, 7 ach): Contra-homage
+  side scroller, fully original. Three chunk-built stages (Canyon Road,
+  Scrap Ramparts, Dynamo Core), forward-only camera, runner/turret/lobber/
+  supply-drone enemies, six parameterized bosses (mid + end per stage),
+  three weapon crates (FAN spread, RAKER auto, SLUG piercing), drop-through
+  platforms, checkpoint respawns, 3 HP × 3 lives with i-frames. Social
+  hook: a full clear without losing a life doubles the run score and earns
+  `one-life-run`. Cap 100k, `TUNE` in `stages.ts`.
+- **Fairness rules found by the harness, kept for humans:** enemies aim at
+  the standing center at the player's last grounded height (a jump is a
+  real dodge, nothing tracks you mid-air), boss volleys keep 1.25 s of
+  daylight between them, bosses never fire mid-charge, and the boss patrol
+  floor is `arenaX + 220` so holding distance can't corner you on the
+  camera wall. Each rule closed a repeatable death the trace bots hit.
+- **Beatability harness** `node scripts/harness/run-n-gunner.mjs`: a grunt
+  bot (late dodges) and an ace bot both full-clear; the ace proves the
+  one-life run and all 7 slugs; cap never exceeded; 12/12 PASS after the
+  aim fix. Browser playtest on `/dev/run-n-gunner` via the console
+  autopilot: victory at 33.7k, five slugs logged live, one score payload,
+  pause/mute/touch pads/drop-through verified; bolt draw size retuned
+  after the first pass rendered shots as giant capsules.
+- **STAND-IN ART** (Zo still down): borrowed Starfall ships/fx + Munch
+  Maze items sheets, every load site tagged `// STAND-IN ART:`. Final
+  sheets to generate: gunner.png (3), foes.png (5), fx.png (5),
+  pickups.png (3). Row seeded `coming_soon` via `db/seed-run-n-gunner.sql`
+  (INSERT ... ON CONFLICT — no teaser row exists for this slug).
