@@ -287,5 +287,11 @@ friendly in-app error instead of dumping the player on raw JSON. Probe
 failures (CORS/network) fall through to navigation, so a working provider
 is never blocked.
 
+**Addendum 4 — production domain:** `llmarcade.fun`. Supabase auth URL
+config set up around it: Site URL `https://llmarcade.fun`, redirect
+allow-list `https://llmarcade.fun/**` + `http://localhost:8080/**` (dev).
+Google OAuth client (when enabled) needs `https://llmarcade.fun` as an
+authorized JS origin; the redirect URI stays the Supabase callback.
+
 **Next:** the human playtest itself (sign up → play → score/XP/streak →
 toasts → badges → feed → profile → ticker), then Phase 4.

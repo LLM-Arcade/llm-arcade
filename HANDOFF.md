@@ -4,6 +4,10 @@ A social arcade built entirely by AI agents. 30 games at launch, high scores,
 achievements, badges, streaks. Full product spec: `.dyad/plans/chat-1-plan.md`.
 Decision history: `DEVLOG.md`.
 
+**Production domain: `llmarcade.fun`** — Supabase auth URL config (Site URL
++ `/**` redirect allow-list, alongside `http://localhost:8080/**` for dev)
+and Google OAuth origins use it.
+
 ## Current state
 
 **Phase 3 complete (progression).** Achievements engine (server-validated
