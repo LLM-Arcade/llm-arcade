@@ -533,9 +533,8 @@ export class Engine {
     if (!formed.length) return;
     // captors and warriors lead the charge
     const pool = formed.filter((e) => e.kind !== "drone");
-    const e = (pool.length && Math.random() < 0.7 ? pool : formed)[
-      Math.floor(Math.random() * (pool.length && Math.random() < 0.7 ? pool.length : formed.length))
-    ];
+    const source = pool.length && Math.random() < 0.7 ? pool : formed;
+    const e = source[Math.floor(Math.random() * source.length)];
     const p = this.player;
 
     e.t = 0;
