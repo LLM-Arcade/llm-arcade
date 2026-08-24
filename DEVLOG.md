@@ -794,3 +794,52 @@ until the user signs in on llmarcade.fun in the driven browser.
   brings in-game art to 12,955 bytes and total cabinet art to 333,039 bytes,
   31.76% of the 1 MiB budget. No engine, stage, collision, score, or balance
   code changed.
+
+## Session 21 — Brickstorm 🧱 (Track A, brick breaker, Matter.js)
+
+- **Brickstorm** (A, `src/games/brickstorm/`, 7 ach): brick breaker across
+  three boards (Pottery Workshop, Olive Greenhouse, Terracotta Kiln) built
+  from the finished session-20 art pack. Matter.js 0.20.0 (pinned, first
+  physics dependency) drives ball contacts at a fixed 120 Hz substep;
+  everything above it (damage, chains, drops, boards, scoring) is plain
+  seeded state, so the node harness replays the exact simulation. Six brick
+  materials with engine-owned hp (tile/glass 1, plaster/mosaic 2, firebrick
+  3, basalt 4) map hp to the sheet's four damage rows. Eight powerups draw
+  from a reshuffled bag so variety is guaranteed: expand, split, slow, fire,
+  shield, sticky, extra life, x2. Score cap 50,000; `storm-legend` at 12,000.
+- **Paddle deflection is the whole game feel:** the bounce angle comes from
+  hit offset with a 62-degree clamp and a 12 percent minimum deflection,
+  because a dead-center return loops forever (the ace bot proved it by
+  stalling 900 simulated seconds). Matter's velocity unit is px per 1/60 s
+  regardless of substep, so one `toMatterSpeed` helper owns the conversion.
+- **Review pass caught four bugs before browser proof:** the expand powerup
+  grew the visual paddle but never the collision body (fixed with
+  `Matter.Body.scale` plus a harness proof), ball spin and streak frames
+  shared one normalization canvas so the ball shrank at speed, powerup
+  icon/pulse pairs normalized in separate families, and auto-pause fired on
+  the victory screen.
+- **Chroma despill:** the shared soft-fringe rule kept anti-aliased magenta
+  pixels at partial alpha, which read as a purple halo on the dark playfield
+  panel and turned the crack/debris sprites into purple spider legs (banned
+  palette). The Brickstorm slicer now subtracts the magenta component
+  (min(r,b) above g) instead; a playfield readback counts zero
+  magenta-leaning pixels and the crack overlay reads charcoal with ember
+  tips. Worth porting if any other cabinet shows purple fringe on dark
+  ground.
+- **Harness** `node scripts/harness/brickstorm.mjs` (in `test:games`): ace
+  bot full-clears at 15,020 with zero lives lost and all seven slugs; grunt
+  clears board 1; idle bot proves the loss path; two same-seed runs match
+  exactly; edge proofs cover expanded-paddle contact, corner speed, double
+  destroys in one substep, multiball drain, 60 s max-speed containment,
+  serve reset, board handover, chain reset, and the score cap under forced
+  multi.
+- **Headless browser proof** (pane hidden, so rAF was simulated by stepping
+  the real engine/render modules via dynamic import): all seven assets 200,
+  zero console errors, engine step plus full 2x draw 0.33 ms avg / 1.3 ms
+  max over 120 frames, canvas exactly 16:9 at desktop and 375 px mobile
+  with no overflow, and captured frames for all three boards, multiball
+  with expanded paddle, and the board-clear badge moment. Human keyboard
+  play on `/dev/brickstorm` still pending Jeff's approval session.
+- Row seeded via `db/seed-brickstorm.sql` (upsert; a teaser row exists for
+  this slug), publish flip in `db/publish-brickstorm.sql`. Neither has been
+  run against Supabase yet.
