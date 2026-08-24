@@ -1,9 +1,10 @@
-# Codex art handoff
+# Art handoff
 
-Mission for the Codex app: replace every stand-in sprite in Hyper Circuit
-and Run 'n Gunner with generated originals, using your image-generation
-skill. Gameplay code is finished and proven. This is an art and
-integration pass only.
+Mission for whichever agent picks this up: replace every stand-in sprite
+in Hyper Circuit and Run 'n Gunner with generated originals, using your
+image-generation capability. Gameplay code is finished and proven. This
+is an art and integration pass only. You need an agent that can generate
+images, edit the repo, run commands, and drive a browser.
 
 ## Read first
 
