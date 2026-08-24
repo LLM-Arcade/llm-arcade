@@ -371,6 +371,47 @@ and boss leg/cannon recoil. A 120-frame move-and-fire stress sample measured
 6.88 ms average / 7.4 ms p95 / 7.7 ms max with zero frames over 25 ms. The
 canvas holds its exact 16:9 ratio at desktop and 390 px mobile widths.
 
+## Brickstorm (Track A, brick breaker, built session 21, NOT published)
+
+`src/games/brickstorm/` — brick breaker over the session-20 art pack, the
+first cabinet with a physics dependency (matter-js 0.20.0, pinned).
+
+- `engine.ts` — frameless seeded class, `TUNE` on top, event queue. Matter
+  runs ball contacts at fixed 120 Hz substeps (max 6 per update); paddle,
+  bricks, walls are static bodies, ball velocity is renormalized to the
+  target speed after every substep with a 0.22 minimum vy ratio. Paddle
+  bounce angle comes from hit offset (62-degree clamp from vertical, 12%
+  minimum deflection so dead-center returns cannot loop). The collision
+  paddle body is rescaled whenever expand starts, expires, or serve resets.
+  Powerups draw from a reshuffled 8-item bag: expand, split, slow, fire,
+  shield (one floor save), sticky, extra life (max 5), x2 score.
+- `levels.ts` — six materials indexed to the bricks.png columns with
+  engine-owned hp (1/1/3/2/2/4); three 8x6 char-grid layouts, ~38 bricks
+  each. Damage row shown = maxHp - hp.
+- `sprites.ts` — exact-grid slicer from the art manifest (throws on a
+  non-divisible sheet or blank cell), 4px inset, chroma key with magenta
+  despill (subtract min(r,b)-g; the old soft-fringe rule left purple halos
+  on the dark panel), per-family anchor normalization (paddle rows
+  bottom-center, icon/pulse pairs together, fx cells individually).
+- `render.ts` — board JPG, rounded ink panel (190..770 x 90..500), sprite
+  placement only. Speed-streak ball frames are sized by height so the ball
+  core never shrinks; the board-clear moment draws the badge + sparkle
+  chrome from the props row.
+- Scoring: destroy 20*maxHp + 10 per chain link, x2 while multi is active;
+  clear 500, untouched board +300, victory 1500, cap 50,000. Slugs seeded +
+  fired: `first-break`, `workshop-clear`, `triple-ball`, `untouched-board`,
+  `brick-chain` (chain 4 — measured: a single ball breaks at most 3 per
+  paddle trip, so it's a multiball reward), `kiln-master`, `storm-legend`
+  (12k). Seed `db/seed-brickstorm.sql` (upsert over the teaser row),
+  publish `db/publish-brickstorm.sql`; neither run against Supabase yet.
+
+**Beatability harness (in `test:games`):** `node
+scripts/harness/brickstorm.mjs` proves an ace full clear (15,020, no lives
+lost, all 7 slugs), a grunt board-1 clear, an idle loss path, same-seed
+determinism, expanded-paddle contact, corner speed keeping, double destroys
+in one substep, multiball drain bookkeeping, 60 s max-speed containment,
+serve/board-handover state, chain reset, and the cap under forced multi.
+
 ## The progression engine (Phase 3, unchanged)
 
 Client never writes progression tables — SECURITY DEFINER functions +

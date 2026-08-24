@@ -19,4 +19,5 @@ export const gameRegistry: Record<
   "starfall-squadron": lazy(() => import("./starfall-squadron/StarfallSquadron")),
   "hyper-circuit": lazy(() => import("./hyper-circuit/HyperCircuit")),
   "run-n-gunner": lazy(() => import("./run-n-gunner/RunNGunner")),
+  brickstorm: lazy(() => import("./brickstorm/Brickstorm")),
 };
