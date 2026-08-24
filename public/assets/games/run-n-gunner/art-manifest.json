@@ -1,0 +1,102 @@
+{
+  "game": "run-n-gunner",
+  "generated": true,
+  "palette": ["#F4E6C1", "#241A12", "#B45735", "#68723C", "#C99A32"],
+  "spriteContract": {
+    "key": "#FF00FF",
+    "gutterPx": 4,
+    "runtimeInsetPx": 4,
+    "slicing": "Exact integer cells only; the loader rejects non-divisible sheets before chroma keying and trims after its inset."
+  },
+  "budget": {
+    "limitBytes": 1048576,
+    "packBytes": 394496,
+    "keyArtBytes": 320084,
+    "totalArtBytes": 714580,
+    "remainingBytes": 333996
+  },
+  "assets": [
+    {
+      "file": "gunner-sheet.png",
+      "bytes": 37952,
+      "dimensions": [600, 192],
+      "grid": [6, 1],
+      "cell": [100, 192],
+      "order": ["idle", "run-a", "run-b", "jump", "fire", "crouch-fire"],
+      "anchor": "bottom-center / feet",
+      "timing": { "runFps": 10 },
+      "wiring": "soldierFrames; render.ts selects frame 0 idle, 1-2 run, 3 jump, 4 fire, 5 crouch.",
+      "promptSummary": "Terracotta-and-olive gunner with a readable rifle silhouette and six action poses."
+    },
+    {
+      "file": "enemy-sheet.png",
+      "bytes": 86415,
+      "dimensions": [600, 224],
+      "grid": [6, 2],
+      "cell": [100, 112],
+      "order": ["rifle-infantry-a", "rifle-infantry-b", "rifle-infantry-fire", "shield-trooper-a", "shield-trooper-b", "shield-trooper-hit", "low-crawler-a", "low-crawler-b", "low-crawler-fire", "hover-drone-a", "hover-drone-b", "hover-drone-fire"],
+      "anchor": "bottom-center after per-triplet normalization; hover is subsequently drawn center-anchored",
+      "timing": { "rifleFps": 8, "shieldFps": 3, "crawlerFps": 3.5, "droneFps": 6 },
+      "wiring": "triplets map in order to runnerFrames, turretFrames, lobberFrames, and droneFrames without changing enemy collision geometry.",
+      "promptSummary": "Four distinct threat silhouettes: rifle infantry, broad shield troops, low tracked crawlers, and hovering rotors."
+    },
+    {
+      "file": "boss-sheet.png",
+      "bytes": 107775,
+      "dimensions": [600, 240],
+      "grid": [6, 3],
+      "cell": [100, 80],
+      "order": ["sentry-rig-base", "sentry-rig-scan", "sentry-rig-fire", "road-breaker-base", "road-breaker-roll", "road-breaker-hit", "mortar-crab-base", "mortar-crab-aim", "mortar-crab-fire", "rampart-warden-base", "rampart-warden-step", "rampart-warden-hit", "coil-hound-base", "coil-hound-run", "coil-hound-strike", "core-custodian-base", "core-custodian-spin", "core-custodian-fire"],
+      "anchor": "bottom-center after each three-frame group normalization; Core Custodian is drawn center-anchored by its existing hover flag",
+      "timing": { "idleFps": 2.5, "chargingFps": 7 },
+      "wiring": "triplets map by stage index and end-boss flag. Every cell is a single isolated pose on a literal #FF00FF key background.",
+      "promptSummary": "Six unmistakably different machines: tripod Sentry Rig, wheeled Road Breaker, Mortar Crab, Rampart Warden, Coil Hound, and hovering Core Custodian."
+    },
+    {
+      "file": "stage-backdrops.png",
+      "bytes": 158422,
+      "dimensions": [543, 181],
+      "grid": [3, 1],
+      "cell": [181, 181],
+      "order": ["canyon-road", "scrap-ramparts", "dynamo-core"],
+      "anchor": "full canvas",
+      "timing": { "parallax": "scrollX * 0.16 with repeated camera-width draws" },
+      "wiring": "backdrops[stageIndex] selects an exact third as a visual layer only; stage geometry remains in stages.ts.",
+      "promptSummary": "Terracotta canyon road, olive scrap fortress, and mustard-charcoal reactor chamber panoramas."
+    },
+    {
+      "file": "fx.png",
+      "bytes": 2305,
+      "dimensions": [320, 64],
+      "grid": [5, 1],
+      "cell": [64, 64],
+      "order": ["bolt", "orb", "grenade", "burst", "muzzle"],
+      "anchor": "center",
+      "timing": { "burstLifetimeSeconds": 0.45 },
+      "wiring": "Existing sprites.ts maps these in sequence to projectile and impact rendering.",
+      "promptSummary": "Warm solid-color weapon and impact effects."
+    },
+    {
+      "file": "pickups.png",
+      "bytes": 1627,
+      "dimensions": [192, 64],
+      "grid": [3, 1],
+      "cell": [64, 64],
+      "order": ["rifle-fan", "raker", "slug"],
+      "anchor": "center",
+      "timing": { "bob": "existing sin(time * 3)" },
+      "wiring": "Existing sprites.ts maps rifle and fan to cell 0, raker to 1, and slug to 2.",
+      "promptSummary": "Compact weapon-crate pickup identifiers."
+    },
+    {
+      "file": "../run-n-gunner.png",
+      "bytes": 320084,
+      "dimensions": [768, 768],
+      "grid": null,
+      "anchor": null,
+      "timing": null,
+      "wiring": "Catalog key art, outside the gameplay sprite directory.",
+      "promptSummary": "Run 'n Gunner cabinet key art."
+    }
+  ]
+}

@@ -7,17 +7,16 @@ import { Engine, H, W, type Enemy } from "./engine.ts";
 import type { GunnerSprites } from "./sprites.ts";
 
 const SKY = "#241A12"; // warm near-black, never pure black
-const RIDGE = "#2E2216";
 const GROUND = "#3A2A1C";
 const GROUND_EDGE = "#57422C";
 const PLATFORM = "#4A3624";
 const PLATFORM_EDGE = "#6B5136";
 
 const ENEMY_DRAW: Record<Enemy["kind"], { size: number }> = {
-  runner: { size: 18 },
-  turret: { size: 22 },
-  lobber: { size: 20 },
-  drone: { size: 16 },
+  runner: { size: 27 },
+  turret: { size: 26 },
+  lobber: { size: 26 },
+  drone: { size: 20 },
 };
 
 const drawSprite = (
@@ -60,6 +59,23 @@ const drawGroundSprite = (
   ctx.restore();
 };
 
+const drawBackdropTile = (
+  ctx: CanvasRenderingContext2D,
+  image: HTMLCanvasElement,
+  x: number,
+  mirrored: boolean,
+) => {
+  if (!mirrored) {
+    ctx.drawImage(image, x, 0, W, H);
+    return;
+  }
+  ctx.save();
+  ctx.translate(x + W, 0);
+  ctx.scale(-1, 1);
+  ctx.drawImage(image, 0, 0, W, H);
+  ctx.restore();
+};
+
 const animationFrame = (frames: HTMLCanvasElement[], time: number, fps: number, phase = 0) =>
   frames[Math.floor(time * fps + phase) % frames.length];
 
@@ -67,12 +83,14 @@ export const draw = (ctx: CanvasRenderingContext2D, eng: Engine, spr: GunnerSpri
   ctx.fillStyle = SKY;
   ctx.fillRect(0, 0, W, H);
 
-  // distant ridge band, parallax at a third of camera speed
-  ctx.fillStyle = RIDGE;
-  const par = (eng.scrollX * 0.33) % 240;
-  for (let i = -1; i < 4; i++) {
-    const bx = i * 240 - par;
-    ctx.fillRect(bx, 150, 150, GROUND_Y - 150);
+  // Exact thirds of the generated strip keep each stage's scenery isolated.
+  const backdrop = spr.backdrops[eng.stageIndex];
+  if (backdrop) {
+    const parallax = eng.scrollX * 0.16;
+    const tileIndex = Math.floor(parallax / W);
+    const tileX = -(parallax - tileIndex * W);
+    drawBackdropTile(ctx, backdrop, tileX, tileIndex % 2 !== 0);
+    drawBackdropTile(ctx, backdrop, tileX + W, tileIndex % 2 === 0);
   }
 
   ctx.save();
@@ -173,7 +191,8 @@ export const draw = (ctx: CanvasRenderingContext2D, eng: Engine, spr: GunnerSpri
   if (b) {
     const flick = b.flash > 0 ? 0.55 : 1;
     const tilt = b.charging > 0 ? b.dir * 0.18 : Math.sin(eng.time * 2.2) * 0.05;
-    const bossFrame = animationFrame(spr.bossFrames, eng.time, b.charging > 0 ? 7 : 2.5);
+    const bossIndex = eng.stageIndex * 2 + (b.def.kind === "end" ? 1 : 0);
+    const bossFrame = animationFrame(spr.bossFrames[bossIndex], eng.time, b.charging > 0 ? 7 : 2.5);
     if (b.def.hover) {
       drawSprite(ctx, bossFrame, b.x, b.y, b.def.w, tilt, flick, b.dir < 0);
     } else {
@@ -199,14 +218,20 @@ export const draw = (ctx: CanvasRenderingContext2D, eng: Engine, spr: GunnerSpri
     const blink = p.iFrames > 0 ? (Math.floor(eng.time * 12) % 2 === 0 ? 0.35 : 0.9) : 1;
     const moving = p.grounded && eng.input.dir !== 0;
     const lean = p.grounded ? (moving ? Math.sin(eng.time * 10) * 0.035 : 0) : 0.1 * p.facing;
-    const frame = p.grounded
-      ? spr.soldierFrames[moving ? Math.floor(eng.time * 10) % 2 : 0]
-      : spr.soldierFrames[2];
+    const frame = !p.grounded
+      ? spr.soldierFrames[3]
+      : eng.input.down
+        ? spr.soldierFrames[5]
+        : eng.muzzle > 0
+          ? spr.soldierFrames[4]
+          : moving
+            ? spr.soldierFrames[1 + Math.floor(eng.time * 10) % 2]
+            : spr.soldierFrames[0];
     const up = eng.input.up;
     const recoil = eng.muzzle > 0 && !up ? -p.facing * 1.2 : 0;
-    drawGroundSprite(ctx, frame, p.x + recoil, p.y, 20, lean, blink, p.facing < 0);
+    drawGroundSprite(ctx, frame, p.x + recoil, p.y, 29, lean, blink, p.facing < 0);
     if (eng.muzzle > 0) {
-      const bodyH = (20 * frame.height) / frame.width;
+      const bodyH = (29 * frame.height) / frame.width;
       const mx = up ? p.x : p.x + p.facing * 15;
       const my = up ? p.y - bodyH - 5 : p.y - bodyH * 0.55;
       drawSprite(ctx, spr.muzzle, mx, my, 10, eng.time * 20, blink);
