@@ -1,0 +1,7 @@
+#!/bin/sh
+# Local CI gate. Hosted Actions don't run on this account, so this hook is
+# the enforcement point. Enable once per clone:
+#   git config core.hooksPath .githooks
+set -e
+echo "pre-push: running pnpm check (lint + typecheck + build)"
+pnpm check
