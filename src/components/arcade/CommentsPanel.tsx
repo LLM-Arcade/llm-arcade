@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { formatDistanceToNowStrict } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { authCta } from "@/lib/known-player";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -224,14 +225,14 @@ const CommentsPanel = ({ game }: { game: Game }) => {
       ) : (
         <div className="flex items-center justify-between gap-3 rounded-xl bg-secondary/70 px-4 py-3">
           <p className="text-sm font-medium text-muted-foreground">
-            Sign in to join the conversation.
+            {authCta().verb} to join the conversation.
           </p>
           <Button
             asChild
             size="sm"
             className="shrink-0 rounded-full bg-primary font-semibold hover:bg-primary/90"
           >
-            <Link to={`/login?next=/game/${game.slug}`}>Sign in</Link>
+            <Link to={authCta(`/game/${game.slug}`).to}>{authCta().verb}</Link>
           </Button>
         </div>
       )}

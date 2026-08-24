@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import LevelRing from "@/components/progression/LevelRing";
 import { useAuth } from "@/contexts/AuthContext";
+import { authCta } from "@/lib/known-player";
 import { levelProgress, LEVEL_CAP } from "@/lib/progression";
 import { Flame } from "lucide-react";
 
@@ -9,17 +10,18 @@ const StreakCard = () => {
   const { user, profile } = useAuth();
 
   if (!user || !profile) {
+    const cta = authCta("/");
     return (
       <div className="rounded-2xl bg-card p-5 shadow-sm ring-1 ring-foreground/10">
         <h3 className="font-mono text-xs tracking-widest text-muted-foreground">YOUR STREAK</h3>
         <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-          Sign in to earn XP, keep a daily play streak, and collect badges.
+          {cta.verb} to earn XP, keep a daily play streak, and collect badges.
         </p>
         <Link
-          to="/login?next=/"
+          to={cta.to}
           className="mt-3.5 inline-block rounded-full bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
         >
-          Sign in
+          {cta.verb}
         </Link>
       </div>
     );

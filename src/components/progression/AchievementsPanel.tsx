@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { authCta } from "@/lib/known-player";
 import { useGameAchievements, useMyUnlocks } from "@/hooks/useAchievements";
 import type { Game } from "@/hooks/useGames";
 import { Loader2, Lock, Trophy } from "lucide-react";
@@ -50,8 +51,8 @@ const AchievementsPanel = ({ game }: { game: Game }) => {
         </p>
       ) : (
         <p className="rounded-xl bg-mustard/15 px-4 py-2.5 text-sm font-medium">
-          <Link to={`/login?next=/game/${game.slug}`} className="font-semibold underline underline-offset-2 hover:text-terra">
-            Sign in
+          <Link to={authCta(`/game/${game.slug}`).to} className="font-semibold underline underline-offset-2 hover:text-terra">
+            {authCta().verb}
           </Link>{" "}
           to track your unlocks — achievements earned as a guest aren't recorded.
         </p>

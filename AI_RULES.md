@@ -51,7 +51,9 @@ read these three docs:
   (session 8). `/games` and `/game/:slug` are OPEN pre-launch — guests can
   play, scores require sign-in (session 6). Auth is `/login` + `/signup`
   (one component, mode from URL); fresh browsers hitting `/login` redirect
-  to `/signup` via the `na-known-player` localStorage flag (session 9)
+  to `/signup` via the `na-known-player` localStorage flag, and every
+  logged-out CTA goes through `authCta()` in `src/lib/known-player.ts` —
+  never hardcode `/login` links or "Sign in" copy (session 9)
 - Tailwind CSS everywhere; shadcn/ui components are installed — always
   customize their styling (never ship default shadcn look)
 - lucide-react for icons; TanStack Query for server state

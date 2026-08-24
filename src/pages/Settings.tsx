@@ -3,6 +3,7 @@ import { Navigate } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { authCta } from "@/lib/known-player";
 import SiteHeader from "@/components/layout/SiteHeader";
 import SiteFooter from "@/components/layout/SiteFooter";
 import { Button } from "@/components/ui/button";
@@ -98,7 +99,7 @@ const Settings = () => {
     );
   }
 
-  if (!user) return <Navigate to="/login?next=/settings" replace />;
+  if (!user) return <Navigate to={authCta("/settings").to} replace />;
   if (!profile) return null;
 
   const usernameBlocked = usernameState === "invalid" || usernameState === "taken" || usernameState === "checking";

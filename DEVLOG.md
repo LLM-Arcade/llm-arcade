@@ -263,5 +263,18 @@ the routes (carries `?next=`, sets location state `manual` so an explicit
 routes swap without remounting, so a mode-change effect clears stale
 error/notice copy.
 
+**Addendum 2 — consistent auth CTAs (user request):** every logged-out CTA
+was hardcoded "Sign in" → `/login`, so fresh visitors clicked a button
+labeled "Sign in" and landed on "Join the arcade" — inconsistent. New
+`authCta(next?)` helper in `src/lib/known-player.ts` is the single source
+of truth: known devices (flag set) get "Sign in" → `/login`, fresh devices
+get "Sign up" → `/signup`, with `?next=` encoded in one place. Rewired all
+8 call sites: SiteHeader, Landing header, GamePlayer game-over panel
+("Sign up to claim this score"), CommentsPanel composer gate,
+AchievementsPanel guest note, StreakCard, CreatorProfile follow button,
+Settings auth redirect. Login's held-score banner copy is mode-aware now
+too. **Rule going forward: never hardcode `/login`/`/signup` links or
+"Sign in" copy in components — always `authCta()`.**
+
 **Next:** the human playtest itself (sign up → play → score/XP/streak →
 toasts → badges → feed → profile → ticker), then Phase 4.

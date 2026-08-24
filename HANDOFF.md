@@ -98,6 +98,8 @@ from clients**) · `unlock_achievement` (authenticated only) ·
 ```
 src/
   lib/progression.ts             level curve (mirror of DB!), badge icons, timeAgo
+  lib/known-player.ts            device flag + authCta() — ALL logged-out auth
+                                 CTAs (verb + /login vs /signup) go through it
   hooks/useAchievements.ts       defs+stats, my unlocks, unlock mutation (toast)
   hooks/useProgression.ts        profile-by-username, badges, top scores, unlocks,
                                  activity, ticker scores, follows
@@ -161,4 +163,6 @@ badges/weekly Spotlight prize, Warm Seat/Dynasty/Founding Player badges
 - Sign-up-first default is device-level (`na-known-player` in localStorage) —
   intentionally never cleared on sign-out. It's enforced as a redirect:
   `/login` → `/signup` on fresh devices, bypassed when the player explicitly
-  clicks the "Sign in" toggle (location state `manual`).
+  clicks the "Sign in" toggle (location state `manual`). **Every logged-out
+  CTA renders via `authCta()`** (label "Sign up"/"Sign in" + matching route)
+  — never hardcode `/login` links or "Sign in" copy in components.

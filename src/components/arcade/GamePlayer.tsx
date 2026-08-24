@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useArcadeBridge, sanitizeScore, type ArcadeScorePayload } from "@/lib/arcade-sdk";
+import { authCta } from "@/lib/known-player";
 import { gameRegistry } from "@/games/registry";
 import { useLeaderboard } from "@/hooks/useLeaderboard";
 import { useUnlockAchievement } from "@/hooks/useAchievements";
@@ -216,6 +217,7 @@ const GamePlayer = ({ game }: { game: Game }) => {
   }
 
   const delta = run && runPb !== null ? run.score - runPb : null;
+  const claimCta = authCta(`/game/${game.slug}`);
 
   return (
     <div
@@ -342,10 +344,10 @@ const GamePlayer = ({ game }: { game: Game }) => {
               <div className="mt-4 flex flex-col gap-2">
                 {!user && run.score > 0 && (
                   <Button
-                    onClick={() => navigate(`/login?next=/game/${game.slug}`)}
+                    onClick={() => navigate(claimCta.to)}
                     className="h-11 w-full rounded-full bg-primary font-semibold hover:bg-primary/90"
                   >
-                    Sign in to claim this score
+                    {claimCta.verb} to claim this score
                   </Button>
                 )}
                 <Button

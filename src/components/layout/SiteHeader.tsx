@@ -1,5 +1,6 @@
 import { Link, NavLink, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { authCta } from "@/lib/known-player";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -21,7 +22,7 @@ const navLinkClass = ({ isActive }: { isActive: boolean }) =>
 const SiteHeader = () => {
   const { user, profile, signOut } = useAuth();
   const location = useLocation();
-  const next = encodeURIComponent(location.pathname + location.search);
+  const cta = authCta(location.pathname + location.search);
 
   return (
     <header className="sticky top-0 z-20 border-b border-border bg-background/90 backdrop-blur">
@@ -94,7 +95,7 @@ const SiteHeader = () => {
               asChild
               className="ml-1.5 rounded-full bg-primary font-semibold hover:bg-primary/90"
             >
-              <Link to={`/login?next=${next}`}>Sign in</Link>
+              <Link to={cta.to}>{cta.verb}</Link>
             </Button>
           )}
         </nav>

@@ -137,7 +137,7 @@ const Login = () => {
         {hasHeldScore && (
           <div className="mt-5 flex items-center gap-2.5 rounded-xl bg-mustard/20 px-4 py-3 text-sm font-medium">
             <Trophy className="h-4 w-4 shrink-0 text-[#8F6400]" />
-            Your run is safe — sign in to claim the score.
+            Your run is safe — {mode === "signin" ? "sign in" : "create your account"} to claim the score.
           </div>
         )}
 

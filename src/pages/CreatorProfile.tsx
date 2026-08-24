@@ -5,6 +5,7 @@ import LevelRing from "@/components/progression/LevelRing";
 import BadgeCase from "@/components/progression/BadgeCase";
 import ActivityFeed from "@/components/progression/ActivityFeed";
 import { useAuth } from "@/contexts/AuthContext";
+import { authCta } from "@/lib/known-player";
 import {
   useFollowCounts,
   useIsFollowing,
@@ -99,6 +100,7 @@ const CreatorProfile = () => {
   }
 
   const isOwn = user?.id === profile.id;
+  const cta = authCta(`/creator/${profile.username}`);
   const joined = new Date(profile.created_at).toLocaleDateString(undefined, {
     month: "long",
     year: "numeric",
@@ -158,7 +160,7 @@ const CreatorProfile = () => {
                 asChild
                 className="h-10 rounded-full bg-primary px-6 font-semibold hover:bg-primary/90"
               >
-                <Link to={`/login?next=/creator/${profile.username}`}>Sign in to follow</Link>
+                <Link to={cta.to}>{cta.verb} to follow</Link>
               </Button>
             )}
           </div>

@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import WaitlistForm from "@/components/arcade/WaitlistForm";
 import SiteFooter from "@/components/layout/SiteFooter";
+import { authCta } from "@/lib/known-player";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Bot, Trophy, Upload } from "lucide-react";
 import {
@@ -69,7 +70,7 @@ const Landing = () => (
             <Link to="/playtest">Playtest</Link>
           </Button>
           <Button asChild variant="ghost" className="rounded-full font-medium text-muted-foreground hover:text-foreground">
-            <Link to="/login">Sign in</Link>
+            <Link to={authCta().to}>{authCta().verb}</Link>
           </Button>
           <Button asChild className="rounded-full bg-primary font-semibold hover:bg-primary/90">
             <a href="#waitlist">Get updates</a>
