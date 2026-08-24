@@ -1,0 +1,130 @@
+{
+  "slug": "gem-columns",
+  "generated": true,
+  "integrationStatus": "wire-ready art pack only; do not create or modify gameplay in this lane.",
+  "palette": ["#F4E6C1", "#241A12", "#B45735", "#68723C", "#C99A32"],
+  "spriteContract": {
+    "key": "#FF00FF",
+    "minimumGutterPx": 4,
+    "slicing": "Exact integer grids only. Treat literal magenta as transparent and keep all core cells center-anchored.",
+    "boardTileAnchor": "center",
+    "wellAnchor": "full panel / board opening center"
+  },
+  "budget": {
+    "limitBytes": 1048576,
+    "gameplayArtBytes": 431921,
+    "keyArtBytes": 64887,
+    "totalArtBytes": 496808,
+    "remainingBytes": 551768
+  },
+  "generatedAssets": [
+    {
+      "file": "gems-set-a.png",
+      "bytes": 68557,
+      "dimensions": [500, 500],
+      "grid": [5, 5],
+      "cell": [100, 100],
+      "renderSize": [36, 36],
+      "anchor": "center",
+      "order": {
+        "columns": ["crescent-oval", "sunburst-lozenge", "spiral-cabochon", "leaf-prism", "compass-square"],
+        "rows": ["normal", "pulse", "matched", "cracked", "clear"]
+      },
+      "animation": { "pulseFps": 5, "matchedHoldMs": 100, "clearFps": 12 },
+      "wiring": "Future board loader derives frame index as stateRow * 5 + gemColumn. Shape and engraved mark identify each family independently of color.",
+      "promptSummary": "Five artisan-foundry gem identities with normal, pulse, matched, cracked, and clear states."
+    },
+    {
+      "file": "gems-set-b.png",
+      "bytes": 59480,
+      "dimensions": [500, 500],
+      "grid": [5, 5],
+      "cell": [100, 100],
+      "renderSize": [36, 36],
+      "anchor": "center",
+      "order": {
+        "columns": ["zigzag-shard", "droplet-heart", "eye-tablet", "flame-teardrop", "wave-star"],
+        "rows": ["normal", "pulse", "matched", "cracked", "clear"]
+      },
+      "animation": { "pulseFps": 5, "matchedHoldMs": 100, "clearFps": 12 },
+      "wiring": "Second five-family sheet; it shares the same state-row contract as gems-set-a.png for ten total generated identities.",
+      "promptSummary": "Five archaeological-archive gem identities with five aligned puzzle states."
+    },
+    {
+      "file": "specials.png",
+      "bytes": 36689,
+      "dimensions": [400, 300],
+      "grid": [4, 3],
+      "cell": [100, 100],
+      "renderSize": [34, 34],
+      "anchor": "center",
+      "order": ["wild-medallion", "bomb-seed", "locked-gem", "garbage-block", "triad-token", "ghost-gem", "landing-marker", "chain-link", "danger-marker", "combo-wreath", "level-seal", "reserve-preview"],
+      "animation": { "bombPulseFps": 5, "ghostFps": 4, "landingHoldMs": 90 },
+      "wiring": "Special-tile and status vocabulary for a future implementation; decorative state only and no rules are implied by this pack.",
+      "promptSummary": "Wild, bomb, lock, garbage, triad, ghost, landing, chain, danger, combo, level, and reserve variants."
+    },
+    {
+      "file": "effects.png",
+      "bytes": 28424,
+      "dimensions": [400, 300],
+      "grid": [4, 3],
+      "cell": [100, 100],
+      "renderSize": [42, 42],
+      "anchor": "center",
+      "order": ["landing-puff", "cascade-arc", "clear-burst", "danger-pulse", "level-rays", "match-sparkle", "crack-chips", "lock-break", "bomb-ring", "garbage-crumble", "ghost-dissolve", "triad-merge"],
+      "animation": { "fxFps": 12, "landingHoldMs": 80, "dangerFps": 4 },
+      "wiring": "Use as center-origin presentation effects only; scale/alpha motion must not affect tile occupancy or timing.",
+      "promptSummary": "Cascade, landing, clear, danger, transition, match, blocker, bomb, garbage, ghost, and triad effects."
+    },
+    {
+      "file": "ui-states.png",
+      "bytes": 33663,
+      "dimensions": [400, 300],
+      "grid": [4, 3],
+      "cell": [100, 100],
+      "renderSize": [48, 48],
+      "anchor": "center",
+      "order": ["blank-score-plaque", "next-triad-frame", "reserve-slot", "pause-medallion", "complete-laurel", "danger-meter", "chain-counter", "foundry-ornament", "conservatory-ornament", "archive-ornament", "restart-medallion", "sound-medallion"],
+      "animation": { "dangerFps": 4, "pauseStatic": true },
+      "wiring": "Blank authored UI frames and non-text icon states; runtime owns all labels, scores, and localization.",
+      "promptSummary": "Ornate readable well-adjacent HUD frames, pause/restart/sound controls, and environment ornaments."
+    },
+    {
+      "file": "well-surrounds.png",
+      "bytes": 98628,
+      "dimensions": [600, 400],
+      "grid": [3, 1],
+      "cell": [200, 400],
+      "renderSize": [200, 400],
+      "anchor": "full panel; board opening centered",
+      "order": ["artisan-foundry", "conservatory", "archaeological-archive"],
+      "animation": { "static": true },
+      "wiring": "Opaque panel strip. Future renderer selects one exact panel and draws the live board over its dark central opening; this asset never determines board geometry.",
+      "promptSummary": "Three distinctly themed ornate empty puzzle-well surrounds: kiln foundry, vine conservatory, and archive cabinet."
+    },
+    {
+      "file": "environment-strip.png",
+      "bytes": 106480,
+      "dimensions": [720, 240],
+      "grid": [3, 1],
+      "cell": [240, 240],
+      "renderSize": [720, 240],
+      "anchor": "full background panel",
+      "order": ["artisan-foundry", "conservatory", "archaeological-archive"],
+      "animation": { "static": true },
+      "wiring": "Opaque three-panel environment strip; choose panel by level theme with exact integer source rectangles and place a future board in the deliberately quiet center space.",
+      "promptSummary": "Three warm tabletop puzzle environments with foundry, greenhouse, and archive visual language."
+    },
+    {
+      "file": "../gem-columns.png",
+      "bytes": 64887,
+      "dimensions": [300, 300],
+      "grid": null,
+      "renderSize": [300, 300],
+      "anchor": null,
+      "animation": null,
+      "wiring": "Catalog key art outside the gameplay pack.",
+      "promptSummary": "A tall archaeological gem well receiving a triad above a ten-identity board and a clear burst."
+    }
+  ]
+}
