@@ -625,3 +625,44 @@ every sprite is a borrowed Starfall/Munch Maze sheet behind a
 Queue next: **Run 'n Gunner** → flagship trio. Hyper Circuit needs art
 regeneration + row publish when Zo is back. Pipeline live-test + Phase 5
 chat still deferred.
+
+## Session 16 addendum — platform, pipeline, and review (orchestrator)
+
+**Rename:** the site is LLM Arcade (llmarcade.fun) everywhere a player
+looks: wordmark, alt text, FAQ, title, OG/canonical meta, CSV export,
+doc headers. Old DEVLOG entries keep the Neon Arcade name.
+
+**CI/CD proven:** `pnpm check` (lint + typecheck + build) is the gate,
+enforced by `.githooks/pre-push` and mirrored in
+`.github/workflows/ci.yml`. Hosted Actions runs green on this repo
+(the old billing assumption was wrong). Push → CI → Vercel →
+llmarcade.fun verified by playing Rockbuster live as a guest.
+
+**Four-angle adversarial review** (security, platform, Track A games,
+Track B games), all confirmed findings fixed and verified in the real
+runtime: Munch Maze level-clear softlock (regression probe committed at
+`scripts/harness/munch-maze-clear-race.ts`), one-ARCADE_SCORE-per-run
+guard in GamePlayer, mute-state desync in all three Track A cabinets,
+Starfall breather bullet freeze, Rockbuster saucer-drone leak,
+Trailbound hidden-tab travel, pad multi-touch releases, Settings
+username race, admin approval now invalidates single-game queries.
+"Sunforged Blade" renamed Sunsteel Blade (branding ban). Two findings
+need decisions, not code: uploaded HTML is publicly reachable in
+Storage before review (fix is a private bucket + signed URLs), and the
+eslint gate now exempts generated shadcn ui files.
+
+**Trailbound diet:** 4.48 MB → 1.17 MB with zero gameplay change
+(panorama quantized, wagon pre-keyed at build time). New art for it,
+and all new cabinet art, is blocked: Zo media generation is down with
+`media_billing_target_missing`, a Zo-subscription line item only the
+user can restore via Zo support.
+
+**TypeStorm (B, `public/games/typestorm.html`, 8 ach)** built as the
+text-shelf typing cabinet, 36 KB, simulator-tuned, all eight
+achievements earned in one live run. It is deliberately NOT seeded in
+the DB: it will be the first real submission through the upload wizard
+and admin queue, which creates its rows via the approval RPC. Blocked
+until the user signs in on llmarcade.fun in the driven browser.
+
+**DB:** Hyper Circuit teaser row updated (cap 40k, coming_soon) and its
+7 achievements seeded through the Supabase dashboard SQL editor.
