@@ -826,3 +826,10 @@ until the user signs in on llmarcade.fun in the driven browser.
   full draw 0.13 ms avg / 0.6 ms max, frames captured for all three wells.
   Seed row era corrected to Genesis to match `launch-lineup.ts`. Human play
   on `/dev/gem-columns` still pending approval. Seed/publish SQL not run.
+- Post-playtest redesign from Jeff's feedback: the cabinet widened from
+  720x540 to 960x540 so the canvas fills the stage (210 px HUD bands plus
+  the 540 px environment exactly), the next-triad gems now sit on the
+  frame's measured ring-slot centers (the authored triplet is right of the
+  trimmed bbox center: fractions 0.352/0.636/0.909), the falling piece
+  clips to the well mouth, and the danger state lost its mid-board flashing
+  sprite and "0 FREE" text in favor of column chevrons plus the meter icon.

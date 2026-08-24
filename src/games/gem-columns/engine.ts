@@ -9,7 +9,7 @@
 
 import { LEVELS, type LevelDef } from "./levels.ts";
 
-export const W = 720;
+export const W = 960;
 export const H = 540;
 
 export const COLS = 6;

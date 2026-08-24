@@ -14,7 +14,6 @@ import {
   W,
   cellAt,
   chainMultiplier,
-  topOccupiedRow,
   type Engine,
   type Fx,
 } from "./engine.ts";
@@ -28,7 +27,14 @@ const PANEL_EDGE = "rgba(244,230,193,0.16)";
 const LABEL = "rgba(244,230,193,0.62)";
 const VALUE = "#F4E6C1";
 
-const BAND = 90;
+// 210 px bands plus the 540 px square environment fill the 960 canvas exactly.
+const BAND = 210;
+
+// Ring-slot centers of the next-triad frame, measured from the art as
+// fractions of its trimmed canvas: the authored triplet sits right of the
+// frame's bbox center, so symmetric offsets miss the slots.
+const NEXT_SLOT_X = [0.352, 0.636, 0.909];
+const NEXT_SLOT_Y = 0.484;
 const TILE = 30;
 const BOARD_W = COLS * TILE;
 const BOARD_H = VISIBLE_ROWS * TILE;
@@ -193,9 +199,10 @@ export const draw = (
     ctx.restore();
   }
 
+  // Danger stays quiet and local: chevrons over the endangered columns and
+  // the meter icon in the band. A flashing mid-board sprite read as a glitch.
   if (eng.danger) {
     const beat = 0.45 + 0.35 * Math.sin(eng.time * 7);
-    drawSprite(ctx, spr.effects["danger-pulse"], W / 2, boardY0 + 26, 130, beat * 0.55);
     for (let col = 0; col < COLS; col++) {
       let top = ROWS;
       for (let row = HIDDEN_ROWS; row < ROWS; row++) {
@@ -221,37 +228,41 @@ export const draw = (
     );
   }
 
-  drawSprite(ctx, spr.ui["blank-score-plaque"], 70, 120, 150);
-  text(ctx, "SCORE", 70, 62, 10, LABEL);
+  const leftX = BAND / 2;
+  const rightX = W - BAND / 2;
+
+  drawSprite(ctx, spr.ui["blank-score-plaque"], leftX, 118, 176);
+  text(ctx, "SCORE", leftX, 54, 11, LABEL);
   // Ink digits: the plaque's blank band is cream, so the shared cream VALUE
   // color would vanish on it.
-  text(ctx, eng.score.toLocaleString(), 70, 122, 18, "#241A12");
-  drawSprite(ctx, spr.ui[eng.level.ornament], 70, 252, 66);
+  text(ctx, eng.score.toLocaleString(), leftX, 120, 20, "#241A12");
+  drawSprite(ctx, spr.ui[eng.level.ornament], leftX, 262, 84);
 
-  // The authored next-triad frame holds three slots in a row, so the preview
-  // lays the triad out horizontally: leftmost slot is the top gem.
-  text(ctx, "NEXT", 650, 82, 10, LABEL);
-  drawSprite(ctx, spr.ui["next-triad-frame"], 650, 122, 120);
+  // The next triad lies across the frame's measured ring slots, leftmost
+  // slot showing the gem that lands on top.
+  text(ctx, "NEXT", rightX, 54, 11, LABEL);
+  const frame = spr.ui["next-triad-frame"];
+  const frameW = 176;
+  const frameH = (frameW * frame.height) / frame.width;
+  drawSprite(ctx, frame, rightX, 120, frameW);
   for (let i = 0; i < 3; i++) {
-    drawSprite(ctx, spr.gems[eng.nextGems[i]][GEM_STATE.normal], 650 + (i - 1) * 34, 122, 26);
+    drawSprite(
+      ctx,
+      spr.gems[eng.nextGems[i]][GEM_STATE.normal],
+      rightX - frameW / 2 + NEXT_SLOT_X[i] * frameW,
+      120 - frameH / 2 + NEXT_SLOT_Y * frameH,
+      28,
+    );
   }
 
   if (eng.chain >= 2) {
-    drawSprite(ctx, spr.ui["chain-counter"], 650, 240, 54);
-    text(ctx, `x${chainMultiplier(eng.chain)}`, 650, 276, 14, VALUE);
+    drawSprite(ctx, spr.ui["chain-counter"], rightX, 260, 64);
+    text(ctx, `x${chainMultiplier(eng.chain)}`, rightX, 302, 15, VALUE);
   }
 
   if (eng.danger) {
     const beat = 0.55 + 0.4 * Math.sin(eng.time * 7);
-    drawSprite(ctx, spr.ui["danger-meter"], 650, 336, 54, beat);
-    text(
-      ctx,
-      `${Math.max(0, topOccupiedRow(eng.grid) - HIDDEN_ROWS)} FREE`,
-      650,
-      372,
-      11,
-      VALUE,
-    );
+    drawSprite(ctx, spr.ui["danger-meter"], rightX, 360, 64, beat);
   }
 
   if (eng.phase === "level-clear") {
