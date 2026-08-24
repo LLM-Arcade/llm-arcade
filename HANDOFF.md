@@ -10,19 +10,20 @@ and Google OAuth origins use it.
 
 ## Current state
 
-**Phase 4 complete; Phase 6 in progress (sessions 11–14, user-directed:
+**Phase 4 complete; Phase 6 in progress (sessions 11–15, user-directed:
 games before chat).** Shipped so far: **Munch Maze** (A,
 `src/games/munch-maze/`, 7 ach), **Rune & Ruin** (A, `src/games/rune-ruin/`,
 8 ach), **Trailbound** (B, `public/games/trailbound.html`, 7 ach),
 **Starfall Squadron** (A, `src/games/starfall-squadron/`, 7 ach),
-**Rockbuster** (B, `public/games/rockbuster.html`, 7 ach) — all
-published. **User-set queue for the next builds: Boulder Rush (B) →
-Hyper Circuit (A).** The Phase-4 pipeline test with a
+**Rockbuster** (B, `public/games/rockbuster.html`, 7 ach), **Boulder Rush**
+(B, `public/games/boulder-rush.html`, 7 ach) — all published.
+**User-set queue for the next builds: Hyper Circuit (A) →
+Run 'n Gunner.** The Phase-4 pipeline test with a
 second account was explicitly skipped (user decision) — the upload
 wizard/admin queue remain untested with real traffic. Site still gated
 (`site_settings.launched = false`, guests → Landing, signed-in → Arcade
-Home + preview banner). **1 account (the admin), 6 published cabinets. The
-five session-11–14 cabinets have NOT been playtested by a human yet.**
+Home + preview banner). **1 account (the admin), 7 published cabinets. The
+six session-11–15 cabinets have NOT been playtested by a human yet.**
 
 **⚖️ Asset diet (user-mandated, session 13 — see AI_RULES):** in-game art
 must be light. Prompt sprites as **flat solid color, NO grain/noise/
@@ -182,6 +183,32 @@ mute; auto-pause on tab hide. Achievement slugs: `first-blast`,
 `rock-legend` (15k; run economy ≈ 2–6k per field + saucers, cap 5M).
 One `ARCADE_SCORE` per run at game over.
 
+## Boulder Rush (Track B, dev-hosted, second diet cabinet)
+
+`public/games/boulder-rush.html` — Boulder Dash homage, single **1.43 MB**
+file. Two flat magenta sheets inlined as data URIs (tiles: dirt, brick,
+steel, hatch closed/open · actors: miner, boulder, gem, gnat, beetle,
+spark), keyed + gap-sliced at runtime (Rockbuster's recipe). **Procedural
+caves** (40×22, steel border, brick segments, carved pockets, critter
+chambers) — no handcrafted layouts, difficulty scales to cave 10: quota
+10+2n, time 135−5n (min 80), boulder density up, gnats/beetles up. Classic
+falling-rock physics at 8 ticks/s: single top-down scan with per-tick
+`moved` flags, boulders/gems fall 1 cell/tick, roll off rounded surfaces
+(boulder/gem/brick), **only falling objects kill**; resting boulders are
+supported by the player beneath (dig-under escape works). Wall-follower
+critters (gnats hug left, beetles hug right, move into EMPTY only);
+touching the miner detonates them; crushing a beetle rains a 3×3 of gems.
+Push boulders sideways at 55%/tick; Shift+dir (or the touch GRAB pad)
+digs/collects without moving; R self-detonates to escape softlocks (costs
+a life). Gems: 15 pts pre-quota, 30 after the hatch opens (border-wall
+exit, opens at quota); clear bonus = 2×seconds left; bugs 50; extra life
+per 2,000 (max 6); death regenerates the same cave number fresh. Score cap
+250k. Balance knobs in `TUNE` at the top of the `<script>`. Achievement
+slugs: `first-spark`, `daylight`, `bug-squasher`, `gem-hoard` (30 gems/one
+cave — beetle farming), `swift-pick` (60+ s left), `deep-digger` (cave 5),
+`rush-legend` (7,500; ≈500–900/cave deep). One `ARCADE_SCORE` at game over
+with stats (cave, gems, bugs_squashed).
+
 ## The progression engine (Phase 3, unchanged)
 
 Client never writes progression tables — SECURITY DEFINER functions +
@@ -250,7 +277,7 @@ URIs (sandbox can't read external images back).
 
 ## Next up
 
-1. **Playtest the five new cabinets** (all desk-checked only). Munch Maze:
+1. **Playtest the six new cabinets** (all desk-checked only). Munch Maze:
    speed/fright constants top of its `engine.ts`; watch sprite-sheet
    slicing. Rune & Ruin: Tuning block in its `engine.ts` + `content.ts`;
    verify the glyph grid fits small screens. Trailbound: PACES/RATIONS/
@@ -260,9 +287,12 @@ URIs (sandbox can't read external images back).
    shows clipped sprites), beam capture + rescue flow, touch drag.
    Rockbuster: verify both inlined sheets slice into 5 + 3 frames (a
    fallback slice shows clipped sprites), saucer aim/warble, hyperspace,
-   touch pads; `TUNE` knobs at the top of its `<script>`.
-2. **The user's game queue (session 13): Boulder Rush →
-   Hyper Circuit**, then Run 'n Gunner → flagship trio. Sprite games follow
+   touch pads; `TUNE` knobs at the top of its `<script>`. Boulder Rush:
+   verify sheets slice into 5 + 6 frames, falling/rolling feel (tick
+   0.125s), push chance, cave solvability across regenerations, quota/time
+   curve, touch D-pad + GRAB; `TUNE` knobs at the top of its `<script>`.
+2. **The user's game queue (session 13): Hyper Circuit (A)**,
+   then Run 'n Gunner → flagship trio. Sprite games follow
    Munch Maze/Starfall; text-shelf follows Rune & Ruin; self-contained
    Track-B follows Rockbuster **on the asset diet** (flat sprites, small
    sheets inlined as data URIs — no fat panoramas). Track-B briefs can

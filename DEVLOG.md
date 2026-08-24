@@ -538,3 +538,40 @@ inserted).
 **State for session 15:** FIVE unplaytested cabinets. Queue next:
 **Boulder Rush** (B, DOS, Boulder Dash homage) → Hyper Circuit (A, SNES).
 Pipeline live-test + Phase 5 chat still deferred.
+
+## Session 15 — Boulder Rush ⛏ (second Track-B diet cabinet)
+
+**Shipped #6: Boulder Rush** (`public/games/boulder-rush.html`, Track B,
+DOS shelf, 7 achievements) — the Boulder Dash homage, dev-hosted,
+published via SQL (teaser row UPDATEd; key art already existed from the
+session-3 lineup batch and was kept).
+
+- **1.43 MB total** on the asset diet: two flat sheets (tiles 558 KB /
+  actors 543 KB) inlined as data URIs, magenta-keyed + gap-sliced with
+  the Rockbuster recipe. Dirt tile variety via mirrored transforms on
+  alternate cells — one frame does the whole cave.
+- **Procedural caves instead of handcrafted layouts** (also IP hygiene —
+  zero First Star level data): 40×22 grid, steel border, random brick
+  segments, carved pockets, 5×3 critter chambers, boulders/gems scattered
+  on remaining dirt, quota = 62% of placed gems, exit hatch replaces a
+  far border cell. Difficulty scales to cave 10 (quota 10+2n, time
+  135−5n, density up, more bugs). Death regenerates the same cave fresh —
+  no stuck states carry over; R self-detonates (costs a life) as the
+  explicit anti-softlock valve.
+- **Classic BD physics preserved:** single top-down scan with `moved`
+  flags, 8 ticks/s, 1-cell-per-tick falls, rounded-surface rolling
+  (boulder/gem/brick), falling-only kills, player-supported boulders
+  (dig-under escape), 55%/tick pushes, Shift-grab digging. Wall-follower
+  bugs: gnats turn left / beetles turn right; touch = detonation;
+  crushed beetles rain 3×3 gems (the score farm that feeds `gem-hoard`).
+- Economy: gems 15/30 (pre/post quota), bugs 50, clear bonus 2×seconds
+  left, extra life per 2k (max 6), cap 250k. `swift-pick` retuned from
+  30→60 spare seconds mid-session (30 was near-automatic on cave 1's
+  130 s clock). `rush-legend` 7,500 ≈ 10+ caves or beetle farming.
+- Slugs seeded + fired: `first-spark`, `daylight`, `bug-squasher`,
+  `gem-hoard`, `swift-pick`, `deep-digger`, `rush-legend`.
+
+**State for session 16:** SIX unplaytested cabinets — the feel-check pass
+is now seriously overdue. Queue next: **Hyper Circuit** (A, SNES, Mode-7
+showpiece) → Run 'n Gunner → flagship trio. Pipeline live-test + Phase 5
+chat still deferred.
