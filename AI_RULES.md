@@ -31,9 +31,9 @@ read these three docs:
   in-game sprites (noise is what bloats PNGs — grain stays allowed on
   key-art tiles only), few small sheets over many files, flat-color
   backgrounds from design tokens, sprite instancing/transforms over extra
-  frames. Target well under ~1 MB of art per game; avoid multi-MB
-  data-URI payloads like Trailbound's (4.5 MB — grandfathered, don't
-  repeat it).
+  frames. Target well under ~1 MB of art per game. Trailbound, the old
+  4.5 MB offender, was requantized to 1.17 MB (session 16) — every
+  cabinet is on the diet now, no grandfathering left.
 
 ## Naming conventions
 

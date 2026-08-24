@@ -133,8 +133,10 @@ Achievement slugs (must match seeded rows): `first-blood`, `delver`,
 
 ## Trailbound (Track B, dev-hosted like Flap Hero)
 
-`public/games/trailbound.html` — Oregon Trail homage, single 4.48 MB file
-(under the 5 MB cap), **fully original geography** (Split Creek → Golden
+`public/games/trailbound.html` — Oregon Trail homage, single **1.17 MB**
+file (dieted in session 16 from 4.48 MB: panorama quantized, wagon
+pre-keyed + pre-trimmed at build time so the runtime chroma-key block is
+gone), **fully original geography** (Split Creek → Golden
 Valley, 1,120 mi; invented forts/rivers — zero MECC IP). Day-tick travel
 loop (640 ms auto-days), pace × rations × weather, 5-member party HP,
 choice-modal events, fort trading, depth-based river fords, stop-the-marker

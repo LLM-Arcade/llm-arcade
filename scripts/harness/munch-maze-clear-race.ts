@@ -6,7 +6,17 @@
 import { Engine } from "../../src/games/munch-maze/engine";
 import { COLS, TILE } from "../../src/games/munch-maze/maze";
 
-const eng = new Engine() as any;
+// Structural view of the Engine's private internals the probe pokes.
+interface EngineInternals {
+  phase: string;
+  player: { px: number; py: number };
+  seeds: Set<number>;
+  powers: Set<number>;
+  ghosts: Array<{ state: string; px: number; py: number }>;
+  update(dt: number): void;
+  drainEvents(): Array<{ type: string }>;
+}
+const eng = new Engine() as unknown as EngineInternals;
 eng.phase = "running";
 
 const p = eng.player;
