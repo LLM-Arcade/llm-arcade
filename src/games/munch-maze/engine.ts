@@ -212,6 +212,9 @@ export class Engine {
     if (this.berryActiveT > 0) this.berryActiveT = Math.max(0, this.berryActiveT - dt);
 
     this.updatePlayer(dt);
+    // Eating the last seed wins the frame: a ghost touch after it would
+    // overwrite "clear" with "dying" and the level could never re-clear.
+    if (this.phase !== "running") return;
     this.updateGhosts(dt);
     this.checkCollisions();
   }
@@ -251,6 +254,7 @@ export class Engine {
     } else if (this.powers.delete(idx)) {
       this.addScore(50);
       this.seedsEatenLevel += 1;
+      this.maybeSpawnBerry();
       this.frightT = this.frightSeconds();
       this.frightCombo = 0;
       for (const g of this.ghosts) {

@@ -313,6 +313,9 @@ export class Engine {
 
     if (this.phase === "cleared") {
       this.updatePlayer(dt);
+      // Bolts fired into the breather must keep flying or they freeze
+      // at the muzzle until nextWave() wipes them.
+      this.updateBullets(dt);
       this.updateFreed(dt);
       if (this.time - this.clearedAt > 1.3) this.nextWave();
       return;

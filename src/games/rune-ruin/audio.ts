@@ -16,6 +16,10 @@ export const setMuted = (m: boolean) => {
   muted = m;
 };
 
+// Module state outlives the key={frameKey} remount; the HUD reads this so
+// its icon matches what the synth actually does.
+export const isMuted = () => muted;
+
 const blip = (
   freqFrom: number,
   freqTo: number,

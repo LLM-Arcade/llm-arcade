@@ -38,7 +38,7 @@ export const WEAPONS: GearDef[] = [
   { name: "Bronze Sword", bonus: 2 },
   { name: "Iron Falx", bonus: 3 },
   { name: "Runed Axe", bonus: 4 },
-  { name: "Sunforged Blade", bonus: 5 },
+  { name: "Sunsteel Blade", bonus: 5 },
 ];
 
 export const ARMORS: GearDef[] = [

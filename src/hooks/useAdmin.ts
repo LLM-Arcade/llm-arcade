@@ -134,7 +134,7 @@ export const useReviewSubmission = () =>
       if (error) throw error;
       return args.approve ? "approved" : "rejected";
     },
-    [["admin-submissions"], ["admin-games"], ["games"], ["my-submissions"]],
+    [["admin-submissions"], ["admin-games"], ["games"], ["game"], ["my-submissions"]],
     (r) => (r === "approved" ? "Approved — the cabinet is live." : "Rejected with reason."),
   );
 

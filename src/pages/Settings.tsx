@@ -55,15 +55,21 @@ const Settings = () => {
       return;
     }
     setUsernameState("checking");
+    // The cleanup can't abort an in-flight request, so a stale response
+    // must not overwrite the verdict for a newer candidate.
+    let stale = false;
     const timer = setTimeout(async () => {
       const { data } = await supabase
         .from("profiles")
         .select("id")
         .eq("username", candidate)
         .maybeSingle();
-      setUsernameState(data ? "taken" : "available");
+      if (!stale) setUsernameState(data ? "taken" : "available");
     }, 450);
-    return () => clearTimeout(timer);
+    return () => {
+      stale = true;
+      clearTimeout(timer);
+    };
   }, [username, profile]);
 
   const save = useMutation({

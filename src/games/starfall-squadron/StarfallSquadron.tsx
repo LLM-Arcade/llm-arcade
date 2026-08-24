@@ -7,7 +7,7 @@ import type { ArcadeGameProps } from "@/games/registry";
 import { Engine, H, W } from "./engine";
 import { draw } from "./render";
 import { loadSprites, type StarfallSprites } from "./sprites";
-import { setMuted, sfx } from "./audio";
+import { isMuted, setMuted, sfx } from "./audio";
 import { Pause, Play, Volume2, VolumeX } from "lucide-react";
 
 const StarfallSquadron = ({ onScore, onAchievement }: ArcadeGameProps) => {
@@ -23,18 +23,23 @@ const StarfallSquadron = ({ onScore, onAchievement }: ArcadeGameProps) => {
   callbacksRef.current = { onScore, onAchievement };
 
   const [ready, setReady] = useState(false);
+  const [spriteError, setSpriteError] = useState(false);
   const [paused, setPaused] = useState(false);
   pausedRef.current = paused;
-  const [muted, setMutedState] = useState(false);
+  const [muted, setMutedState] = useState(isMuted);
   const [hud, setHud] = useState({ score: 0, wave: 1, lives: 3, chain: 0, banner: "" });
 
   useEffect(() => {
     let alive = true;
-    loadSprites().then((s) => {
-      if (!alive) return;
-      spritesRef.current = s;
-      setReady(true);
-    });
+    loadSprites()
+      .then((s) => {
+        if (!alive) return;
+        spritesRef.current = s;
+        setReady(true);
+      })
+      .catch(() => {
+        if (alive) setSpriteError(true);
+      });
     return () => {
       alive = false;
     };
@@ -156,6 +161,7 @@ const StarfallSquadron = ({ onScore, onAchievement }: ArcadeGameProps) => {
   }, []);
 
   const onPointerDown = (e: React.PointerEvent) => {
+    if (pausedRef.current) return;
     e.currentTarget.setPointerCapture(e.pointerId);
     pointerTo(e.clientX);
     keysRef.current.fire = true;
@@ -224,7 +230,7 @@ const StarfallSquadron = ({ onScore, onAchievement }: ArcadeGameProps) => {
 
         {!ready && (
           <p className="absolute font-mono text-[11px] tracking-widest text-background/60">
-            LOADING SQUADRON…
+            {spriteError ? "ART FAILED TO LOAD · RELOAD TO RETRY" : "LOADING SQUADRON…"}
           </p>
         )}
 

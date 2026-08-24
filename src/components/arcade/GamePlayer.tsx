@@ -35,6 +35,7 @@ const GamePlayer = ({ game }: { game: Game }) => {
 
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
+  const scoredRunRef = useRef(false);
 
   const TrackAGame = gameRegistry[game.slug];
 
@@ -98,6 +99,11 @@ const GamePlayer = ({ game }: { game: Game }) => {
   });
 
   const handleGameOver = (payload: ArcadeScorePayload) => {
+    // The SDK contract is one ARCADE_SCORE per run. The iframe stays live
+    // under the game-over overlay, so a buggy or hostile cabinet could
+    // keep posting scores; only the first one counts.
+    if (scoredRunRef.current) return;
+    scoredRunRef.current = true;
     setRun(payload);
     setRunPb(personalBest ?? null);
     setPhase("over");
@@ -176,6 +182,7 @@ const GamePlayer = ({ game }: { game: Game }) => {
   const start = () => {
     setRun(null);
     setSubmitState("idle");
+    scoredRunRef.current = false;
     setFrameKey((k) => k + 1);
     setPhase(TrackAGame ? "playing" : "loading");
     void supabase.rpc("increment_play_count", { p_game_id: game.id });

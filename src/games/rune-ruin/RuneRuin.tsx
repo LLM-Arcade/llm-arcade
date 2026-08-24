@@ -8,7 +8,7 @@ import type { ArcadeGameProps } from "@/games/registry";
 import { Engine, type Action } from "./engine";
 import { MAP_H, MAP_W, STAIRS, WALL } from "./dungeon";
 import { PALETTE } from "./content";
-import { setMuted, sfx } from "./audio";
+import { isMuted, setMuted, sfx } from "./audio";
 import {
   ChevronDown,
   ChevronLeft,
@@ -50,7 +50,7 @@ const RuneRuin = ({ onScore, onAchievement }: ArcadeGameProps) => {
 
   const [, setTick] = useState(0);
   const [paused, setPaused] = useState(false);
-  const [muted, setMutedState] = useState(false);
+  const [muted, setMutedState] = useState(isMuted);
   const [fontSize, setFontSize] = useState(13);
 
   const boardRef = useRef<HTMLDivElement>(null);

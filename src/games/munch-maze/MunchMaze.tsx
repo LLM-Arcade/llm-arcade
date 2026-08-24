@@ -6,7 +6,7 @@ import type { ArcadeGameProps } from "@/games/registry";
 import { Engine, type Dir } from "./engine";
 import { loadSprites, type MunchSprites } from "./sprites";
 import { render, resetRenderCache } from "./render";
-import { setMuted, sfx } from "./audio";
+import { isMuted, setMuted, sfx } from "./audio";
 import { BOARD_H, BOARD_W } from "./maze";
 import { Heart, Loader2, Pause, Play, Volume2, VolumeX } from "lucide-react";
 
@@ -27,8 +27,9 @@ const MunchMaze = ({ onScore, onAchievement }: ArcadeGameProps) => {
   if (!engineRef.current) engineRef.current = new Engine();
 
   const [sprites, setSprites] = useState<MunchSprites | null>(null);
+  const [spriteError, setSpriteError] = useState(false);
   const [paused, setPaused] = useState(false);
-  const [muted, setMutedState] = useState(false);
+  const [muted, setMutedState] = useState(isMuted);
   // HUD mirrors of engine state (updated once per frame)
   const [hud, setHud] = useState({ score: 0, lives: 3, level: 1 });
   const [phase, setPhase] = useState(engineRef.current.phase);
@@ -41,9 +42,13 @@ const MunchMaze = ({ onScore, onAchievement }: ArcadeGameProps) => {
   useEffect(() => {
     let alive = true;
     resetRenderCache();
-    void loadSprites().then((s) => {
-      if (alive) setSprites(s);
-    });
+    void loadSprites()
+      .then((s) => {
+        if (alive) setSprites(s);
+      })
+      .catch(() => {
+        if (alive) setSpriteError(true);
+      });
     return () => {
       alive = false;
     };
@@ -106,7 +111,7 @@ const MunchMaze = ({ onScore, onAchievement }: ArcadeGameProps) => {
       const dir = KEY_DIRS[e.code];
       if (dir !== undefined) {
         e.preventDefault();
-        engineRef.current.setDirection(dir);
+        if (!pausedRef.current) engineRef.current.setDirection(dir);
         return;
       }
       if (e.code === "KeyP" || e.code === "Escape") {
@@ -160,7 +165,13 @@ const MunchMaze = ({ onScore, onAchievement }: ArcadeGameProps) => {
   if (!sprites) {
     return (
       <div className="flex h-full w-full items-center justify-center">
-        <Loader2 className="h-6 w-6 animate-spin text-background/70" />
+        {spriteError ? (
+          <p className="font-mono text-[11px] tracking-widest text-background/60">
+            ART FAILED TO LOAD · RELOAD TO RETRY
+          </p>
+        ) : (
+          <Loader2 className="h-6 w-6 animate-spin text-background/70" />
+        )}
       </div>
     );
   }
