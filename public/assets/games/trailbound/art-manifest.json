@@ -1,0 +1,130 @@
+{
+  "slug": "trailbound",
+  "generatedAssets": [
+    {
+      "file": "region-prairie.png",
+      "frames": 1,
+      "sourceSize": [720, 314],
+      "renderSize": "scene width with mileage-driven horizontal pan",
+      "anchor": "bottom-left",
+      "animation": "Split Creek prairie region",
+      "promptSummary": "Chunky DOS-era prairie panorama with a winding trail, homestead, warm cream sky, terracotta earth, olive grass, and no baked wagon"
+    },
+    {
+      "file": "region-riverlands.png",
+      "frames": 1,
+      "sourceSize": [720, 316],
+      "renderSize": "scene width with mileage-driven horizontal pan",
+      "anchor": "bottom-left",
+      "animation": "broad riverlands region",
+      "promptSummary": "Chunky DOS-era riverlands panorama with a ford, cottonwoods, marsh banks, warm cream, terracotta, olive, and no baked wagon"
+    },
+    {
+      "file": "region-mountain-pass.png",
+      "frames": 1,
+      "sourceSize": [720, 316],
+      "renderSize": "scene width with mileage-driven horizontal pan",
+      "anchor": "bottom-left",
+      "animation": "high mountain pass region",
+      "promptSummary": "Chunky DOS-era mountain-pass panorama with switchback trail, rock faces, sparse olive pines, terracotta cliffs, and no baked wagon"
+    },
+    {
+      "file": "region-golden-valley.png",
+      "frames": 1,
+      "sourceSize": [720, 314],
+      "renderSize": "scene width with mileage-driven horizontal pan",
+      "anchor": "bottom-left",
+      "animation": "Golden Valley approach region",
+      "promptSummary": "Chunky DOS-era arrival panorama with descending trail, fertile olive valley, distant settlement, mustard light, and no baked wagon"
+    },
+    {
+      "file": "wagon-motion.png",
+      "frames": 4,
+      "grid": [4, 1],
+      "sourceSize": [772, 113],
+      "cellSize": [193, 113],
+      "renderSize": "34% of scene height",
+      "anchor": "bottom-center at wheel contact",
+      "animation": "travel loop at 140 ms per frame; first frame while stopped",
+      "runtime": "embedded into public/games/trailbound.html by scripts/embed-trailbound-art.mjs",
+      "promptSummary": "Four aligned side-view ox-wagon movement poses on pure magenta with fixed wheel and hoof contact, chunky DOS-era pixel art"
+    },
+    {
+      "file": "event-fort.png",
+      "frames": 1,
+      "sourceSize": [560, 246],
+      "renderSize": "modal or full scene",
+      "anchor": "center",
+      "animation": "fort and trade event",
+      "promptSummary": "Frontier stockade trading fort event scene in chunky warm-palette DOS pixel art"
+    },
+    {
+      "file": "event-river-crossing.png",
+      "frames": 1,
+      "sourceSize": [560, 246],
+      "renderSize": "modal or full scene",
+      "anchor": "center",
+      "animation": "river crossing decision",
+      "promptSummary": "Ox wagon entering a dangerous broad river crossing in chunky warm-palette DOS pixel art"
+    },
+    {
+      "file": "event-hunt.png",
+      "frames": 1,
+      "sourceSize": [560, 246],
+      "renderSize": "modal",
+      "anchor": "center",
+      "animation": "hunt outcome",
+      "promptSummary": "Careful frontier hunt scene with distant game, tall prairie grass, and readable chunky silhouettes"
+    },
+    {
+      "file": "event-storm.png",
+      "frames": 1,
+      "sourceSize": [560, 246],
+      "renderSize": "full scene",
+      "anchor": "center",
+      "animation": "severe storm event",
+      "promptSummary": "Canvas-topped wagon braced in a severe plains storm, flat terracotta and olive DOS pixel art with no glow"
+    },
+    {
+      "file": "event-arrival.png",
+      "frames": 1,
+      "sourceSize": [560, 246],
+      "renderSize": "modal or full scene",
+      "anchor": "center",
+      "animation": "successful Golden Valley arrival",
+      "promptSummary": "Warm Golden Valley arrival with wagon, fields, settlement, and consequential journey-end framing"
+    },
+    {
+      "file": "event-camp.png",
+      "frames": 1,
+      "sourceSize": [560, 246],
+      "renderSize": "wire-ready event scene",
+      "anchor": "center",
+      "animation": "optional camp and rest event",
+      "promptSummary": "Full trail party resting around a campfire beside the wagon and oxen in chunky warm-palette DOS pixel art"
+    },
+    {
+      "file": "event-illness.png",
+      "frames": 1,
+      "sourceSize": [560, 246],
+      "renderSize": "modal",
+      "anchor": "center",
+      "animation": "trail fever decision",
+      "promptSummary": "Sick traveler under blankets while companions offer water and a frontier medicine kit in chunky warm-palette DOS pixel art"
+    },
+    {
+      "file": "event-broken-axle.png",
+      "frames": 1,
+      "sourceSize": [560, 246],
+      "renderSize": "modal",
+      "anchor": "center",
+      "animation": "broken axle decision",
+      "promptSummary": "Tilted wagon with a removed wheel while two travelers repair the axle and the oxen rest nearby in chunky warm-palette DOS pixel art"
+    }
+  ],
+  "gameplayArtBytes": 876743,
+  "keyArtBytes": 159985,
+  "totalArtBytes": 1036728,
+  "budgetBytes": 1048576,
+  "budgetNote": "Includes the 43463-byte wagon source sheet and its embedded runtime copy. Unique generated image bytes total 993265."
+}
