@@ -20,6 +20,9 @@ export interface Profile {
   role: Role;
   xp: number;
   level: number;
+  streak_days: number;
+  best_streak: number;
+  last_play_date: string | null;
   created_at: string;
 }
 

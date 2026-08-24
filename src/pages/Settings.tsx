@@ -73,7 +73,6 @@ const Settings = () => {
           username: username.trim().toLowerCase(),
           display_name: displayName.trim() || null,
           bio: bio.trim(),
-          updated_at: new Date().toISOString(),
         })
         .eq("id", user!.id);
       if (error) throw error;

@@ -6,6 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useArcadeBridge, sanitizeScore, type ArcadeScorePayload } from "@/lib/arcade-sdk";
 import { gameRegistry } from "@/games/registry";
 import { useLeaderboard } from "@/hooks/useLeaderboard";
+import { useUnlockAchievement } from "@/hooks/useAchievements";
 import { gameArtPath } from "@/data/launch-lineup";
 import type { Game } from "@/hooks/useGames";
 import { Button } from "@/components/ui/button";
@@ -61,6 +62,12 @@ const GamePlayer = ({ game }: { game: Game }) => {
       ? weeklyBoard.findIndex((r) => r.user_id === user.id) + 1
       : 0;
 
+  const unlock = useUnlockAchievement(game.id);
+  const handleAchievement = (id: string) => {
+    // Guests don't accrue unlocks — the run's score is what gets held/claimed.
+    if (user) unlock.mutate(id);
+  };
+
   const submit = useMutation({
     mutationFn: async (payload: ArcadeScorePayload) => {
       const { error } = await supabase.from("scores").insert({
@@ -76,6 +83,10 @@ const GamePlayer = ({ game }: { game: Game }) => {
       setSubmitState("saved");
       queryClient.invalidateQueries({ queryKey: ["leaderboard", game.id] });
       queryClient.invalidateQueries({ queryKey: ["personal-best", game.id] });
+      // Progression side effects (XP, streak, badges) happen in a DB trigger
+      queryClient.invalidateQueries({ queryKey: ["profile"] });
+      queryClient.invalidateQueries({ queryKey: ["activity"] });
+      queryClient.invalidateQueries({ queryKey: ["recent-scores"] });
     },
     onError: (error: Error) => {
       if (error.message.toLowerCase().includes("security")) {
@@ -146,6 +157,7 @@ const GamePlayer = ({ game }: { game: Game }) => {
   useArcadeBridge(iframeRef, game.score_cap, {
     onReady: () => setPhase((p) => (p === "loading" ? "playing" : p)),
     onScore: handleGameOver,
+    onAchievement: handleAchievement,
   });
 
   // If a game never sends ARCADE_READY, assume it's playing after 5s
@@ -246,7 +258,7 @@ const GamePlayer = ({ game }: { game: Game }) => {
                 const score = sanitizeScore(p.score, game.score_cap);
                 if (score !== null) handleGameOver({ ...p, score });
               }}
-              onAchievement={() => undefined}
+              onAchievement={handleAchievement}
             />
           </Suspense>
         ) : game.html_path ? (

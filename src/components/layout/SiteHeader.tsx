@@ -9,7 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { LogOut, Settings } from "lucide-react";
+import { LogOut, Settings, UserRound } from "lucide-react";
 
 const navLinkClass = ({ isActive }: { isActive: boolean }) =>
   `rounded-full px-3.5 py-2 text-sm font-medium transition-colors ${
@@ -68,6 +68,12 @@ const SiteHeader = () => {
                   </p>
                 </div>
                 <DropdownMenuSeparator className="bg-border" />
+                <DropdownMenuItem asChild className="cursor-pointer rounded-xl py-2.5 font-medium">
+                  <Link to={`/creator/${profile.username}`}>
+                    <UserRound className="h-4 w-4" />
+                    Profile
+                  </Link>
+                </DropdownMenuItem>
                 <DropdownMenuItem asChild className="cursor-pointer rounded-xl py-2.5 font-medium">
                   <Link to="/settings">
                     <Settings className="h-4 w-4" />

@@ -30,7 +30,7 @@ read these three docs:
 ## Naming conventions
 
 - Pages & components: `PascalCase.tsx` (`src/pages/`, `src/components/<domain>/`)
-- Component domains: `layout/`, `arcade/` (later: `progression/`, `chat/`, `admin/`)
+- Component domains: `layout/`, `arcade/`, `progression/` (later: `chat/`, `admin/`)
 - Non-component modules: `kebab-case.ts` (`src/data/launch-lineup.ts`)
 - Hooks: `useCamelCase.ts` in `src/hooks/`
 - Assets: `public/assets/brand/` and `public/assets/games/<slug>.png` —

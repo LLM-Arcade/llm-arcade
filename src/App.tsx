@@ -8,6 +8,7 @@ import LaunchGate from "@/components/layout/LaunchGate";
 import Home from "./pages/Home";
 import Games from "./pages/Games";
 import GameDetail from "./pages/GameDetail";
+import CreatorProfile from "./pages/CreatorProfile";
 import Login from "./pages/Login";
 import Settings from "./pages/Settings";
 import Faq from "./pages/Faq";
@@ -35,6 +36,7 @@ const App = () => (
             {/* Open pre-launch: guests can play; scores require sign-in */}
             <Route path="/games" element={<Games />} />
             <Route path="/game/:slug" element={<GameDetail />} />
+            <Route path="/creator/:username" element={<CreatorProfile />} />
             <Route path="/login" element={<Login />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/faq" element={<Faq />} />

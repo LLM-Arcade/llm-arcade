@@ -6,6 +6,7 @@ import LeaderboardPanel from "@/components/arcade/LeaderboardPanel";
 import CommentsPanel from "@/components/arcade/CommentsPanel";
 import RatingWidget from "@/components/arcade/RatingWidget";
 import FavoriteButton from "@/components/arcade/FavoriteButton";
+import AchievementsPanel from "@/components/progression/AchievementsPanel";
 import { useGame, useGames } from "@/hooks/useGames";
 import { gameArtPath } from "@/data/launch-lineup";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -107,6 +108,9 @@ const GameDetail = () => {
                 <TabsTrigger value="leaderboard" className={tabTriggerClass}>
                   Leaderboard
                 </TabsTrigger>
+                <TabsTrigger value="achievements" className={tabTriggerClass}>
+                  Achievements
+                </TabsTrigger>
                 <TabsTrigger value="comments" className={tabTriggerClass}>
                   Comments
                 </TabsTrigger>
@@ -116,6 +120,9 @@ const GameDetail = () => {
               </TabsList>
               <TabsContent value="leaderboard" className="mt-4">
                 <LeaderboardPanel game={game} />
+              </TabsContent>
+              <TabsContent value="achievements" className="mt-4">
+                <AchievementsPanel game={game} />
               </TabsContent>
               <TabsContent value="comments" className="mt-4">
                 <CommentsPanel game={game} />

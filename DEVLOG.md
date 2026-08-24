@@ -152,3 +152,51 @@ Flap Hero is the only published cabinet; no scores/comments/ratings data yet ·
 full recipe + rules distilled into HANDOFF.md and AI_RULES.md. Next: verify
 the play → score → claim loop end-to-end, then start **Phase 3 (progression)**
 — achievements engine first so Flap Hero's manifest events stop being ignored.
+
+## Session 7 — Phase 3: Progression ✅
+
+**Goal:** achievements engine, XP/levels/streaks, badges, activity feed +
+follows, real Arcade Home (spec §9 Phase 3).
+
+**Security fix first:** discovered `profiles` had **full-table UPDATE granted
+to anon+authenticated** — any signed-in user could have set their own
+role/xp/level (RLS row policy alone doesn't restrict columns). Revoked and
+re-granted column-level UPDATE on username/display_name/avatar_url/bio only.
+`updated_at` is now maintained by a `touch_updated_at` trigger (Settings no
+longer writes it — it would be denied). Rule going forward: after ALTERs on
+profiles, re-check `information_schema.column_privileges`.
+
+**Schema:** `achievements` (per-game manifest defs; Flap Hero's 6 seeded from
+its JSON block), `user_achievements`, `xp_events`, `badges` (7 seeded) +
+`user_badges`, `follows`, `activity_events`; `profiles` gains
+streak_days/best_streak/last_play_date. Clients can only write `follows`;
+everything else moves through SECURITY DEFINER functions with EXECUTE revoked
+where internal (`grant_xp`, `award_badge`).
+
+**Engine decisions**
+- `unlock_achievement(game_id, slug)` RPC validates against the approved
+  manifest (published games only), is idempotent, grants XP, logs activity,
+  checks Completionist. Client-trust accepted like scores (v1 stance).
+- XP economy: +10/score (200/day cap), +25 first play of day, achievement =
+  manifest xp, badge rarity 25/50/100/200, #1 takeover +50. **Level =
+  min(50, floor(sqrt(xp/40))+1)** — mirrored in `src/lib/progression.ts`.
+- Streaks = consecutive **UTC** days with ≥1 score, updated in the score
+  trigger; freeze token deferred.
+- Chart-topper/top_rank only fires when #1 changes hands; era-tourist gated
+  until ≥5 eras have published games; playtester badge auto-awards via role
+  trigger (ready for Phase 4 approvals).
+- Guests: achievements are NOT held/claimed (only scores are) — Achievements
+  tab tells them; keeps the held-run payload simple.
+
+**UI:** Achievements tab on GameDetail (locked hint + global unlock %,
+unlocked date), stamp-animation unlock toast, `/creator/:username` (level
+ring, stats strip, badge case, follow, top scores/achievements/activity),
+real Arcade Home (Spotlight = featured/most-played published game until the
+Phase 4 admin picker, ScoreTicker marquee — animates only with ≥5 rows,
+rails, streak card, global feed), Profile link in the header menu.
+
+**Session close — state for session 8:** still zero accounts; nothing
+runtime-tested against real data (type checks clean, RPCs smoke-tested in
+SQL). **First action next session: sign up and run the whole loop** — score
+→ XP/streak → toasts → badges → feed → profile — then start Phase 4
+(upload wizard + admin, incl. spotlight picker and playtester approvals).
