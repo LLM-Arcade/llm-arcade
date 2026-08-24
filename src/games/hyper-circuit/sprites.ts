@@ -1,25 +1,19 @@
 // Hyper Circuit sprites. Chroma-key + gap-slice pipeline copied from
 // Starfall Squadron per PATTERNS.md (each cabinet carries its own copy).
-//
-// STAND-IN ART: Zo image generation is down, so every sheet below is
-// borrowed from existing cabinets. Final sheets to generate later:
-//   hyper-circuit/craft.png   (5 bank frames of the Copperhead, rear view)
-//   hyper-circuit/rivals.png  (4 rival crafts, rear view)
-//   hyper-circuit/fx.png      (boost flame, spark, streak, pad glyph)
-//   hyper-circuit/horizon.png (panorama strip for the sky band)
 
-const STARFALL = "/assets/games/starfall-squadron";
-const MUNCH = "/assets/games/munch-maze";
+const ASSETS = "/assets/games/hyper-circuit";
 
 export interface HyperSprites {
   craft: HTMLCanvasElement;
   rivalSheets: HTMLCanvasElement[];
-  bolt: HTMLCanvasElement;
-  orb: HTMLCanvasElement;
-  burst: HTMLCanvasElement;
-  star: HTMLCanvasElement;
-  beam: HTMLCanvasElement;
-  hedge: HTMLImageElement;
+  flame: HTMLCanvasElement;
+  spark: HTMLCanvasElement;
+  shield: HTMLCanvasElement;
+  streak: HTMLCanvasElement;
+  rail: HTMLCanvasElement;
+  checker: HTMLCanvasElement;
+  pad: HTMLCanvasElement;
+  terrain: HTMLImageElement;
 }
 
 const loadImage = (src: string) =>
@@ -117,42 +111,26 @@ const sliceSheet = (img: HTMLImageElement, count: number): HTMLCanvasElement[] =
   });
 };
 
-const scaled = (src: HTMLCanvasElement, factor: number): HTMLCanvasElement => {
-  const c = toCanvas(Math.round(src.width * factor), Math.round(src.height * factor));
-  const ctx = c.getContext("2d")!;
-  ctx.imageSmoothingEnabled = false;
-  ctx.drawImage(src, 0, 0, c.width, c.height);
-  return c;
-};
-
 export const loadSprites = async (): Promise<HyperSprites> => {
-  const [shipsImg, fxImg, hedge] = await Promise.all([
-    // STAND-IN ART: Starfall ships.png stands in for hyper-circuit
-    // craft.png + rivals.png (fighter = Copperhead and ghost, drone =
-    // Dust Moth, warrior = Saltflat Comet and Cinder Fox, captor =
-    // Basalt Bull).
-    loadImage(`${STARFALL}/ships.png`),
-    // STAND-IN ART: Starfall fx.png stands in for hyper-circuit fx.png
-    // (bolt = rail segment and start-line stamp, orb = boost pad dot,
-    // burst = rail spark and blowout, star = speed streak, beam =
-    // boost flame).
-    loadImage(`${STARFALL}/fx.png`),
-    // STAND-IN ART: Munch Maze hedge.png stands in for terrain scrub
-    // patches on the ground texture (whole image, no keying).
-    loadImage(`${MUNCH}/hedge.png`),
+  const [shipsImg, fxImg, stampsImg, terrain] = await Promise.all([
+    loadImage(`${ASSETS}/ships.png`),
+    loadImage(`${ASSETS}/fx.png`),
+    loadImage(`${ASSETS}/stamps.png`),
+    loadImage(`${ASSETS}/terrain-scrub.png`),
   ]);
-  const ships = sliceSheet(shipsImg, 4);
-  const fx = sliceSheet(fxImg, 5);
+  const ships = sliceSheet(shipsImg, 5);
+  const fx = sliceSheet(fxImg, 4);
+  const stamps = sliceSheet(stampsImg, 3);
   return {
     craft: ships[0],
-    // Grid order per spec: Saltflat Comet (warrior), Basalt Bull
-    // (captor), Dust Moth (drone), Cinder Fox (warrior at 0.85 scale).
-    rivalSheets: [ships[2], ships[3], ships[1], scaled(ships[2], 0.85)],
-    bolt: fx[0],
-    orb: fx[1],
-    burst: fx[2],
-    star: fx[3],
-    beam: fx[4],
-    hedge,
+    rivalSheets: ships.slice(1),
+    flame: fx[0],
+    spark: fx[1],
+    shield: fx[2],
+    streak: fx[3],
+    rail: stamps[0],
+    checker: stamps[1],
+    pad: stamps[2],
+    terrain,
   };
 };

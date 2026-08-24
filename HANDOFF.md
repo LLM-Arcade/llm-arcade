@@ -10,18 +10,16 @@ and Google OAuth origins use it.
 
 ## Current state
 
-**Phase 4 complete; Phase 6 in progress (sessions 11–15, user-directed:
+**Phase 4 complete; Phase 6 in progress (sessions 11–18, user-directed:
 games before chat).** Shipped so far: **Munch Maze** (A,
 `src/games/munch-maze/`, 7 ach), **Rune & Ruin** (A, `src/games/rune-ruin/`,
 8 ach), **Trailbound** (B, `public/games/trailbound.html`, 7 ach),
 **Starfall Squadron** (A, `src/games/starfall-squadron/`, 7 ach),
 **Rockbuster** (B, `public/games/rockbuster.html`, 7 ach), **Boulder Rush**
-(B, `public/games/boulder-rush.html`, 7 ach) — all published.
-**Hyper Circuit** (A, `src/games/hyper-circuit/`, 7 ach) and
-**Run 'n Gunner** (A, `src/games/run-n-gunner/`, 7 ach, session 17) are
-built and agent-playtested but run on STAND-IN art (Zo image generation
-down), so their rows stay `coming_soon` until each art set is
-regenerated.
+(B, `public/games/boulder-rush.html`, 7 ach), and **Hyper Circuit** (A,
+`src/games/hyper-circuit/`, 7 ach) — all published. **Run 'n Gunner** (A,
+`src/games/run-n-gunner/`, 7 ach, session 17) is built and agent-playtested
+but remains `coming_soon` until its stand-in art is replaced.
 **TypeStorm** (B, `public/games/typestorm.html`, 8 ach) is built and
 tuned but has NO games row on purpose: it goes through the upload
 wizard as the pipeline's first real submission, and the approval RPC
@@ -30,7 +28,7 @@ trio.** The Phase-4 pipeline test with a
 second account was explicitly skipped (user decision) — the upload
 wizard/admin queue remain untested with real traffic. Site still gated
 (`site_settings.launched = false`, guests → Landing, signed-in → Arcade
-Home + preview banner). **1 account (the admin), 7 published cabinets. The
+Home + preview banner). **1 account (the admin), 8 published cabinets. The
 six session-11–15 cabinets have NOT been playtested by a human yet.**
 
 **⚖️ Asset diet (user-mandated, session 13 — see AI_RULES):** in-game art
@@ -219,7 +217,7 @@ cave — beetle farming), `swift-pick` (60+ s left), `deep-digger` (cave 5),
 `rush-legend` (7,500; ≈500–900/cave deep). One `ARCADE_SCORE` at game over
 with stats (cave, gems, bugs_squashed).
 
-## Hyper Circuit (Track A, mode-7 racer, STAND-IN ART, still coming_soon)
+## Hyper Circuit (Track A, mode-7 racer, published session 18)
 
 `src/games/hyper-circuit/` — F-Zero homage grand prix, fully original.
 Three circuits (Alkali Flats, Terrace Canyon with a 145-radius hairpin,
@@ -256,12 +254,14 @@ ARCADE_SAVE persistence deferred platform-wide).
   builds the engine instance hangs on `window.__hc` so a console
   autopilot can drive playtests.
 
-**STAND-IN ART:** all sheets borrowed (Starfall ships.png + fx.png, Munch
-Maze hedge.png), zero new asset bytes. Every load site carries a
-`// STAND-IN ART:` comment naming the final sheet to generate when Zo is
-back: craft.png (5 bank frames), rivals.png (4 crafts), fx.png,
-horizon.png, road/terrain tiles. Art regeneration, then flipping the DB
-row to published, is the remaining work.
+**Original art:** four generated, flat-color assets under
+`public/assets/games/hyper-circuit/`: `ships.png` (five craft), `fx.png`
+(four effects), `stamps.png` (rail/checker/pit-pad), and
+`terrain-scrub.png`. The three magenta sheets take the gap-slice path at
+5/4/3 frames. All four PNGs are palette-quantized and metadata-stripped:
+18,302 bytes total, 1.75% of the 1 MiB cabinet budget. The browser playtest
+loaded every asset with 200 responses, showed no magenta fringe, and drove
+a real keyboard run to a rail-hit DNF before the row was published.
 
 Balance knobs: `TUNE` at the top of `engine.ts` (all units commented),
 `parLap`/`rivalSpeed`/`halfWidth` per course in `courses.ts`. Scoring:
@@ -416,11 +416,9 @@ URIs (sandbox can't read external images back).
    text-shelf follows Rune & Ruin; self-contained Track-B follows
    Rockbuster **on the asset diet** (flat sprites, small sheets inlined
    as data URIs — no fat panoramas). Track-B briefs can also be
-   dispatched through the real wizard anytime. Hyper Circuit and
-   Run 'n Gunner additionally need their art sets regenerated (Zo image
-   generation was down at build time) and their games rows flipped to
-   published via `db/seed-hyper-circuit.sql` /
-   `db/seed-run-n-gunner.sql`.
+   dispatched through the real wizard anytime. Run 'n Gunner additionally
+   needs its art set regenerated and its row flipped to published via
+   `db/publish-run-n-gunner.sql`.
 3. **Phase 5 — Chat** (deferred behind games by user decision, session 11).
 4. **Phase 7 — flip `launched`** (button exists in `/admin` → Site).
 5. (Whenever convenient) run one Track-B submission through the upload

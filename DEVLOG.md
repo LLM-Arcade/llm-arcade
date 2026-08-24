@@ -695,3 +695,20 @@ until the user signs in on llmarcade.fun in the driven browser.
   sheets to generate: gunner.png (3), foes.png (5), fx.png (5),
   pickups.png (3). Row seeded `coming_soon` via `db/seed-run-n-gunner.sql`
   (INSERT ... ON CONFLICT — no teaser row exists for this slug).
+
+## Session 18 — Hyper Circuit original art + publication
+
+- Replaced every borrowed Hyper Circuit sprite with four generated original
+  flat-color assets: five angular racing craft, four warm effects, three
+  track stamps, and a sparse desert-scrub tile. The magenta sheets were
+  recomposed with deterministic gutters, palette-quantized, and stripped to
+  18,302 bytes total (1.75% of the 1 MiB cabinet budget).
+- The runtime gap-slicer found exactly 5/4/3 frames. The beatability harness
+  stayed PASS and `pnpm check` stayed green. A real keyboard browser run on
+  `/dev/hyper-circuit` reached racing speed, used steering and boost, and
+  ended in a rail-hit DNF; the mid-play review showed a cohesive warm
+  terracotta/olive set with clean keying and no clipart mismatch.
+- Hyper Circuit shipped atomically, deployed through Vercel, and was opened
+  to guests with `db/publish-hyper-circuit.sql`; the production guest run
+  was played through game over and screenshotted before Run 'n Gunner work
+  began.

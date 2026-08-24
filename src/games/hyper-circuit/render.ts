@@ -1,6 +1,6 @@
 // Hyper Circuit mode-7 renderer. Per-pixel ground sampling into a reused
 // ImageData, then sprite transforms only (no drawn shapes beyond the flat
-// sky fills, which stand in for a generated panorama). Allocation-free per
+// sky fills). Allocation-free per
 // frame: every buffer below is module-level and reused.
 
 import type { Engine, Rival } from "./engine";
@@ -116,8 +116,7 @@ export const draw = (
   const camX = p.x - fwdX * CAM_BACK;
   const camY = p.y - fwdY * CAM_BACK;
 
-  // Sky. STAND-IN ART: flat paper + haze band fills stand in for a
-  // generated horizon.png panorama strip.
+  // Flat paper and haze keep the horizon quiet behind the track.
   ctx.fillStyle = SKY;
   ctx.fillRect(0, 0, W, HORIZON - 14);
   ctx.fillStyle = HAZE;
@@ -242,7 +241,7 @@ export const draw = (
     const t = Math.min(1, sp.age / 0.4);
     drawSprite(
       ctx,
-      spr.burst,
+      spr.spark,
       halfW + (sdx * sideX + sdy * sideY) * k,
       HORIZON + CAM_H * k,
       SPARK_WORLD_W * k * (0.5 + t),
@@ -258,10 +257,10 @@ export const draw = (
     for (let i = 0; i < n; i++) {
       const sx = i % 2 === 0 ? 10 + ((i * 23) % 46) : W - 12 - ((i * 31) % 46);
       const sy = ((eng.time * (520 + i * 70) + i * 97) % (H + 60)) - 30;
-      drawSprite(ctx, spr.star, sx, sy, 4, 0, 0.4);
+      drawSprite(ctx, spr.streak, sx, sy, 4, 0, 0.4);
       ctx.save();
       ctx.globalAlpha = 0.3;
-      ctx.drawImage(spr.star, sx - 1.5, sy - 18 - speedFrac * 20, 3, 36 + speedFrac * 44);
+      ctx.drawImage(spr.streak, sx - 1.5, sy - 18 - speedFrac * 20, 3, 36 + speedFrac * 44);
       ctx.restore();
     }
   }
@@ -281,8 +280,8 @@ export const draw = (
     ctx.save();
     ctx.scale(1, -1);
     ctx.globalAlpha = flicker;
-    ctx.drawImage(spr.beam, -12, -(craftH / 2 + flameLen), 24, flameLen);
-    ctx.drawImage(spr.beam, -6, -(craftH / 2 + flameLen * 0.55), 12, flameLen * 0.55);
+    ctx.drawImage(spr.flame, -12, -(craftH / 2 + flameLen), 24, flameLen);
+    ctx.drawImage(spr.flame, -6, -(craftH / 2 + flameLen * 0.55), 12, flameLen * 0.55);
     ctx.restore();
   }
   ctx.drawImage(spr.craft, -craftW / 2, -craftH / 2, craftW, craftH);

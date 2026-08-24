@@ -15,10 +15,6 @@ const SAND = "#D9C9A3";
 const SHADE = "#C9B78E";
 const ROAD = "#4A4038";
 const SHOULDER = "#5C5044";
-const RAIL = "#C0562F";
-const LINE_CREAM = "#F6F1E7";
-const LINE_INK = "#221B14";
-const PAD = "#D9A13B";
 const PIT = "#7A7A46";
 
 const mulberry32 = (seed: number) => {
@@ -30,20 +26,6 @@ const mulberry32 = (seed: number) => {
     t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
-};
-
-// Silhouette tint: keeps the sprite's alpha, replaces its color. Cheap
-// enough because composition runs once per circuit, never per frame.
-const tinted = (src: HTMLCanvasElement, color: string): HTMLCanvasElement => {
-  const c = document.createElement("canvas");
-  c.width = src.width;
-  c.height = src.height;
-  const ctx = c.getContext("2d")!;
-  ctx.drawImage(src, 0, 0);
-  ctx.globalCompositeOperation = "source-in";
-  ctx.fillStyle = color;
-  ctx.fillRect(0, 0, c.width, c.height);
-  return c;
 };
 
 const clearOfRoad = (t: Track, x: number, y: number, margin: number): boolean => {
@@ -68,11 +50,11 @@ export const buildGroundTexture = (track: Track, sprites: HyperSprites): GroundT
   ctx.imageSmoothingEnabled = false;
 
   // 1. Terrain base plus seeded scrub. Shade patches are terrain-base
-  // flat fills, scrub is stamped hedge crops.
+  // flat fills, scrub is stamped generated terrain crops.
   ctx.fillStyle = SAND;
   ctx.fillRect(0, 0, WORLD, WORLD);
 
-  const hedge = sprites.hedge;
+  const terrain = sprites.terrain;
   const roadMargin = halfW + 26;
   for (let i = 0; i < 70; i++) {
     const x = 30 + rand() * (WORLD - 60);
@@ -87,19 +69,15 @@ export const buildGroundTexture = (track: Track, sprites: HyperSprites): GroundT
     ctx.fillStyle = SHADE;
     ctx.fillRect(-w * 0.7, -h * 0.7, w * 1.4, h * 1.4);
     ctx.globalAlpha = 0.85;
-    // STAND-IN ART: Munch Maze hedge crop stands in for hyper-circuit
-    // terrain scrub tiles.
-    const sw = Math.min(hedge.width, 40 + Math.floor(rand() * 80));
-    const sh = Math.min(hedge.height, 40 + Math.floor(rand() * 80));
-    const sx = Math.floor(rand() * Math.max(1, hedge.width - sw));
-    const sy = Math.floor(rand() * Math.max(1, hedge.height - sh));
-    ctx.drawImage(hedge, sx, sy, sw, sh, -w / 2, -h / 2, w, h);
+    const sw = Math.min(terrain.width, 40 + Math.floor(rand() * 80));
+    const sh = Math.min(terrain.height, 40 + Math.floor(rand() * 80));
+    const sx = Math.floor(rand() * Math.max(1, terrain.width - sw));
+    const sy = Math.floor(rand() * Math.max(1, terrain.height - sh));
+    ctx.drawImage(terrain, sx, sy, sw, sh, -w / 2, -h / 2, w, h);
     ctx.restore();
   }
 
   // 2. Road ribbon: rotated flat slices walked along the centerline.
-  // STAND-IN ART: final art replaces these flat fills with stamped
-  // slices of a generated road tile.
   const sliceStep = 3;
   for (let s = 0; s < track.total; s += sliceStep) {
     const p = trackPos(track, s);
@@ -130,9 +108,7 @@ export const buildGroundTexture = (track: Track, sprites: HyperSprites): GroundT
   }
   ctx.globalAlpha = 1;
 
-  // 3. Rails: stretched bolt capsules along both edges.
-  // STAND-IN ART: Starfall bolt stands in for a generated rail segment.
-  const rail = tinted(sprites.bolt, RAIL);
+  // 3. Rails: generated segment stamps along both edges.
   for (let s = 0; s < track.total; s += 9) {
     const p = trackPos(track, s);
     const ang = Math.atan2(p.dirY, p.dirX);
@@ -140,32 +116,25 @@ export const buildGroundTexture = (track: Track, sprites: HyperSprites): GroundT
       ctx.save();
       ctx.translate(p.x - p.dirY * side * (halfW + 2), p.y + p.dirX * side * (halfW + 2));
       ctx.rotate(ang);
-      ctx.drawImage(rail, -6, -2.5, 12, 5);
+      ctx.drawImage(sprites.rail, -6, -2.5, 12, 5);
       ctx.restore();
     }
   }
 
-  // 4b. Start line: two rows of alternating cream/ink stamps at s = 0.
-  // STAND-IN ART: Starfall bolt stands in for generated checker stamps.
-  const cream = tinted(sprites.bolt, LINE_CREAM);
-  const ink = tinted(sprites.bolt, LINE_INK);
+  // 4b. Start line: two rows of checker stamps at s = 0.
   for (let row = 0; row < 2; row++) {
     const p = trackPos(track, row * 5);
     const ang = Math.atan2(p.dirY, p.dirX);
-    let k = row;
     for (let lat = -halfW + 6; lat <= halfW - 6; lat += 9) {
       ctx.save();
       ctx.translate(p.x - p.dirY * lat, p.y + p.dirX * lat);
       ctx.rotate(ang + Math.PI / 2);
-      ctx.drawImage(k % 2 === 0 ? cream : ink, -4.5, -2.5, 9, 5);
+      ctx.drawImage(sprites.checker, -4.5, -2.5, 9, 5);
       ctx.restore();
-      k++;
     }
   }
 
-  // 4c. Boost pads: mustard chevrons of orb stamps pointing along travel.
-  // STAND-IN ART: Starfall orb stands in for a generated pad glyph.
-  const pad = tinted(sprites.orb, PAD);
+  // 4c. Boost pads: generated glyph stamps pointing along travel.
   for (const frac of track.def.boostPads) {
     const center = frac * track.total;
     for (let row = -1; row <= 1; row++) {
@@ -175,7 +144,7 @@ export const buildGroundTexture = (track: Track, sprites: HyperSprites): GroundT
           const lat = side * (4 + k * 8);
           ctx.save();
           ctx.translate(p.x - p.dirY * lat, p.y + p.dirX * lat);
-          ctx.drawImage(pad, -3.5, -3.5, 7, 7);
+          ctx.drawImage(sprites.pad, -3.5, -3.5, 7, 7);
           ctx.restore();
         }
       }
