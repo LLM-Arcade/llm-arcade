@@ -25,6 +25,11 @@ site is still gated (`site_settings.launched = false`) — but signed-in
 on). Google OAuth needs the provider enabled in Supabase → Auth → Providers;
 the login page degrades gracefully until then.
 
+**State at handoff (verified):** **zero accounts exist** — the next signup
+becomes admin. Google provider is still disabled. Landing header now links to
+Games + Sign in. Flap Hero is the only published game; leaderboards/comments/
+ratings have no data yet, so the first real playtest happens next session.
+
 ## The core loop (implemented)
 
 - **Play** — `GamePlayer` renders Track-A registry components or Track-B HTML
@@ -92,15 +97,33 @@ public/
                                  can't read pixels from URL-loaded images)
 ```
 
-## Asset pipeline (game key art)
+## Asset pipeline
 
-Unchanged — square AI-generated originals in `public/assets/games/<slug>.png`.
+**Key art** — square AI-generated originals in `public/assets/games/<slug>.png`.
 Prompt template (keep the set cohesive):
 
 > Video game key art: [scene description]. Flat vector illustration, warm
 > earthy retro palette: cream, terracotta orange, olive green, mustard yellow,
 > dark umber. Paper grain texture, bold shapes, no text, no logos.
 > Square composition.
+
+**In-game art (user-mandated, session 6):** games must render **real
+generated assets, not programmatic canvas shapes** — vector-drawn sprites
+were rejected as low quality. The Flap Hero recipe, now standard for every
+cabinet:
+
+1. Generate sprites in the same flat-vector earthy style as the key art.
+2. Full-bleed layers (backdrops, ground strips, tile textures) need no
+   transparency — load by URL (`public/assets/games/<slug>/`), draw
+   mirror-tiled for seamless scrolling.
+3. Sprites needing alpha (characters, pickups): generate on **solid magenta
+   (#FF00FF), no shadows**, then chroma-key + trim at runtime. Those images
+   must be **inlined as data URIs** in the game HTML — sandboxed iframes have
+   an opaque origin, so URL-loaded images taint the canvas and block
+   `getImageData`.
+4. Keep a silent programmatic fallback so a failed asset never breaks play.
+5. Stay under the 5 MB Track-B file cap (Flap Hero: 1.7 MB with the bird
+   inlined).
 
 ## Next up (per spec §9)
 

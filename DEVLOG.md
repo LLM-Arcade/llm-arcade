@@ -145,3 +145,10 @@ filter, board virtualization, mod deletion of comments.
   inside the opaque-origin sandbox, where URL-loaded images can't be read
   back. Vector drawing kept only as a silent fallback. This is now part of
   the Track-B agent brief: ship real art, inline anything needing pixel work.
+
+**Session close — state for session 7:** zero accounts in the DB (first
+signup → admin) · Google provider still disabled (email/password works) ·
+Flap Hero is the only published cabinet; no scores/comments/ratings data yet ·
+full recipe + rules distilled into HANDOFF.md and AI_RULES.md. Next: verify
+the play → score → claim loop end-to-end, then start **Phase 3 (progression)**
+— achievements engine first so Flap Hero's manifest events stop being ignored.

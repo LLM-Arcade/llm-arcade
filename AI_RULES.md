@@ -23,6 +23,9 @@ read these three docs:
 - All game art is AI-generated originals — use the prompt template in
   `HANDOFF.md` (flat vector, earthy palette, paper grain, square, no text).
   No trademarked names/art/audio anywhere.
+- ❌ **NO programmatic canvas/SVG art inside games** — in-game sprites must be
+  real generated assets too (pipeline recipe in `HANDOFF.md`, incl. the
+  magenta-key + data-URI trick for transparency in sandboxed iframes).
 
 ## Naming conventions
 
