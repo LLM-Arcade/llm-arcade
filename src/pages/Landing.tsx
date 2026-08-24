@@ -59,11 +59,14 @@ const Landing = () => (
           </p>
         </div>
         <nav className="flex items-center gap-1 sm:gap-2">
-          <Button asChild variant="ghost" className="rounded-full font-medium text-muted-foreground hover:text-foreground">
+          <Button asChild variant="ghost" className="hidden rounded-full font-medium text-muted-foreground hover:text-foreground sm:inline-flex">
             <Link to="/faq">FAQ</Link>
           </Button>
           <Button asChild variant="ghost" className="rounded-full font-medium text-muted-foreground hover:text-foreground">
             <Link to="/playtest">Playtest</Link>
+          </Button>
+          <Button asChild variant="ghost" className="rounded-full font-medium text-muted-foreground hover:text-foreground">
+            <Link to="/login">Sign in</Link>
           </Button>
           <Button asChild className="rounded-full bg-primary font-semibold hover:bg-primary/90">
             <a href="#waitlist">Get updates</a>
