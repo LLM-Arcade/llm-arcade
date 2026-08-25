@@ -70,12 +70,25 @@ const drawStanding = (
   ctx.restore();
 };
 
+const LANE_FACE = 52; // px of solid pavement face under the surface line
+
 const drawLane = (ctx: CanvasRenderingContext2D, course: Course) => {
   for (const s of course.segments) {
+    // A solid face marks the ride surface; below it the district art shows
+    // through a dim wash instead of a dead black slab.
     ctx.fillStyle = INK;
     ctx.beginPath();
     ctx.moveTo(s.x0, s.y0);
     ctx.lineTo(s.x1, s.y1);
+    ctx.lineTo(s.x1, s.y1 + LANE_FACE);
+    ctx.lineTo(s.x0, s.y0 + LANE_FACE);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = "rgba(36,26,18,0.55)";
+    ctx.beginPath();
+    ctx.moveTo(s.x0, s.y0 + LANE_FACE);
+    ctx.lineTo(s.x1, s.y1 + LANE_FACE);
     ctx.lineTo(s.x1, H + 40);
     ctx.lineTo(s.x0, H + 40);
     ctx.closePath();
@@ -114,13 +127,24 @@ export const draw = (ctx: CanvasRenderingContext2D, eng: Engine, spr: KickflipSp
   const def = DISTRICTS[eng.districtIndex];
   const scroll = eng.scrollX;
 
-  // District panorama, drawn at 1.5x and tiled so a long course never runs off
-  // the end of it.
+  // District panorama, mirror-tiled: the art is not seam-matched, so every
+  // other copy flips horizontally and the join always mirrors itself.
   const backdrop = spr.districts[eng.districtIndex];
-  let bx = -((scroll * BACKDROP_PARALLAX) % W);
-  if (bx > 0) bx -= W;
-  ctx.drawImage(backdrop, bx, 0, W, H);
-  ctx.drawImage(backdrop, bx + W, 0, W, H);
+  const off = scroll * BACKDROP_PARALLAX;
+  const firstTile = Math.floor(off / W);
+  for (let i = 0; i < 2; i++) {
+    const tile = firstTile + i;
+    const x = tile * W - off;
+    ctx.save();
+    if (((tile % 2) + 2) % 2 === 1) {
+      ctx.translate(x + W, 0);
+      ctx.scale(-1, 1);
+      ctx.drawImage(backdrop, 0, 0, W, H);
+    } else {
+      ctx.drawImage(backdrop, x, 0, W, H);
+    }
+    ctx.restore();
+  }
 
   // Parallax silhouettes between the panorama and the lane.
   for (const p of course.parallax) {
@@ -139,7 +163,9 @@ export const draw = (ctx: CanvasRenderingContext2D, eng: Engine, spr: KickflipSp
     const frame = moving
       ? frames[Math.floor(eng.time / 0.12 + actor.phase) % 2 === 0 ? 1 : 0]
       : frames[Math.floor(eng.time / 0.18 + actor.phase) % 2 === 0 ? 0 : 2];
-    drawStanding(ctx, frame, x, GROUND_Y - 2, frame.width * 0.62, frame.height * 0.62, 0, 0.8);
+    // Raised, smaller, and dimmer than the play lane, so the crowd reads as
+    // a back walkway rather than as obstacles in the skater's path.
+    drawStanding(ctx, frame, x, GROUND_Y - 26, frame.width * 0.5, frame.height * 0.5, 0, 0.65);
   }
 
   ctx.save();
@@ -203,29 +229,35 @@ export const draw = (ctx: CanvasRenderingContext2D, eng: Engine, spr: KickflipSp
   }
   ctx.globalAlpha = 1;
 
-  // HUD.
+  // HUD. A soft ink chip keeps the readouts legible over any backdrop.
   ctx.textAlign = "center";
+  const lineOpen = eng.line.length > 0;
+  const chipW = lineOpen ? 250 : 96;
+  ctx.fillStyle = "rgba(36,26,18,0.72)";
+  ctx.beginPath();
+  ctx.roundRect(W / 2 - chipW / 2, 12, chipW, lineOpen ? 66 : 44, 14);
+  ctx.fill();
   ctx.fillStyle = eng.clock <= 10 ? TERRA : PAPER;
-  ctx.font = "700 30px ui-sans-serif, system-ui, sans-serif";
-  ctx.fillText(Math.ceil(eng.clock).toString().padStart(2, "0"), W / 2, 44);
+  ctx.font = "700 26px ui-sans-serif, system-ui, sans-serif";
+  ctx.fillText(Math.ceil(eng.clock).toString().padStart(2, "0"), W / 2, 42);
 
-  if (eng.line.length > 0) {
+  if (lineOpen) {
     const total = Math.round(eng.linePoints * eng.multiplier);
     ctx.fillStyle = MUSTARD;
-    ctx.font = "600 15px ui-monospace, monospace";
+    ctx.font = "600 14px ui-monospace, monospace";
     ctx.fillText(
       `${eng.line.length} LINK${eng.line.length === 1 ? "" : "S"}  x${eng.multiplier.toFixed(1)}  ${total}`,
       W / 2,
-      68,
+      66,
     );
   }
 
   if (eng.stance === "grinding") {
     const barW = 150;
     ctx.fillStyle = "rgba(246,241,231,0.22)";
-    ctx.fillRect(W / 2 - barW / 2, 82, barW, 6);
+    ctx.fillRect(W / 2 - barW / 2, 92, barW, 6);
     ctx.fillStyle = Math.abs(eng.balance) > 0.7 ? TERRA : MUSTARD;
-    ctx.fillRect(W / 2 - 4 + (eng.balance * barW) / 2, 80, 8, 10);
+    ctx.fillRect(W / 2 - 4 + (eng.balance * barW) / 2, 90, 8, 10);
   }
 
   if (eng.phase === "district-clear" || eng.phase === "victory") {
