@@ -951,3 +951,39 @@ until the user signs in on llmarcade.fun in the driven browser.
   trimmed bbox center: fractions 0.352/0.636/0.909), the falling piece
   clips to the well mouth, and the danger state lost its mid-board flashing
   sprite and "0 FREE" text in favor of column chevrons plus the meter icon.
+
+## Session 21 — Sky Defense 🛡️ (Track A, interception)
+
+- **Sky Defense** (A, `src/games/sky-defense/`, 7 ach): interception game
+  across the Desert Relay, River City, and Mountain Observatory. Eight
+  fictional threat families (the manifest's vocabulary only), an
+  eight-bearing battery, bursts that kill only while growing, and ember
+  mines that chain. The organizing structure is the burst group: one shot
+  opens a group, its burst and every chained detonation credit it, and it
+  settles when nothing in it can still kill, so multi-kill scoring is a
+  property of the data.
+- Region health (100, +30 repair between regions) drives the horizon art
+  tiers at 67/34 and the building damage states; zero regional damage earns
+  `perfect-sky`. Accuracy at or above 80 percent pays 400 per region, so
+  balloon decoys are a real economy. `defense-legend` is 11,500, calibrated
+  against a 24-seed ace floor of 12,610 and a degraded-aim bot that tops
+  out at 11,220: a scraped win cannot reach it.
+- The desert horizon sheet is authored as 3 rows of 360x40, not the 3
+  columns its manifest claims; the corrected rects live in `sprites.ts`
+  (seam analysis confirmed y=40/y=80) and the manifest stays untouched.
+  The launch-lineup alt text for this slug described real weapons and now
+  uses the fictional vocabulary.
+- **Harness** `node scripts/harness/sky-defense.mjs` (in `test:games`):
+  lead-aiming ace wins all six seeds (spread 12,680 to 13,880), a no-lead
+  sloppy bot loses, same-seed determinism, and staged proofs for burst
+  timing, ember chains crediting one group, health tiers, the ammo cycle,
+  zero-damage balloons, the accuracy gate, and the cap.
+- Headless-built; browser play on `/dev/sky-defense` pending, and the
+  burst-growth-versus-skiff-speed lead requirement is the difficulty knob
+  to feel out (`TUNE.burstGrow`).
+- Review pass: props-ui.png diverges from its manifest past cell 4 (six
+  building states, weather shifted one cell, radar chrome where the manifest
+  claims reticle/cursor cells, two decorative leftovers). The slicer now
+  names the true cells, erases six measured stray sub-motifs after keying,
+  damaged bridges and observatories use their own authored frames, and the
+  aiming reticle comes from the effects sheet's ring cell.

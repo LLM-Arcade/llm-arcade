@@ -52,7 +52,7 @@ export const LAUNCH_LINEUP: RevealedGame[] = [
   { slug: "hyper-circuit", title: "Hyper Circuit", era: "SNES", alt: "Hover car racing toward a sunset horizon" },
   { slug: "the-undervault", title: "The Undervault", era: "Original", alt: "Torch-lit dungeon staircase descending into darkness" },
   { slug: "flap-hero", title: "Flap Hero", era: "Mobile", alt: "Plump bird flying between tall pillars" },
-  { slug: "sky-defense", title: "Sky Defense", era: "Arcade", alt: "Counter-rockets rising to intercept falling missiles over cities" },
+  { slug: "sky-defense", title: "Sky Defense", era: "Arcade", alt: "A lone battery bursting fictional sky threats over a desert city" },
   { slug: "gem-columns", title: "Gem Columns", era: "Genesis", alt: "Columns of gems falling and stacking in a pit" },
   { slug: "kickflip-city", title: "Kickflip City", era: "PS1", alt: "Skateboarder mid-kickflip over a stair rail" },
   { slug: "trailbound", title: "Trailbound", era: "DOS", alt: "Covered wagon crossing the plains toward mountains" },
