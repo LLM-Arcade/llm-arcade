@@ -11,7 +11,7 @@
     "typecheck": "tsc --noEmit -p tsconfig.app.json && tsc --noEmit -p tsconfig.node.json",
     "check": "pnpm lint && pnpm typecheck && pnpm build",
     "art:budget": "node scripts/art-budget.mjs",
-    "test:games": "node scripts/harness/hyper-circuit.mjs && node scripts/harness/run-n-gunner.mjs && node scripts/harness/lastwatch.mjs && node scripts/harness/brickstorm.mjs && node scripts/harness/gem-columns.mjs && node scripts/harness/sky-defense.mjs",
+    "test:games": "node scripts/harness/hyper-circuit.mjs && node scripts/harness/run-n-gunner.mjs && node scripts/harness/lastwatch.mjs && node scripts/harness/brickstorm.mjs && node scripts/harness/gem-columns.mjs && node scripts/harness/sky-defense.mjs && node scripts/harness/kickflip-city.mjs",
     "ci": "pnpm check && pnpm test:games",
     "preview": "vite preview"
   },
