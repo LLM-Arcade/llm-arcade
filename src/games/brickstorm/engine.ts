@@ -33,8 +33,8 @@ export const TUNE = {
   paddlePointerSpeed: 1400, // px/s, pointer snap cap; never teleports past a ball
 
   ballRadius: 12, // px
-  ballBaseSpeed: 430, // px/s
-  ballSpeedPerBrick: 12, // px/s added per brick destroyed this run
+  ballBaseSpeed: 400, // px/s
+  ballSpeedPerBrick: 9, // px/s added per brick destroyed on this board
   ballMaxSpeed: 620, // px/s
   slowFactor: 0.7, // speed multiplier while slow is active
   minVyRatio: 0.22, // of speed; kills horizontal stalemates
@@ -71,7 +71,9 @@ export const TUNE = {
 
   boardClearBonus: 500,
   untouchedBonus: 300,
-  victoryBonus: 1500,
+  loopBonus: 1500, // for clearing all three boards of a loop
+  loopSpeedBonus: 36, // px/s added to the ball's base speed per loop
+  loopSpeedCap: 130, // px/s of total loop speed bonus
   boardClearHold: 2.2, // s of banner between boards
 
   scoreCap: 50000,
@@ -91,7 +93,7 @@ export const TUNE = {
   trailEvery: 0.06, // s between ball trail puffs
 } as const;
 
-export type Phase = "serve" | "running" | "board-clear" | "gameover" | "victory";
+export type Phase = "serve" | "running" | "board-clear" | "gameover";
 
 export type PowerId =
   | "expand"
@@ -205,6 +207,8 @@ export class Engine {
   lives: number = TUNE.lives;
   boardIndex = 0;
   board: BoardDef = BOARDS[0];
+  /** Completed loops of all three boards; drives the endless speed ramp. */
+  loop = 0;
 
   bricks: Brick[] = [];
   balls: Ball[] = [];
@@ -224,6 +228,8 @@ export class Engine {
   chain = 0;
   maxChain = 0;
   bricksBroken = 0;
+  /** Resets each board, so the speed ramp is per board, not per run. */
+  bricksThisBoard = 0;
   boardsCleared = 0;
   powerupsCaught = 0;
   livesLost = 0;
@@ -323,6 +329,7 @@ export class Engine {
     this.boardIndex = index;
     this.board = BOARDS[index];
     this.lostOnBoard = false;
+    this.bricksThisBoard = 0;
 
     for (const slot of brickSlots(this.board)) {
       const c = brickCenter(slot.col, slot.row);
@@ -403,9 +410,10 @@ export class Engine {
   // ---- Speeds -----------------------------------------------------------
 
   ballSpeed(): number {
+    const loopBonus = Math.min(TUNE.loopSpeedCap, this.loop * TUNE.loopSpeedBonus);
     const grown = Math.min(
-      TUNE.ballMaxSpeed,
-      TUNE.ballBaseSpeed + this.bricksBroken * TUNE.ballSpeedPerBrick,
+      TUNE.ballMaxSpeed + loopBonus,
+      TUNE.ballBaseSpeed + loopBonus + this.bricksThisBoard * TUNE.ballSpeedPerBrick,
     );
     return this.time < this.slowUntil ? grown * TUNE.slowFactor : grown;
   }
@@ -422,7 +430,7 @@ export class Engine {
     const launchPressed = this.input.launch && !this.prevLaunch;
     this.prevLaunch = this.input.launch;
 
-    if (this.phase === "gameover" || this.phase === "victory") return;
+    if (this.phase === "gameover") return;
 
     if (this.phase === "board-clear") {
       this.clearTimer -= step;
@@ -591,6 +599,7 @@ export class Engine {
     this.doomed.push(brick.body);
     this.brickByBody.delete(brick.body.id);
     this.bricksBroken++;
+    this.bricksThisBoard++;
     this.chain++;
     if (this.chain > this.maxChain) this.maxChain = this.chain;
     if (this.chain >= TUNE.chainAchieveAt) this.achieve("brick-chain");
@@ -841,10 +850,12 @@ export class Engine {
 
   private advanceBoard() {
     if (this.boardIndex >= BOARDS.length - 1) {
-      this.phase = "victory";
-      this.addScore(TUNE.victoryBonus);
+      // Endless: a cleared kiln pays the loop bonus and restarts the tour
+      // with a faster ball. The run only ends when the lives run out.
+      this.loop++;
+      this.addScore(TUNE.loopBonus);
       this.emit({ type: "sfx", sound: "victory" });
-      this.sendGameover();
+      this.buildBoard(0);
       return;
     }
     this.buildBoard(this.boardIndex + 1);
@@ -858,6 +869,7 @@ export class Engine {
       score: this.score,
       stats: {
         boards_cleared: this.boardsCleared,
+        loops: this.loop,
         bricks_broken: this.bricksBroken,
         powerups_caught: this.powerupsCaught,
         max_chain: this.maxChain,
