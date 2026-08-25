@@ -86,10 +86,14 @@ export const TUNE = {
   olliePoints: 50,
   flipPoints: 150,
   grabPoints: 100,
-  // A one-link line banks at x1; every link past the first adds half a
-  // multiplier, so linking is what pays rather than repeating one trick.
+  // A one-link line banks at x1; every trick link past the first adds half a
+  // multiplier. Plain ollies pay their points but never grow the multiplier,
+  // and repeating the same move inside one line decays toward the floor, so
+  // hop-spam and one-trick loops cannot ride an unbanked line to the cap.
   multPerLink: 0.5,
   maxMult: 5,
+  repeatDecay: 0.6, // each repeat of a label in one line pays this of the last
+  repeatFloor: 0.4, // of base points; the decay never goes below this
 
   districtClearBonus: 500,
   timeBonusPerSecond: 8,
@@ -101,12 +105,13 @@ export const TUNE = {
   cleanLandingLinks: 5, // links in one banked line that fire clean-landing
   railWorkerPx: 400, // px of grinding in one line that fires rail-worker
 
-  // Calibrated from the harness bots over the same six seeds. The ace, which
-  // links its lines, scores 14,275 to 19,630. The plodder, which clears every
-  // district but never builds a line, tops out at 9,130. 12,000 is the round
-  // number between them: 31% clear of the best sloppy finish and 16% under the
-  // worst ace run, so it rewards linking rather than finishing.
-  legendScore: 12000,
+  // Calibrated from the harness bots over the same six seeds AFTER the
+  // anti-spam pass (ollies never multiply, repeated moves decay). The ace,
+  // which links real tricks and grinds, scores 11,170 to 14,185. The plodder,
+  // which clears every district without linking, tops out at 5,280. 9,000
+  // sits between those populations: 70% above the best sloppy finish and 19%
+  // under the worst ace run.
+  legendScore: 9000,
 } as const;
 
 export type Phase = "skating" | "district-clear" | "gameover" | "victory";
@@ -146,6 +151,8 @@ export interface Fx {
 export interface LineLink {
   label: string;
   points: number;
+  /** False for a plain ollie, which pays but never grows the multiplier. */
+  trick: boolean;
 }
 
 export interface ActiveTrick {
@@ -409,7 +416,15 @@ export class Engine {
   }
 
   get multiplier() {
-    return Math.min(TUNE.maxMult, 1 + TUNE.multPerLink * Math.max(0, this.line.length - 1));
+    const trickLinks = this.line.reduce((n, link) => n + (link.trick ? 1 : 0), 0);
+    return Math.min(TUNE.maxMult, 1 + TUNE.multPerLink * Math.max(0, trickLinks - 1));
+  }
+
+  /** Pushes a link with the same-label repeat decay applied to its points. */
+  private pushLink(label: string, points: number, trick: boolean) {
+    const repeats = this.line.reduce((n, link) => n + (link.label === label ? 1 : 0), 0);
+    const factor = Math.max(TUNE.repeatFloor, Math.pow(TUNE.repeatDecay, repeats));
+    this.line.push({ label, points: Math.round(points * factor), trick });
   }
 
   get linePoints() {
@@ -611,7 +626,7 @@ export class Engine {
     this.trick = null;
     this.ollied = false;
     Matter.Body.setPosition(this.body, { x: this.x, y: rail.y - TUNE.bodyH / 2 });
-    this.line.push({ label: `${rail.kind} grind`, points: 0 });
+    this.line.push({ label: `${rail.kind} grind`, points: 0, trick: true });
     this.quiet = 0;
     this.sfx("grindOn");
   }
@@ -727,11 +742,11 @@ export class Engine {
     if (t) {
       const points =
         t.kind === "grab" ? TUNE.grabPoints + Math.round(TUNE.grabRate * t.held) : TUNE.flipPoints;
-      this.line.push({ label: TRICK_LABEL[t.kind], points });
+      this.pushLink(TRICK_LABEL[t.kind], points, true);
       this.tricksLanded++;
       this.quiet = 0;
     } else if (this.ollied) {
-      this.line.push({ label: "Ollie", points: TUNE.olliePoints });
+      this.pushLink("Ollie", TUNE.olliePoints, false);
       this.tricksLanded++;
       this.quiet = 0;
     }
@@ -790,7 +805,7 @@ export class Engine {
 
   private bank() {
     if (this.line.length === 0) return;
-    const links = this.line.length;
+    const links = this.line.reduce((n, link) => n + (link.trick ? 1 : 0), 0);
     const total = Math.round(this.linePoints * this.multiplier);
     this.bestLine = Math.max(this.bestLine, total);
     this.addScore(total);

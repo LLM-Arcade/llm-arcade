@@ -41,7 +41,7 @@ CROSS JOIN (
     ('market-run', 'Market Run', 'Clear the market underpass.', 'District two ends at the finish line.', 30, 4),
     ('roofline', 'Roofline', 'Clear the warehouse roofs.', 'Mind the gaps between the roofs.', 40, 5),
     ('clean-landing', 'Clean Landing', 'Bank a five-link line without bailing all run.', 'One wreck anywhere ends the attempt.', 50, 6),
-    ('city-legend', 'City Legend', 'Score 12,000 in one run.', 'Long lines pay far more than finishing does.', 50, 7)
+    ('city-legend', 'City Legend', 'Score 9,000 in one run.', 'Long lines pay far more than finishing does.', 50, 7)
 ) AS a(slug, name, description, hint, xp, sort_order)
 WHERE g.slug = 'kickflip-city'
 ON CONFLICT (game_id, slug) DO UPDATE

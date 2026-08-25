@@ -569,7 +569,7 @@ const apexRise = (crouchSeconds) => {
   const eng = new Engine();
   place(eng, eng.course.startX, 200);
   eng.input = idle();
-  eng.line.push({ label: "Ollie", points: 50 });
+  eng.line.push({ label: "Ollie", points: 50, trick: false });
   const clock = eng.clock;
   const score = eng.score;
   eng.bail();
@@ -625,15 +625,17 @@ const apexRise = (crouchSeconds) => {
 {
   const eng = new Engine();
   const first = eng.course;
-  eng.line.push({ label: "Ollie", points: 50 });
-  eng.line.push({ label: "Kickflip", points: 150 });
+  eng.line.push({ label: "Ollie", points: 50, trick: false });
+  eng.line.push({ label: "Kickflip", points: 150, trick: true });
   place(eng, eng.course.finishX - 6, 200);
   eng.input = idle();
   eng.input.dir = 1;
   for (let i = 0; i < 30 && eng.phase === "skating"; i++) eng.update(DT);
   check(eng.phase === "district-clear", "crossing the finish enters the clear banner");
   const banked = eng.score;
-  check(banked >= 200 * 1.5 + TUNE.districtClearBonus, "the line banks with the clear bonus");
+  // One trick link keeps the multiplier at x1; the ollie pays but never
+  // multiplies, so the handover banks 200 flat plus the bonus.
+  check(banked >= 200 + TUNE.districtClearBonus, "the line banks with the clear bonus");
   check(eng.line.length === 0, "the line is empty after the handover bank");
   settle(eng, TUNE.districtHold + 0.2);
   check(eng.districtIndex === 1, "the next district loads");
@@ -647,7 +649,9 @@ const apexRise = (crouchSeconds) => {
   const eng = new Engine();
   eng.score = TUNE.scoreCap - 10;
   for (let round = 0; round < 8; round++) {
-    for (let i = 0; i < 9; i++) eng.line.push({ label: "Kickflip", points: TUNE.flipPoints });
+    for (let i = 0; i < 9; i++) {
+      eng.line.push({ label: "Kickflip", points: TUNE.flipPoints, trick: true });
+    }
     check(eng.multiplier === TUNE.maxMult, "nine links reach the multiplier cap");
     eng.bank();
   }
