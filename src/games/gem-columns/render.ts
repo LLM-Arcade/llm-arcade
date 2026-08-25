@@ -30,17 +30,20 @@ const VALUE = "#F4E6C1";
 // 210 px bands plus the 540 px square environment fill the 960 canvas exactly.
 const BAND = 210;
 
-// Ring-slot centers of the next-triad frame, measured from the art as
-// fractions of its trimmed canvas: the authored triplet sits right of the
-// frame's bbox center, so symmetric offsets miss the slots.
-const NEXT_SLOT_X = [0.352, 0.636, 0.909];
-const NEXT_SLOT_Y = 0.484;
-const TILE = 30;
+// Ring-slot centers of the next-triad frame as fractions of its FULL 100 px
+// cell (this cabinet's slicer keeps whole cells, no trim). Measured from the
+// art by dark-hole component centers. The visible frame sits right of the
+// cell center by 5.5%, so the draw compensates to look centered.
+const NEXT_SLOT_X = [0.373, 0.621, 0.864];
+const NEXT_SLOT_Y = 0.557;
+const NEXT_FRAME_W = 200;
+const NEXT_FRAME_SHIFT = 0.055 * NEXT_FRAME_W;
+const TILE = 34;
 const BOARD_W = COLS * TILE;
 const BOARD_H = VISIBLE_ROWS * TILE;
 const BOARD_PAD = 6;
 
-const WELL_SCALE = 1.3;
+const WELL_SCALE = 1.35;
 const WELL_W = 200 * WELL_SCALE;
 const WELL_H = 400 * WELL_SCALE;
 const WELL_Y = (H - WELL_H) / 2;
@@ -242,16 +245,15 @@ export const draw = (
   // slot showing the gem that lands on top.
   text(ctx, "NEXT", rightX, 54, 11, LABEL);
   const frame = spr.ui["next-triad-frame"];
-  const frameW = 176;
-  const frameH = (frameW * frame.height) / frame.width;
-  drawSprite(ctx, frame, rightX, 120, frameW);
+  const frameCx = rightX - NEXT_FRAME_SHIFT;
+  drawSprite(ctx, frame, frameCx, 122, NEXT_FRAME_W);
   for (let i = 0; i < 3; i++) {
     drawSprite(
       ctx,
       spr.gems[eng.nextGems[i]][GEM_STATE.normal],
-      rightX - frameW / 2 + NEXT_SLOT_X[i] * frameW,
-      120 - frameH / 2 + NEXT_SLOT_Y * frameH,
-      28,
+      frameCx - NEXT_FRAME_W / 2 + NEXT_SLOT_X[i] * NEXT_FRAME_W,
+      122 - NEXT_FRAME_W / 2 + NEXT_SLOT_Y * NEXT_FRAME_W,
+      40,
     );
   }
 
