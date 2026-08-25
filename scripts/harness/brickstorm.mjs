@@ -151,7 +151,7 @@ const simulate = (prof, label, seed = TUNE.seed) => {
   let seenBoards = 0;
 
   // Endless game: bots stop after one full loop unless they die first.
-  while (eng.phase !== "gameover" && eng.boardsCleared < 3 && steps < STEP_BUDGET) {
+  while (eng.phase !== "gameover" && eng.loop < 1 && steps < STEP_BUDGET) {
     drive(eng, prof, st, steps);
     eng.update(DT);
     steps++;
@@ -202,7 +202,7 @@ const simulate = (prof, label, seed = TUNE.seed) => {
 // ---- bots ----------------------------------------------------------------
 
 const ace = simulate(ACE, "ace bot (pointer tracking, drop chasing)");
-check(ace.eng.boardsCleared === 3, "ace clears all three boards of the first loop");
+check(ace.eng.loop === 1, "ace clears all three boards of the first loop");
 check(ace.achievements.has("kiln-master"), "kiln-master fires on the first full loop");
 check(ace.eng.livesLost === 0, "ace clears without losing a life");
 check(ace.eng.score >= TUNE.legendScore, `ace scores at least ${TUNE.legendScore}`);
