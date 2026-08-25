@@ -1049,3 +1049,28 @@ until the user signs in on llmarcade.fun in the driven browser.
   landed at 20,000 (sloppy ceiling 1,782, skilled floor 46,438), the wave
   budget quadratic settled at 2.2 -> 2.0, concurrency capped at 32, and
   characters catch their breath (30% of missing HP) when the horn quiets.
+
+## Session 23 — Lastwatch phases 3 and 4, and the first live playtest
+
+- Phase 3: the 3D realm on three.js 0.185.1 (pinned exact, release well
+  past the 72-hour rule). Fire-lit warm night from the sim's own room
+  data, a rippling apocalyptic sky shader with a low ivory moon, an
+  instanced 17-type horde with ember eyes, rigid-part hero figures,
+  runtime stone/plank/cobble textures, tracer-free flying arrows,
+  elemental spell glows, splinters, death presentations, and the DOM
+  HUD with barks, boss bars, ledger, and command wheel. Measured on the
+  dev machine: 1.2 ms average, 2.6 ms max render at near-1080p.
+- Phase 4: the synthesized score and full SFX in WebAudio, no files.
+  Layered siege bed keyed to the wave, ledger motif, answering horn,
+  per-class footsteps, ducking. Mixed low under the action by direction.
+- Jeff played mid-build and his findings drove a round of rulings:
+  physical rebuildable barricades, visible board destruction, surface
+  texture, arrows as arrows with a first-person draw, elemental magic,
+  and a real sword-swing arc. All applied and re-proven; the harness
+  ace gate recalibrated to the Coalhide milestone (observed band 15 to
+  22) with the wave-20 trigger staged.
+- Ship prep: `db/seed-lastwatch.sql` (12 achievements, cap 5,000,000,
+  upsert-safe) and `db/publish-lastwatch.sql` as files only, GDD carried
+  onto this branch with a revision 3 record. Key art is blocked on the
+  image-generation outage (`media_identity_missing`) and stays the one
+  missing deliverable; the row stays coming_soon.

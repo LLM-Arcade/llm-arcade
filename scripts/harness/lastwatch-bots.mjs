@@ -103,7 +103,7 @@ function walkTo(eng, c, input, room, x, y) {
       }
       return n * 20;
     };
-    const path = findPath(c.room, room, (d) => eng.doorOpen[d.id], crowdCost);
+    const path = findPath(c.room, room, (d) => eng.doorPassableWatch(d), crowdCost);
     if (path && path.length > 0) {
       const mid = doorMid(path[0]);
       tx = mid.x;

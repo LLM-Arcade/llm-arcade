@@ -24,4 +24,6 @@ export const gameRegistry: Record<
   "sky-defense": lazy(() => import("./sky-defense/SkyDefense")),
   "kickflip-city": lazy(() => import("./kickflip-city/KickflipCity")),
   "the-undervault": lazy(() => import("./the-undervault/TheUndervault")),
+  // The 3D flagship: co-op horde defense, keyboard only.
+  lastwatch: lazy(() => import("./lastwatch/Lastwatch")),
 };

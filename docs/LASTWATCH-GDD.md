@@ -956,3 +956,59 @@ meshes). The phases stay uncompressed per the handoff. Estimate: phase
 One decision is Jeff's before phase 2 starts: the name (section 1
 recommends keeping Lastwatch). Everything else is proposed as final,
 and phase 2 begins on approval of this document as a whole.
+<<<<<<< HEAD
+=======
+
+## 22. Revision 3: what the build measured and what Jeff ruled
+
+Jeff approved revision 2 and the name **Lastwatch** on 2026-08-25, then
+directed the build live. This section records what changed between the
+approved design and the built game, so the document above stays honest.
+
+### Calibration results (the (cal) markers, resolved by the harness)
+
+| Knob | GDD guess | Calibrated |
+|---|---|---|
+| `watch-legend` threshold | 600,000 | **20,000** (sloppy ceiling 1,782, skilled floor 31,000 to 46,000) |
+| Wave budget quadratic | 3.4 N² | **2.0 N²** |
+| Trickle floor | 1.2 s from wave 21 | **1.8 s waves 2 to 20, 1.2 s after** |
+| Concurrency cap | 40 | **32** (pressure and render both preferred it) |
+| Enemy HP scaling | +5%/wave past 8 | **+3%/wave past 8** |
+| Enemy damage scaling | +3%/wave past 10 | **+2%/wave past 10** |
+| Hexer speed tether | +30% | **+20%**, and no walker ever exceeds 7.4 m/s (sprint fairness rule) |
+| Ace-duo proof | wave 20+ | **hard gate at the Coalhide milestone (15+)**, observed band 15 to 22, the wave-20 trigger staged separately |
+| Between waves | no recovery | characters recover **30% of missing HP** when the horn quiets |
+
+### Rules the harness forced into the engine
+
+- Bosses present themselves: the Shepherd fights inside the walls, never
+  besieging through a door slit. Lobbers press inside before standing
+  off. An idle leftover horde retreats rather than freezing the night.
+- The gear ladder is guaranteed: racks always stock a straight upgrade
+  per class (never a sidegrade in the guaranteed slots), quality floors
+  rise with the wave, and boss caches never offer a downgrade.
+- Boss caches wait through the whole intermission before auto-claiming.
+
+### Jeff's live-playtest rulings (round one, applied)
+
+- Barricades are physical for everyone and rebuilt by hand: hold E at
+  damaged boards, valor becomes timber plank by plank. Boards shake and
+  splinter as they break.
+- The hold wears runtime stone, plank, cobble, and scrub textures.
+- Arrows fly as arrows with an air wake. The tracer line is gone. A
+  drawn bow pulls into first person and the nocked arrow replaces the
+  crosshair.
+- Spells carry their element in additive warm glows: kiln fire, amber
+  cinder lightning, hearth light. Burn fields burn visibly.
+- Sword swings are real arcs: windup, cut, torso rotation, recovery.
+- Art direction: fire is the most reliable light, the sky is an
+  apocalyptic warm ripple with a low ivory moon, fog veils the far
+  ground, and the music sits low under the fight.
+
+### Still open at this revision
+
+- Key art (`public/assets/games/lastwatch.png`): image generation is
+  down (`media_identity_missing`), so the tile is the one missing
+  deliverable. The games row stays `coming_soon` until it lands.
+- Jeff's end-to-end playtest verdict gates the release PR.
+>>>>>>> feature/lastwatch-game
