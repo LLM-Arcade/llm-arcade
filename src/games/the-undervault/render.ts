@@ -223,13 +223,15 @@ const drawGrid = (
 
   for (const m of eng.monsters) {
     if (eng.visible[idx(m.x, m.y)] !== 1 || !onScreen(m.x, m.y)) continue;
+    // A quarter-tile taller than the cell: the families are portrait-shaped
+    // and a strict tile box left them reading like icons, not creatures.
     place(
       ctx,
       spr.monsters[m.def.family][monsterFrame(m, time)],
       cellX(m.x) + TILE / 2,
       cellY(m.y) + TILE - 1,
       TILE,
-      TILE,
+      TILE * 1.25,
     );
   }
 
@@ -255,8 +257,8 @@ const drawGrid = (
   if (onScreen(eng.px, eng.py)) {
     const cx = cellX(eng.px) + TILE / 2;
     const cy = cellY(eng.py) + TILE / 2;
-    centred(ctx, spr.sites.sundisc, cx, cy, TILE, 0.9);
-    centred(ctx, spr.portraits[eng.portraitArt][0], cx, cy, 26);
+    centred(ctx, spr.sites.sundisc, cx, cy, TILE + 2, 0.9);
+    centred(ctx, spr.portraits[eng.portraitArt][0], cx, cy, 28);
   }
 };
 
@@ -327,6 +329,13 @@ const drawCombat = (ctx: CanvasRenderingContext2D, eng: Engine, spr: UndervaultS
 
   text(ctx, floor.name.toUpperCase(), left, top + 44, 12, PALETTE.cream);
   text(ctx, `DEPTH ${eng.depth}/${FLOORS.length}`, left, top + 62, 11, PALETTE.label);
+
+  // Ink underlay: the panel art is busiest exactly where the keeper caption
+  // and boss readout sit, and the text drowned in it.
+  ctx.fillStyle = "rgba(26,20,14,0.6)";
+  ctx.beginPath();
+  ctx.roundRect(left - 10, top + 74, 196, 50, 8);
+  ctx.fill();
 
   if (boss) {
     centred(ctx, spr.bosses[boss.def.art][0], left + 14, top + 100, 42, boss.awake ? 1 : 0.35);
