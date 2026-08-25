@@ -1,8 +1,14 @@
 # Lastwatch: the 3D flagship handoff
 
-**Status 2026-08-24: phase 1 delivered.** The complete GDD is at
-`docs/LASTWATCH-GDD.md` and awaits Jeff's approval. Phase 2 (sim core +
-harness) does not start until he approves it and picks the name.
+**Status 2026-08-25: all five phases built, PR #5 open into dev**
+(https://github.com/Jeff-Kazzee/jolly-bear-cheer/pull/5). Jeff approved
+the GDD and the name Lastwatch, then directed the build live with two
+rounds of playtest feedback, both applied. The full record lives on
+`feature/lastwatch-game`: the GDD with its revision 3 calibration log,
+the sim and its thirteen-proof harness in `pnpm test:games`, the
+three.js realm, the synthesized score, and seed/publish SQL as files.
+Open before merge: the key-art tile (image generation down,
+`media_identity_missing`) and Jeff's end-to-end verdict.
 
 The brief, context, and build contract for the most ambitious cabinet in
 the catalog: a real-time 3D co-op horde defense. Working title
