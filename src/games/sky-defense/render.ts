@@ -43,8 +43,8 @@ const FX_ART: Record<Fx["kind"], { name: EffectName | PropName; size: number }> 
 
 const DAMAGED_PROP: Record<BuildingKind, PropName> = {
   house: "house-damaged",
-  bridge: "city-damaged",
-  observatory: "city-damaged",
+  bridge: "bridge-damaged",
+  observatory: "observatory-damaged",
 };
 
 const INTACT_PROP: Record<BuildingKind, PropName> = {
@@ -232,15 +232,15 @@ export const draw = (
     }
   }
 
-  drawSprite(ctx, spr.props["radar-dial"], 62, 62, 62);
-  drawSprite(ctx, spr.props["radar-sweep"], 62, 62, 54, time * 1.6);
+  // The radar screen's sweep is painted into the art; no spin overlay needed.
+  drawSprite(ctx, spr.props["radar-screen"], 58, 56, 60);
 
   drawSprite(
     ctx,
-    coarse ? spr.props["cursor-crosshair"] : spr.props["target-reticle"],
+    spr.effects["radar-ping"],
     eng.reticle.x,
     eng.reticle.y,
-    38,
+    coarse ? 44 : 38,
   );
 
   const barW = 240;

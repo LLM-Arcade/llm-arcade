@@ -824,3 +824,9 @@ until the user signs in on llmarcade.fun in the driven browser.
 - Headless-built; browser play on `/dev/sky-defense` pending, and the
   burst-growth-versus-skiff-speed lead requirement is the difficulty knob
   to feel out (`TUNE.burstGrow`).
+- Review pass: props-ui.png diverges from its manifest past cell 4 (six
+  building states, weather shifted one cell, radar chrome where the manifest
+  claims reticle/cursor cells, two decorative leftovers). The slicer now
+  names the true cells, erases six measured stray sub-motifs after keying,
+  damaged bridges and observatories use their own authored frames, and the
+  aiming reticle comes from the effects sheet's ring cell.
