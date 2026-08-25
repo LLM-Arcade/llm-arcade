@@ -21,4 +21,5 @@ export const gameRegistry: Record<
   "run-n-gunner": lazy(() => import("./run-n-gunner/RunNGunner")),
   brickstorm: lazy(() => import("./brickstorm/Brickstorm")),
   "gem-columns": lazy(() => import("./gem-columns/GemColumns")),
+  "sky-defense": lazy(() => import("./sky-defense/SkyDefense")),
 };
