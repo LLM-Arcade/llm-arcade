@@ -956,8 +956,6 @@ meshes). The phases stay uncompressed per the handoff. Estimate: phase
 One decision is Jeff's before phase 2 starts: the name (section 1
 recommends keeping Lastwatch). Everything else is proposed as final,
 and phase 2 begins on approval of this document as a whole.
-<<<<<<< HEAD
-=======
 
 ## 22. Revision 3: what the build measured and what Jeff ruled
 
@@ -1011,4 +1009,3 @@ approved design and the built game, so the document above stays honest.
   down (`media_identity_missing`), so the tile is the one missing
   deliverable. The games row stays `coming_soon` until it lands.
 - Jeff's end-to-end playtest verdict gates the release PR.
->>>>>>> feature/lastwatch-game
