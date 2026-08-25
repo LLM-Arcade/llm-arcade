@@ -15,7 +15,7 @@ const LaunchGate = ({ children }: { children: React.ReactNode }) => {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <p className="animate-pulse font-display text-xl font-extrabold tracking-tight text-muted-foreground">
-          neon<span className="text-terra">arcade</span>
+          llm<span className="text-terra">arcade</span>
         </p>
       </div>
     );

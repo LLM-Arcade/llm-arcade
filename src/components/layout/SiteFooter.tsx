@@ -11,7 +11,7 @@ const SiteFooter = () => (
           className="h-6 w-6 rounded-full ring-1 ring-foreground/10"
         />
         <p className="font-display text-base font-extrabold tracking-tight">
-          neon<span className="text-terra">arcade</span>
+          llm<span className="text-terra">arcade</span>
         </p>
       </div>
       <nav className="flex items-center gap-6 text-sm font-medium text-muted-foreground">
