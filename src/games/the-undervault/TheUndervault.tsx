@@ -243,7 +243,11 @@ const TheUndervault = ({ onScore, onAchievement }: ArcadeGameProps) => {
   useEffect(() => {
     const onHide = () => {
       const phase = engineRef.current.phase;
-      if (document.hidden && phase !== "dead" && phase !== "won") setPaused(true);
+      // The chooser has nothing running, and pausing there buries its buttons
+      // under the pause overlay.
+      if (document.hidden && phase !== "dead" && phase !== "won" && phase !== "choosing") {
+        setPaused(true);
+      }
     };
     document.addEventListener("visibilitychange", onHide);
     return () => document.removeEventListener("visibilitychange", onHide);
