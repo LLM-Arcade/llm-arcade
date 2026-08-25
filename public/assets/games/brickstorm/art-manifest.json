@@ -1,0 +1,123 @@
+{
+  "slug": "brickstorm",
+  "packVersion": 1,
+  "generatedAssets": [
+    {
+      "file": "paddles.png",
+      "exactBytes": 81893,
+      "dimensions": [640, 192],
+      "grid": [5, 3],
+      "frames": 15,
+      "frameOrder": "rows: terracotta, olive barrel, cream wing; columns: idle, move-compress, hit, expanded, damaged",
+      "renderSize": [128, 64],
+      "sliceRect": [0, 0, 128, 64],
+      "cellInset": 4,
+      "anchor": "bottom-center",
+      "animation": "idle 180ms; move-compress 90ms; hit 80ms; expanded static; damaged static",
+      "promptSummary": "Three authored paddle bodies with five motion and condition states on a magenta sprite grid.",
+      "intendedWiring": "Select row by board theme or cosmetic choice, column from visual paddle state; never use frame dimensions for collision."
+    },
+    {
+      "file": "ball-fx.png",
+      "exactBytes": 73532,
+      "dimensions": [512, 192],
+      "grid": [8, 3],
+      "frames": 24,
+      "frameOrder": "row 1: four rotation highlights then four speed angles; row 2: impact, two trails, clear, crack, spark, ember, dust; row 3: six debris clusters, ground burst, dust burst",
+      "renderSize": [64, 64],
+      "sliceRect": [0, 0, 64, 64],
+      "cellInset": 4,
+      "anchor": "center",
+      "animation": "ball rotation 70ms per frame; trail 45ms; impacts 60ms; debris 90ms",
+      "promptSummary": "Ceramic ball angles, travel states, impacts, trails, debris and clear effects.",
+      "intendedWiring": "Use first four cells for rolling highlight, speed cells by velocity angle, remaining cells as ephemeral visual FX."
+    },
+    {
+      "file": "bricks.png",
+      "exactBytes": 115613,
+      "dimensions": [576, 192],
+      "grid": [6, 4],
+      "frames": 24,
+      "frameOrder": "columns: pottery tile, olive glass, kiln firebrick, cream plaster, mustard mosaic, charcoal basalt; rows: intact, chipped, cracked, near-break",
+      "renderSize": [96, 48],
+      "sliceRect": [0, 0, 96, 48],
+      "cellInset": 4,
+      "anchor": "center",
+      "animation": "damage state swap on hit; optional 70ms crack flash before next row",
+      "promptSummary": "Six materially distinct brick families, each with four readable damage states.",
+      "intendedWiring": "Index material by level palette and damage row by visual health; preserve logic-owned hit point values."
+    },
+    {
+      "file": "powerups-props-ui.png",
+      "exactBytes": 98187,
+      "dimensions": [512, 192],
+      "grid": [8, 3],
+      "frames": 24,
+      "frameOrder": "row 1: expand, split, slow, fire, shield, sticky, extra life, multiplier; row 2: matching pulsing variants; row 3: clay jar, olive pot, kiln door, greenhouse trellis, board badge, pause, replay, sparkle",
+      "renderSize": [64, 64],
+      "sliceRect": [0, 0, 64, 64],
+      "cellInset": 4,
+      "anchor": "center",
+      "animation": "idle/pulse alternate every 120ms; props and UI static",
+      "promptSummary": "Eight gameplay-neutral powerup marks with pulse variants plus artisan board props and UI symbols.",
+      "intendedWiring": "Pair row 1 and 2 by powerup id; use row 3 as optional board decoration or static control chrome."
+    },
+    {
+      "file": "board-pottery-workshop.jpg",
+      "exactBytes": 47701,
+      "dimensions": [960, 540],
+      "grid": null,
+      "frames": 1,
+      "renderSize": [960, 540],
+      "anchor": "top-left",
+      "animation": "static",
+      "promptSummary": "Pottery workshop surround with shelves, kiln tools and a clear ink playfield center.",
+      "intendedWiring": "Board environment id pottery-workshop; layer below brick field and above flat page background."
+    },
+    {
+      "file": "board-olive-greenhouse.jpg",
+      "exactBytes": 76074,
+      "dimensions": [960, 540],
+      "grid": null,
+      "frames": 1,
+      "renderSize": [960, 540],
+      "anchor": "top-left",
+      "animation": "static",
+      "promptSummary": "Olive greenhouse surround with potted trees, trellis and a clear ink playfield center.",
+      "intendedWiring": "Board environment id olive-greenhouse; layer below brick field and above flat page background."
+    },
+    {
+      "file": "board-terracotta-kiln.jpg",
+      "exactBytes": 58767,
+      "dimensions": [960, 540],
+      "grid": null,
+      "frames": 1,
+      "renderSize": [960, 540],
+      "anchor": "top-left",
+      "animation": "static",
+      "promptSummary": "Terracotta kiln room surround with arched ovens, tile stacks and a clear ink playfield center.",
+      "intendedWiring": "Board environment id terracotta-kiln; layer below brick field and above flat page background."
+    },
+    {
+      "file": "../brickstorm.png",
+      "exactBytes": 117049,
+      "dimensions": [960, 540],
+      "grid": null,
+      "frames": 1,
+      "renderSize": [960, 540],
+      "anchor": "center",
+      "animation": "static",
+      "promptSummary": "Catalog key art of a ceramic mosaic ball, artisan paddle and six brick materials in motion.",
+      "intendedWiring": "Replacement catalog art at public/assets/games/brickstorm.png; not a gameplay texture."
+    }
+  ],
+  "validation": {
+    "spriteSheets": "equal-size cells with a pure #FF00FF 4px inset on every edge; every declared grid cell contains non-magenta pixels",
+    "sourceInspection": "all seven pack assets and replacement key art inspected at shipped resolution",
+    "notes": "Wire-ready only; no Brickstorm gameplay source was created or changed."
+  },
+  "gameplayArtBytes": 551767,
+  "keyArtBytes": 117049,
+  "totalArtBytes": 668816,
+  "budgetBytes": 1048576
+}
