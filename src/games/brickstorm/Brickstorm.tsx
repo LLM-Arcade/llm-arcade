@@ -49,6 +49,7 @@ const Brickstorm = ({ onScore, onAchievement }: ArcadeGameProps) => {
   const [hud, setHud] = useState({
     score: 0,
     board: "",
+    loop: 0,
     lives: TUNE.lives as number,
     powers: "",
     phase: "serve" as Engine["phase"],
@@ -119,11 +120,12 @@ const Brickstorm = ({ onScore, onAchievement }: ArcadeGameProps) => {
       setHud((h) =>
         h.score === eng.score &&
         h.board === board &&
+        h.loop === eng.loop &&
         h.lives === eng.lives &&
         h.powers === powers &&
         h.phase === eng.phase
           ? h
-          : { score: eng.score, board, lives: eng.lives, powers, phase: eng.phase },
+          : { score: eng.score, board, loop: eng.loop, lives: eng.lives, powers, phase: eng.phase },
       );
 
       raf = requestAnimationFrame(loop);
@@ -182,7 +184,7 @@ const Brickstorm = ({ onScore, onAchievement }: ArcadeGameProps) => {
   useEffect(() => {
     const onHide = () => {
       const phase = engineRef.current.phase;
-      if (document.hidden && phase !== "gameover" && phase !== "victory") setPaused(true);
+      if (document.hidden && phase !== "gameover") setPaused(true);
     };
     document.addEventListener("visibilitychange", onHide);
     return () => document.removeEventListener("visibilitychange", onHide);
@@ -220,7 +222,7 @@ const Brickstorm = ({ onScore, onAchievement }: ArcadeGameProps) => {
       <div className="flex h-10 shrink-0 items-center gap-3 px-4 font-mono text-[11px] tracking-widest text-background/90 sm:text-xs">
         <span className="tabular-nums">SCORE {hud.score.toLocaleString()}</span>
         <span className="hidden rounded-full bg-background/10 px-2.5 py-0.5 text-[10px] sm:inline">
-          {hud.board}
+          {hud.loop > 0 ? `LOOP ${hud.loop + 1} · ${hud.board}` : hud.board}
         </span>
         {hud.powers && (
           <span className="rounded-full bg-background/10 px-2.5 py-0.5 text-[10px] text-mustard">
@@ -281,7 +283,7 @@ const Brickstorm = ({ onScore, onAchievement }: ArcadeGameProps) => {
 
         {ready && hud.phase === "board-clear" && !paused && (
           <p className="pointer-events-none absolute top-[32%] px-4 text-center font-display text-2xl font-extrabold tracking-wide text-background drop-shadow-sm">
-            {hud.board} CLEAR
+            {hud.loop > 0 ? `LOOP ${hud.loop + 1} · ${hud.board}` : hud.board} CLEAR
           </p>
         )}
 
