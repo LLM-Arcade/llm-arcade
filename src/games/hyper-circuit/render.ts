@@ -27,7 +27,9 @@ const HAZE = "#E4D5B8";
 const SAND32 = 0xffa3c9d9;
 const FOG_R = 217, FOG_G = 201, FOG_B = 163;
 
-const RIVAL_WORLD_W = 14;
+// Raised with the player draw width lowered: the player car read at
+// twice the size of a rival sitting right ahead of it.
+const RIVAL_WORLD_W = 17;
 const GHOST_WORLD_W = 10;
 const SPARK_WORLD_W = 9;
 const CAR_CONTACT_INSET = 16 / 128;
@@ -253,7 +255,7 @@ export const draw = (
     slot.img = carFrame(spr.roadCars, rv.spriteIdx + 1, yaw, motion);
     slot.sx = halfW + side * k;
     slot.sy = HORIZON + CAM_H * k;
-    slot.w = Math.min(92, RIVAL_WORLD_W * k);
+    slot.w = Math.min(104, RIVAL_WORLD_W * k);
     slot.alpha = 1;
     slot.bank = Math.max(-0.06, Math.min(0.06, headingDelta * 0.12));
   }
@@ -335,7 +337,7 @@ export const draw = (
   // Player car stays tire-anchored; alternating sheets provide suspension
   // and steering movement instead of an anti-gravity hover.
   const lean = Math.max(-10, Math.min(10, p.lat * 0.15));
-  const craftW = 68;
+  const craftW = 56;
   const playerX = halfW + lean;
   const playerY = H - 42;
   const playerYaw = yawFor(eng.input.steer * 0.36);
