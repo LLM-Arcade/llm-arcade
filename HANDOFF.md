@@ -10,6 +10,13 @@ and Google OAuth origins use it.
 
 ## Current state
 
+**Session 23: Lastwatch, the 3D flagship, is playable end to end on
+`feature/lastwatch-game`** (engine + harness + three.js realm + synth
+audio + live playtest round one). `/dev/lastwatch` on the worktree's dev
+server; `pnpm test:games` now includes its harness. Blocked on: key art
+(image generation down) and Jeff's final playtest verdict before the PR
+to dev. Seed and publish SQL are files under `db/`, unrun.
+
 **Branch and release contract (session 19):** `dev` is the default
 integration branch, `prod` is the only production release branch, and
 legacy `main` is frozen. Cabinet work uses one
@@ -248,7 +255,7 @@ ARCADE_SAVE persistence deferred platform-wide).
   to the player and bled shield through bumps.
 - `track-texture.ts` — ground composed once per circuit at 1 texel/unit
   into a 1536² canvas: flat road/terrain fills (Munch Maze level-geometry
-  exception) plus stamped transforms of borrowed sprites (rails, start
+  exception) plus stamped transforms of generated sprites (rails, start
   checkers, pad chevrons, hedge scrub). Read back once into a Uint32Array.
 - `render.ts` — the mode-7 pass: per-row depth precomputed, incremental
   world-space walk per pixel into a reused ImageData, nearest sample, fog
@@ -271,12 +278,23 @@ ARCADE_SAVE persistence deferred platform-wide).
 loaded every asset with 200 responses, showed no magenta fringe, and drove
 a real keyboard run to a rail-hit DNF before the row was published.
 
+**Animation quality pass (session 19):** steering bank is damped instead
+of snapping, rivals bank from their track heading with independent hover
+and thruster phases, near-camera rival scale is capped, cruise/boost flames
+share one anchored draw path, and the generated shield sprite now pulses
+behind the player during boosts and low-shield warnings. The canvas uses
+container-relative sizing and holds its exact 400:260 ratio at desktop and
+390 px mobile widths; the old mobile layout stretched it vertically.
+Browser stress proof sampled 120 moving frames at 6.95 ms average / 7.3 ms
+p95 / 7.9 ms max with no frame over 25 ms, no console errors, and no boost
+flame clipping after the corrected player anchor.
+
 Balance knobs: `TUNE` at the top of `engine.ts` (all units commented),
 `parLap`/`rivalSpeed`/`halfWidth` per course in `courses.ts`. Scoring:
 positions [4000, 2600, 1800, 1200, 800] + 500 finish + shield·5 + par
 bonus (200/s under par, cap 1200/lap) + 150 per clean boost + 50 per pad.
-Cap 40,000, seeded in `db/seed-hyper-circuit.sql` (UPDATEs the teaser
-row, upserts achievements, status stays coming_soon on purpose).
+Cap 40,000, seeded in `db/seed-hyper-circuit.sql` and published with
+`db/publish-hyper-circuit.sql`.
 
 **Beatability harness (rerun it):** `node scripts/harness/hyper-circuit.mjs`
 proves geometry validity (no self-overlap, curv·halfWidth < 0.5), an ace
@@ -313,11 +331,14 @@ via Down+jump.
   is a real dodge; boss volleys keep 1.25 s of daylight; bosses never
   fire mid-charge; boss patrol floor `arenaX + 220` so holding distance
   never corners you on the camera wall.
-- `sprites.ts` — the Starfall gap-slicer copy, now loading four original
-  generated sheets: gunner.png (3 frames), foes.png (5), fx.png (5), and
-  pickups.png (3). Deterministic gutters resolve exactly 3/5/5/3 at runtime.
+- `sprites.ts` — the Starfall gap-slicer copy, now loading five original
+  generated sheets: gunner.png (3 frames), foes.png (5), foes-motion.png
+  (5 alternate poses), fx.png (5), and pickups.png (3). Deterministic
+  gutters resolve exactly 3/5/5/5/3 at runtime.
 - `render.ts` — camera-translated sprite placement; ground/platform/ridge
-  flat fills are the Munch Maze level-geometry exception.
+  flat fills are the Munch Maze level-geometry exception. Player, grounded
+  foes, and non-hovering bosses share foot-anchored draw paths so changing
+  frame proportions cannot move them through the floor.
 - `RunNGunner.tsx` — Starfall shell idiom. Touch: run pads left, JUMP +
   FIRE right (`pointer: coarse`). Dev lever: `window.__rg` in DEV builds.
 
@@ -336,11 +357,16 @@ bot completes a full one-life clear, every achievement threshold fires in
 simulation, and the score never exceeds the cap. Exit 0 = PASS. Prints a
 per-stage table per bot.
 
-**Original art proof:** the four palette-quantized in-game sheets total
-9,950 bytes; the 768 px key-art tile is 320,084 bytes; all Run 'n Gunner
-art totals 330,034 bytes (31.47% of the 1 MiB cabinet budget). Real keyboard
+**Original art proof:** the five palette-quantized in-game sheets total
+12,955 bytes; the 768 px key-art tile is 320,084 bytes; all Run 'n Gunner
+art totals 333,039 bytes (31.76% of the 1 MiB cabinet budget). Real keyboard
 play on `/dev/run-n-gunner` covered running, firing, jumping, damage, and
 enemy encounters with no keying fringe or palette clash before publish.
+The animation pass pairs each of the five base foe frames with a generated
+alternate pose: runner stride, turret recoil, lobber brace, drone rotor/fire,
+and boss leg/cannon recoil. A 120-frame move-and-fire stress sample measured
+6.88 ms average / 7.4 ms p95 / 7.7 ms max with zero frames over 25 ms. The
+canvas holds its exact 16:9 ratio at desktop and 390 px mobile widths.
 
 ## The progression engine (Phase 3, unchanged)
 

@@ -743,10 +743,111 @@ until the user signs in on llmarcade.fun in the driven browser.
   local pre-push hook and GitHub Actions run the same command.
 - Added repeatable GitHub protection configuration with strict required
   checks, pull-request-only changes, linear history, conversation
-  resolution, no force pushes/deletions, and admin enforcement. Vercel's
-  production branch is `prod`; preview deployments remain available for
-  feature and `dev` branches.
+  resolution, no force pushes/deletions, and admin enforcement. The target
+  Vercel production branch is `prod`, but that external setting remains a
+  release gate: the local Vercel session is logged out, and GitHub's
+  deployment records confirm Vercel still ignores `dev` and `prod` pushes.
 - Visual acceptance is an explicit gate, not something CI can infer:
   changed cabinets must be keyboard-played at `/dev/<slug>` and checked for
   asset failures, frame clipping, sprite overlap, animation jank, console
   errors, and palette cohesion before promotion.
+
+## Session 19 — Hyper Circuit animation quality pass
+
+- Kept the five original craft sprites and made their motion stateful:
+  damped player steering bank, track-heading rival bank, independent hover
+  and thruster phases, capped near-camera rival scale, and animated cruise
+  and boost flames. The previously unused shield asset now pulses behind
+  the craft during boosts and low-shield warnings.
+- Moved every craft/flame composition through one anchored renderer. The
+  first browser pass exposed a boost flame crossing the canvas bottom; the
+  player anchor moved up and the second pass showed the full effect with no
+  edge clipping or sprite distortion.
+- Fixed the cabinet canvas itself after mobile proof found the 400×260
+  render stretched into a 342×362 box. Container-relative sizing now holds
+  1.5385 exactly on desktop and 390 px mobile, with no horizontal overflow.
+- Real keyboard steering/boost proof stayed in the racing phase with all
+  four rivals rendered. A 120-frame stress sample measured 6.95 ms average,
+  7.3 ms p95, 7.9 ms max, and zero frames over 25 ms; the Hyper harness and
+  TypeScript gate remained green without physics or balance changes.
+
+## Session 19 — Run 'n Gunner animation quality pass
+
+- Generated `foes-motion.png`, a flat-color magenta-keyed companion row with
+  alternate poses for the existing runner, turret, lobber, drone, and boss.
+  The source prompt preserved the original silhouettes and rust/olive/cream
+  palette while asking for stride, recoil, brace, rotor, and cannon motion.
+  Cleanup left exactly five gap-sliced frames with no detached fragments.
+- Paired each base foe with its alternate at role-specific frame rates. The
+  gunner's existing run and jump poses now use the same stable foot anchor;
+  grounded foes and bosses cannot sink, hop, or clip through the floor when
+  differently proportioned frames alternate. Pickup sway, orb pulse, muzzle
+  recoil, and restrained airborne lean add feedback without changing rules.
+- Real keyboard play exercised movement, jumping, firing, damage, and enemy
+  encounters. Controlled side-by-side staging of all five foe classes showed
+  fixed ground contact and separated silhouettes. A 120-frame move-and-fire
+  sample measured 6.88 ms average, 7.4 ms p95, 7.7 ms max, and zero frames
+  over 25 ms, with no browser errors or missing assets.
+- Fixed the same mobile canvas stretch found in Hyper Circuit. The 640x360
+  logical frame now renders at 832x468 desktop and 342x192.375 at 390 px
+  mobile width, both exactly 16:9 with no overflow. The new 3,005-byte sheet
+  brings in-game art to 12,955 bytes and total cabinet art to 333,039 bytes,
+  31.76% of the 1 MiB budget. No engine, stage, collision, score, or balance
+  code changed.
+
+## Session 23 — Lastwatch phase 2: the whole game, headless
+
+- Built the complete Lastwatch simulation in `src/games/lastwatch/`: a
+  DOM-free 60 Hz deterministic engine (seeded mulberry32, event queue,
+  relative imports) covering movement, three class kits, five weapons per
+  class with quality tiers, armor, consumables, the five-district hold
+  with convex-room portal pathing, twelve Gloam types across three
+  intelligence tiers with engine-level coordination, four milestone
+  bosses, the valor economy, downs and revives, difficulty levels,
+  scoring, and all twelve achievements.
+- `scripts/harness/lastwatch.mjs` proves the phase 2 gate and now runs in
+  `pnpm test:games`: determinism by event-log hash, an ace duo reaching
+  wave 22 on Long Watch, casual floors at all three difficulties on all
+  three classes (nine runs, every one surviving the full 300 s window),
+  a do-nothing loss, exact kit arithmetic, coordination and raid stages,
+  five partner behaviors, economy and difficulty arithmetic, district
+  effects, the flood cap, and 12/12 achievements firing in simulation.
+- The harness earned its keep before any renderer exists. It caught the
+  knight partner's heavy swing never releasing (zero melee damage all
+  run), the Shepherd besieging unkillably from outside the walls, lone
+  hexers and slit-camping lobbers softlocking waves, boss caches
+  auto-claiming before the player could choose, and a gear ladder that
+  could strand a class on its starting weapon for ten waves. Each fix is
+  an engine rule now: bosses present themselves, artillery presses in,
+  no walker outruns a sprinting archer, guaranteed rack slots never
+  offer sidegrades, and an idle leftover horde retreats instead of
+  freezing the night.
+- Calibration replaced guesses per the GDD's (cal) contract: watch-legend
+  landed at 20,000 (sloppy ceiling 1,782, skilled floor 46,438), the wave
+  budget quadratic settled at 2.2 -> 2.0, concurrency capped at 32, and
+  characters catch their breath (30% of missing HP) when the horn quiets.
+
+## Session 23 — Lastwatch phases 3 and 4, and the first live playtest
+
+- Phase 3: the 3D realm on three.js 0.185.1 (pinned exact, release well
+  past the 72-hour rule). Fire-lit warm night from the sim's own room
+  data, a rippling apocalyptic sky shader with a low ivory moon, an
+  instanced 17-type horde with ember eyes, rigid-part hero figures,
+  runtime stone/plank/cobble textures, tracer-free flying arrows,
+  elemental spell glows, splinters, death presentations, and the DOM
+  HUD with barks, boss bars, ledger, and command wheel. Measured on the
+  dev machine: 1.2 ms average, 2.6 ms max render at near-1080p.
+- Phase 4: the synthesized score and full SFX in WebAudio, no files.
+  Layered siege bed keyed to the wave, ledger motif, answering horn,
+  per-class footsteps, ducking. Mixed low under the action by direction.
+- Jeff played mid-build and his findings drove a round of rulings:
+  physical rebuildable barricades, visible board destruction, surface
+  texture, arrows as arrows with a first-person draw, elemental magic,
+  and a real sword-swing arc. All applied and re-proven; the harness
+  ace gate recalibrated to the Coalhide milestone (observed band 15 to
+  22) with the wave-20 trigger staged.
+- Ship prep: `db/seed-lastwatch.sql` (12 achievements, cap 5,000,000,
+  upsert-safe) and `db/publish-lastwatch.sql` as files only, GDD carried
+  onto this branch with a revision 3 record. Key art is blocked on the
+  image-generation outage (`media_identity_missing`) and stays the one
+  missing deliverable; the row stays coming_soon.

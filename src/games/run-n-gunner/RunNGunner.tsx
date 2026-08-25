@@ -274,13 +274,16 @@ const RunNGunner = ({ onScore, onAchievement }: ArcadeGameProps) => {
       )}
 
       {/* Playfield */}
-      <div className="relative flex min-h-0 flex-1 items-center justify-center px-2 pb-2 pt-1">
+      <div
+        className="relative flex min-h-0 flex-1 items-center justify-center px-2 pb-2 pt-1"
+        style={{ containerType: "size" }}
+      >
         <canvas
           ref={canvasRef}
           width={W * 2}
           height={H * 2}
-          className="h-full w-auto max-w-full rounded-xl ring-1 ring-background/10"
-          style={{ aspectRatio: `${W} / ${H}`, objectFit: "contain" }}
+          className="block h-auto max-h-full max-w-full rounded-xl ring-1 ring-background/10"
+          style={{ aspectRatio: `${W} / ${H}`, width: `min(100%, calc(100cqh * ${W / H}))` }}
         />
 
         {!ready && (

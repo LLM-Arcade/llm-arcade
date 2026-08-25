@@ -10,7 +10,7 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit -p tsconfig.app.json && tsc --noEmit -p tsconfig.node.json",
     "check": "pnpm lint && pnpm typecheck && pnpm build",
-    "test:games": "node scripts/harness/hyper-circuit.mjs && node scripts/harness/run-n-gunner.mjs",
+    "test:games": "node scripts/harness/hyper-circuit.mjs && node scripts/harness/run-n-gunner.mjs && node scripts/harness/lastwatch.mjs",
     "ci": "pnpm check && pnpm test:games",
     "preview": "vite preview"
   },
@@ -63,6 +63,7 @@
     "sonner": "^1.5.0",
     "tailwind-merge": "^2.5.2",
     "tailwindcss-animate": "^1.0.7",
+    "three": "0.185.1",
     "vaul": "^0.9.3",
     "zod": "^3.25.0"
   },
@@ -73,6 +74,7 @@
     "@types/node": "^22.5.5",
     "@types/react": "^19.2.8",
     "@types/react-dom": "^19.2.3",
+    "@types/three": "0.185.4",
     "@vitejs/plugin-react-swc": "^4.3.0",
     "autoprefixer": "^10.4.20",
     "eslint": "^9.9.0",

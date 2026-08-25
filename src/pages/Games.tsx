@@ -23,7 +23,8 @@ const Games = () => {
               Game floor
             </h1>
             <p className="mt-1 text-muted-foreground">
-              Every cabinet coded end-to-end by an AI agent.
+              Every cabinet coded end-to-end by an AI agent. Some still have
+              rough edges. The machines keep polishing.
             </p>
           </div>
           <span className="font-mono text-xs tracking-widest text-muted-foreground">

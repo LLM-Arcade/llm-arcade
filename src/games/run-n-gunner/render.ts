@@ -40,6 +40,29 @@ const drawSprite = (
   ctx.restore();
 };
 
+const drawGroundSprite = (
+  ctx: CanvasRenderingContext2D,
+  c: HTMLCanvasElement,
+  x: number,
+  feetY: number,
+  w: number,
+  angle = 0,
+  alpha = 1,
+  flipX = false,
+) => {
+  const h = (w * c.height) / c.width;
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.translate(x, feetY);
+  if (angle) ctx.rotate(angle);
+  if (flipX) ctx.scale(-1, 1);
+  ctx.drawImage(c, -w / 2, -h, w, h);
+  ctx.restore();
+};
+
+const animationFrame = (frames: HTMLCanvasElement[], time: number, fps: number, phase = 0) =>
+  frames[Math.floor(time * fps + phase) % frames.length];
+
 export const draw = (ctx: CanvasRenderingContext2D, eng: Engine, spr: GunnerSprites) => {
   ctx.fillStyle = SKY;
   ctx.fillRect(0, 0, W, H);
@@ -77,10 +100,17 @@ export const draw = (ctx: CanvasRenderingContext2D, eng: Engine, spr: GunnerSpri
   const bob = Math.sin(eng.time * 3) * 2;
   for (const fp of eng.stage.pickups) {
     if (fp.collected) continue;
-    drawSprite(ctx, spr.pickups[fp.item], fp.x, GROUND_Y - 10 + bob, 16);
+    drawSprite(ctx, spr.pickups[fp.item], fp.x, GROUND_Y - 10 + bob, 16, Math.sin(eng.time * 2.5) * 0.06);
   }
   for (const pk of eng.pickups) {
-    drawSprite(ctx, spr.pickups[pk.item], pk.x, pk.y - 10 + (pk.y >= GROUND_Y ? bob : 0), 16);
+    drawSprite(
+      ctx,
+      spr.pickups[pk.item],
+      pk.x,
+      pk.y - 10 + (pk.y >= GROUND_Y ? bob : 0),
+      16,
+      Math.sin(eng.time * 2.5 + pk.x * 0.02) * 0.06,
+    );
   }
 
   // enemies
@@ -88,34 +118,52 @@ export const draw = (ctx: CanvasRenderingContext2D, eng: Engine, spr: GunnerSpri
     const d = ENEMY_DRAW[e.kind];
     switch (e.kind) {
       case "runner":
-        drawSprite(
+        drawGroundSprite(
           ctx,
-          spr.runner,
-          e.x,
-          e.y - 9 + Math.abs(Math.sin(eng.time * 10)) * -2,
+          animationFrame(spr.runnerFrames, eng.time, 8, e.x * 0.025),
+          e.x + Math.sin(eng.time * 8 + e.x * 0.03) * 0.7,
+          e.y,
           d.size,
-          0,
+          Math.sin(eng.time * 8 + e.x * 0.03) * 0.045,
           1,
           eng.player.x < e.x,
         );
         break;
       case "turret":
-        drawSprite(ctx, spr.turret, e.x, e.y - 10, d.size, 0, 1, eng.player.x < e.x);
-        break;
-      case "lobber":
-        drawSprite(
+        drawGroundSprite(
           ctx,
-          spr.lobber,
+          animationFrame(spr.turretFrames, eng.time, 3, e.x * 0.015),
           e.x,
-          e.y - 8 + Math.sin(eng.time * 4) * 1.5,
+          e.y,
           d.size,
           0,
           1,
           eng.player.x < e.x,
         );
         break;
+      case "lobber":
+        drawGroundSprite(
+          ctx,
+          animationFrame(spr.lobberFrames, eng.time, 3.5, e.x * 0.02),
+          e.x,
+          e.y,
+          d.size,
+          Math.sin(eng.time * 3.5 + e.x * 0.02) * 0.035,
+          1,
+          eng.player.x < e.x,
+        );
+        break;
       case "drone":
-        drawSprite(ctx, spr.drone, e.x, e.y, d.size, 0, 0.95, eng.player.x > e.x);
+        drawSprite(
+          ctx,
+          animationFrame(spr.droneFrames, eng.time, 6, e.x * 0.02),
+          e.x,
+          e.y,
+          d.size,
+          Math.sin(eng.time * 5 + e.x * 0.02) * 0.08,
+          0.95,
+          eng.player.x > e.x,
+        );
         break;
     }
   }
@@ -125,7 +173,12 @@ export const draw = (ctx: CanvasRenderingContext2D, eng: Engine, spr: GunnerSpri
   if (b) {
     const flick = b.flash > 0 ? 0.55 : 1;
     const tilt = b.charging > 0 ? b.dir * 0.18 : Math.sin(eng.time * 2.2) * 0.05;
-    drawSprite(ctx, spr.boss, b.x, b.y, b.def.w, tilt, flick, b.dir < 0);
+    const bossFrame = animationFrame(spr.bossFrames, eng.time, b.charging > 0 ? 7 : 2.5);
+    if (b.def.hover) {
+      drawSprite(ctx, bossFrame, b.x, b.y, b.def.w, tilt, flick, b.dir < 0);
+    } else {
+      drawGroundSprite(ctx, bossFrame, b.x, b.y + b.def.h / 2, b.def.w, tilt, flick, b.dir < 0);
+    }
   }
 
   // shots
@@ -136,7 +189,7 @@ export const draw = (ctx: CanvasRenderingContext2D, eng: Engine, spr: GunnerSpri
     if (s.grav) {
       drawSprite(ctx, spr.grenade, s.x, s.y, 11, eng.time * 9, 0.95);
     } else {
-      drawSprite(ctx, spr.orb, s.x, s.y, 9, 0, 0.95);
+      drawSprite(ctx, spr.orb, s.x, s.y, 9 + Math.sin(eng.time * 12 + s.x * 0.02) * 0.8, 0, 0.95);
     }
   }
 
@@ -144,16 +197,18 @@ export const draw = (ctx: CanvasRenderingContext2D, eng: Engine, spr: GunnerSpri
   const p = eng.player;
   if (eng.phase === "playing") {
     const blink = p.iFrames > 0 ? (Math.floor(eng.time * 12) % 2 === 0 ? 0.35 : 0.9) : 1;
-    const cy = p.y - 11;
-    const lean = p.grounded ? Math.sin(eng.time * 14) * 0.06 : 0.14 * p.facing;
+    const moving = p.grounded && eng.input.dir !== 0;
+    const lean = p.grounded ? (moving ? Math.sin(eng.time * 10) * 0.035 : 0) : 0.1 * p.facing;
     const frame = p.grounded
-      ? spr.soldierFrames[eng.input.dir === 0 ? 0 : Math.floor(eng.time * 10) % 2]
+      ? spr.soldierFrames[moving ? Math.floor(eng.time * 10) % 2 : 0]
       : spr.soldierFrames[2];
-    drawSprite(ctx, frame, p.x, cy, 20, lean, blink, p.facing < 0);
+    const up = eng.input.up;
+    const recoil = eng.muzzle > 0 && !up ? -p.facing * 1.2 : 0;
+    drawGroundSprite(ctx, frame, p.x + recoil, p.y, 20, lean, blink, p.facing < 0);
     if (eng.muzzle > 0) {
-      const up = eng.input.up;
+      const bodyH = (20 * frame.height) / frame.width;
       const mx = up ? p.x : p.x + p.facing * 15;
-      const my = up ? cy - 16 : cy - 1;
+      const my = up ? p.y - bodyH - 5 : p.y - bodyH * 0.55;
       drawSprite(ctx, spr.muzzle, mx, my, 10, eng.time * 20, blink);
     }
   }

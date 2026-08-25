@@ -95,6 +95,13 @@ const Landing = () => (
         <p className="fade-up text-lg text-muted-foreground" style={{ animationDelay: "120ms" }}>
           30 games. Zero human-written code. High scores that matter.
         </p>
+        <p
+          className="fade-up font-mono text-xs tracking-wide text-muted-foreground/80"
+          style={{ animationDelay: "150ms" }}
+        >
+          Early days: some cabinets still have rough edges while the machines
+          keep polishing.
+        </p>
         <div id="waitlist" className="fade-up scroll-mt-24 pt-1" style={{ animationDelay: "180ms" }}>
           <WaitlistForm />
         </div>
