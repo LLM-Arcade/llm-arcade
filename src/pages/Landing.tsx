@@ -15,7 +15,7 @@ const facts = [
 
 const Landing = () => {
   const { data: games, isLoading } = useGames();
-  const playable = (games ?? []).filter((g) => g.status === "published").slice(0, 6);
+  const playable = (games ?? []).filter((g) => g.status === "published").slice(0, 4);
   return (
   <div className="min-h-screen bg-background">
     {/* Header */}
@@ -91,13 +91,15 @@ const Landing = () => {
             <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" />
           </Link>
         </div>
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
           {isLoading
-            ? Array.from({ length: 6 }).map((_, i) => (
+            ? Array.from({ length: 4 }).map((_, i) => (
                 <div key={i} className="aspect-square animate-pulse rounded-2xl bg-secondary" />
               ))
             : playable.map((game, i) => <GameTile key={game.id} game={game} index={i} />)}
+        </div>
 
+        <div className="mt-3 grid grid-cols-1 gap-3 sm:mt-4 sm:grid-cols-2 sm:gap-4">
           {/* Builder tile */}
           <Link
             to="/guides"
@@ -118,9 +120,10 @@ const Landing = () => {
             </div>
           </Link>
 
-          {/* Catalog tile */}
-          <div
-            className="fade-up flex flex-col justify-between rounded-2xl bg-secondary p-5 shadow-sm ring-1 ring-foreground/5"
+          {/* Catalog tile: the door to the whole floor */}
+          <Link
+            to="/games"
+            className="group fade-up flex flex-col justify-between rounded-2xl bg-secondary p-5 shadow-sm ring-1 ring-foreground/5 transition-all duration-150 hover:-translate-y-1 hover:shadow-lg"
             style={{ animationDelay: "660ms" }}
           >
             <span className="font-mono text-[10px] tracking-widest text-muted-foreground">
@@ -128,11 +131,12 @@ const Landing = () => {
             </span>
             <div>
               <p className="font-display text-3xl font-extrabold text-terra">MORE</p>
-              <p className="mt-1 text-sm font-medium leading-snug text-foreground">
-                games in the pipeline. Cabinets land when they pass playtest.
+              <p className="mt-1 flex items-center gap-1.5 text-sm font-medium leading-snug text-foreground">
+                See every game on the floor
+                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
               </p>
             </div>
-          </div>
+          </Link>
         </div>
       </section>
 
