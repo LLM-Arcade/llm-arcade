@@ -216,8 +216,22 @@ export interface Drop {
   ttl: number;
 }
 
+export interface Tracer {
+  t: number; // engine time fired
+  x0: number;
+  y0: number;
+  h0: number;
+  x1: number;
+  y1: number;
+  h1: number;
+  beam: boolean;
+}
+
 export interface PendingImpact {
   t: number; // engine time it lands
+  t0: number; // engine time it launched
+  fromX: number;
+  fromY: number;
   room: RoomId;
   x: number;
   y: number;
@@ -271,6 +285,7 @@ export class Engine {
   hazards: Hazard[] = [];
   drops: Drop[] = [];
   impacts: PendingImpact[] = [];
+  tracers: Tracer[] = [];
   holes: SapperHole[] = [];
   structures: Record<StructureId, { hp: number; maxHp: number; tier: number }>;
   doorOpen: Record<DoorId, boolean>;
@@ -578,6 +593,7 @@ export class Engine {
     this.prevInput = [{ ...playerInput }, { ...partnerInput }];
 
     this.updatePhase();
+    this.tracers = this.tracers.filter((tr) => this.time - tr.t < 0.35);
     this.updateGloam();
     this.updateHazards();
     this.updateImpacts();
@@ -1180,6 +1196,21 @@ export class Engine {
     const dirY = Math.sin(c.yaw);
     const eye = this.charElev(c) + CLASSES[c.cls].eyeHeight;
     const arrow = isArrow ? ARROWS[c.arrowType] : null;
+    const reach = Math.min(maxRange, 30);
+    const tracer: Tracer | null =
+      this.tracers.length < 48
+        ? {
+            t: this.time,
+            x0: c.x,
+            y0: c.y,
+            h0: eye,
+            x1: c.x + dirX * reach,
+            y1: c.y + dirY * reach,
+            h1: eye + Math.tan(c.pitch) * reach,
+            beam: !isArrow,
+          }
+        : null;
+    if (tracer) this.tracers.push(tracer);
     const candidates: { u: GloamUnit; d: number }[] = [];
     for (const u of this.gloam) {
       if (u.room !== c.room && !this.losCU(c, u)) continue;
@@ -1227,6 +1258,12 @@ export class Engine {
       this.damageGloam(u, dmg * mult, c, isArrow ? "arrow" : "beam", head);
       if (isArrow) this.sfx("arrow-hit");
       left--;
+      // The tracer stops at the last body it buried itself in.
+      if (tracer && left === 0) {
+        tracer.x1 = c.x + dirX * d;
+        tracer.y1 = c.y + dirY * d;
+        tracer.h1 = eye + Math.tan(c.pitch) * d;
+      }
     }
   }
 
@@ -1265,6 +1302,9 @@ export class Engine {
     const room = best ? best.room : c.room;
     this.impacts.push({
       t: this.time + (best ? bestD : 12) / BOLT_SPEED,
+      t0: this.time,
+      fromX: c.x,
+      fromY: c.y,
       room,
       x: tx,
       y: ty,
@@ -2069,6 +2109,9 @@ export class Engine {
       this.sfx("lob");
       this.impacts.push({
         t: this.time + B.lobberFlight,
+        t0: this.time,
+        fromX: u.x,
+        fromY: u.y,
         room: target.room,
         x: target.x,
         y: target.y,
