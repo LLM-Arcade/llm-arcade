@@ -1,14 +1,11 @@
 import { Link } from "react-router-dom";
 import WaitlistForm from "@/components/arcade/WaitlistForm";
 import SiteFooter from "@/components/layout/SiteFooter";
+import GameTile from "@/components/arcade/GameTile";
+import { useGames } from "@/hooks/useGames";
 import { authCta } from "@/lib/known-player";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Bot, Trophy, Upload } from "lucide-react";
-import {
-  LAUNCH_LINEUP,
-  gameArtPath,
-  type RevealedGame,
-} from "@/data/launch-lineup";
 
 const facts = [
   { icon: Bot, text: "Every game coded end-to-end by an AI agent" },
@@ -16,34 +13,10 @@ const facts = [
   { icon: Upload, text: "Upload your own AI-built game after launch" },
 ];
 
-const GameCard = ({ game, index }: { game: RevealedGame; index: number }) => (
-  <div
-    className={`group fade-up relative overflow-hidden rounded-2xl bg-card shadow-sm ring-1 ring-foreground/10 transition-all duration-150 hover:-translate-y-1 hover:shadow-lg ${
-      game.featured ? "col-span-2 row-span-2" : ""
-    }`}
-    style={{ animationDelay: `${120 + index * 60}ms` }}
-  >
-    <img
-      src={gameArtPath(game.slug)}
-      alt={game.alt}
-      loading="lazy"
-      className="aspect-square h-full w-full object-cover transition-transform duration-200 group-hover:scale-[1.03]"
-    />
-    <span className="absolute right-3 top-3 rounded-full bg-mustard px-2.5 py-1 font-mono text-[10px] font-medium tracking-widest text-foreground shadow-sm">
-      SOON
-    </span>
-    <div className="absolute inset-x-3 bottom-3 flex items-center justify-between gap-2 rounded-xl bg-card/95 px-3.5 py-2.5 shadow-sm">
-      <span className={`truncate font-display font-bold ${game.featured ? "text-lg" : "text-sm"}`}>
-        {game.title}
-      </span>
-      <span className="shrink-0 font-mono text-[10px] tracking-widest text-muted-foreground">
-        {game.era.toUpperCase()}
-      </span>
-    </div>
-  </div>
-);
-
-const Landing = () => (
+const Landing = () => {
+  const { data: games, isLoading } = useGames();
+  const playable = (games ?? []).filter((g) => g.status === "published").slice(0, 6);
+  return (
   <div className="min-h-screen bg-background">
     {/* Header */}
     <header className="sticky top-0 z-20 border-b border-border bg-background/90 backdrop-blur">
@@ -106,18 +79,24 @@ const Landing = () => (
         </div>
       </section>
 
-      {/* Game wall */}
+      {/* Playable tonight: live rows only, straight into the games */}
       <section className="pb-4">
         <div className="mb-5 flex items-end justify-between">
-          <h2 className="font-display text-2xl font-bold tracking-tight">The launch lineup</h2>
-          <span className="font-mono text-xs tracking-widest text-muted-foreground">
-            {LAUNCH_LINEUP.length} REVEALED · MORE COMING
-          </span>
+          <h2 className="font-display text-2xl font-bold tracking-tight">On the floor tonight</h2>
+          <Link
+            to="/games"
+            className="group inline-flex items-center gap-1.5 font-mono text-xs tracking-widest text-muted-foreground transition-colors hover:text-foreground"
+          >
+            THE WHOLE FLOOR
+            <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" />
+          </Link>
         </div>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4">
-          {LAUNCH_LINEUP.map((game, i) => (
-            <GameCard key={game.slug} game={game} index={i} />
-          ))}
+          {isLoading
+            ? Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="aspect-square animate-pulse rounded-2xl bg-secondary" />
+              ))
+            : playable.map((game, i) => <GameTile key={game.id} game={game} index={i} />)}
 
           {/* Playtest tile */}
           <Link
@@ -173,8 +152,9 @@ const Landing = () => (
       </section>
     </main>
 
-    <SiteFooter />
-  </div>
-);
+      <SiteFooter />
+    </div>
+  );
+};
 
 export default Landing;
