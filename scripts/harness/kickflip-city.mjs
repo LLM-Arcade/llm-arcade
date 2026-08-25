@@ -235,7 +235,7 @@ const driveClumsy = (eng) => {
   eng.input.dir = 1;
 };
 
-const simulate = (drive, label, seed) => {
+const simulate = (drive, label, seed, stopDistricts = 3) => {
   const eng = new Engine(seed);
   const st = { pressed: false, flipToggle: false };
   const achievements = new Set();
@@ -246,7 +246,8 @@ const simulate = (drive, label, seed) => {
   let seen = 0;
   let prevScore = 0;
 
-  while (eng.phase !== "gameover" && eng.phase !== "victory" && steps < STEP_BUDGET) {
+  // Endless game: bots stop after one full lap unless they die first.
+  while (eng.phase !== "gameover" && eng.districtsCleared < stopDistricts && steps < STEP_BUDGET) {
     drive(eng, st);
     eng.update(DT);
     steps++;
@@ -317,7 +318,7 @@ console.log(`  slugs across the six ace runs: ${[...aceSlugs].sort().join(", ")}
 
 for (let i = 0; i < SEEDS.length; i++) {
   const r = aceRuns[i];
-  check(r.eng.phase === "victory", `ace reaches victory on seed ${SEEDS[i]}`);
+  check(r.eng.lap === 1, `ace completes lap one on seed ${SEEDS[i]}`);
   check(r.eng.districtsCleared === 3, `ace clears all three districts on seed ${SEEDS[i]}`);
   check(r.eng.score >= TUNE.legendScore, `ace beats the legend threshold on seed ${SEEDS[i]}`);
   check(r.capOk, `score never exceeds the cap on seed ${SEEDS[i]}`);
@@ -325,16 +326,6 @@ for (let i = 0; i < SEEDS.length; i++) {
 }
 
 const ace = aceRuns[0];
-check(ace.stats !== null, "gameover stats emitted (ace)");
-if (ace.stats) {
-  check(
-    ace.stats.districts_cleared === 3 &&
-      ace.stats.tricks_landed > 0 &&
-      ace.stats.best_line > 0 &&
-      ace.stats.longest_grind_px > 0,
-    "stats carry districts_cleared, tricks_landed, best_line, longest_grind_px",
-  );
-}
 
 // ---- plodder bot ---------------------------------------------------------
 
@@ -354,7 +345,10 @@ check(
 const clumsy = simulate(driveClumsy, "clumsy bot (never jumps)", TUNE.seed);
 check(clumsy.eng.phase === "gameover", "clumsy bot loses on the clock");
 check(clumsy.eng.districtsCleared === 0, "clumsy bot never clears a district");
-check(clumsy.eng.bails >= 3, "clumsy bot bails on the same hazard repeatedly");
+// The first hit at speed is a real wreck; after the respawn the stumble rule
+// holds the skater at the hazard instead of chain-bailing them to death.
+check(clumsy.eng.bails >= 1, "clumsy bot wrecks at least once at speed");
+check(clumsy.eng.bails <= 3, "the stumble rule stops the old bail chain");
 check(clumsy.stats !== null, "gameover stats emitted (clumsy)");
 
 // ---- determinism ---------------------------------------------------------

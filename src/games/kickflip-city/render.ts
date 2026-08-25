@@ -110,7 +110,13 @@ const skaterFrame = (eng: Engine, spr: KickflipSprites) => {
 
   const poses = art.rolling[facing];
   if (eng.stance === "airborne") return { c: poses.ollie, angle: eng.trickTilt() };
-  if (eng.stance === "bailing") return { c: poses.coast, angle: eng.time * 7 };
+  if (eng.stance === "bailing") {
+    // A crash tips the skater over and holds them down, rather than the old
+    // continuous pinwheel, which read as a glitch instead of a fall.
+    const p = 1 - eng.tumbleLeft / TUNE.bailTumble;
+    const tip = -1.7 * Math.min(1, p * 1.9) * (eng.facing < 0 ? -1 : 1);
+    return { c: poses.coast, angle: tip };
+  }
 
   // Pushing alternates the two authored rolling poses at a rate that rises with
   // speed; coasting holds the coast pose.
@@ -264,14 +270,20 @@ export const draw = (ctx: CanvasRenderingContext2D, eng: Engine, spr: KickflipSp
     ctx.fillRect(W / 2 - 4 + (eng.balance * barW) / 2, 90, 8, 10);
   }
 
-  if (eng.phase === "district-clear" || eng.phase === "victory") {
+  if (eng.phase === "district-clear") {
+    const lapped = eng.districtIndex === DISTRICTS.length - 1 && eng.lap > 0;
     ctx.fillStyle = PAPER;
     ctx.font = "800 34px ui-sans-serif, system-ui, sans-serif";
     ctx.fillText(
-      eng.phase === "victory" ? "CITY CLEARED" : `${course.name.toUpperCase()} CLEARED`,
+      lapped ? `LAP ${eng.lap} COMPLETE` : `${course.name.toUpperCase()} CLEARED`,
       W / 2,
       H / 2,
     );
+    if (lapped) {
+      ctx.font = "600 15px ui-monospace, monospace";
+      ctx.fillStyle = MUSTARD;
+      ctx.fillText("FASTER BOARD, TIGHTER CLOCK, NEW STREETS", W / 2, H / 2 + 30);
+    }
   }
   ctx.textAlign = "left";
 };

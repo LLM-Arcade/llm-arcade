@@ -348,7 +348,7 @@ export const DISTRICTS: DistrictDef[] = [
 
 const LEAD_IN = 260; // px of clear pavement before the first chunk
 const RUN_OUT = 320; // px of clear pavement after the last chunk
-const TARGET_LENGTH = 2400; // px, the length each district aims for
+const TARGET_LENGTH = 3400; // px, the length each district aims for
 const FINISH_INSET = 70; // px the finish line sits before the course end
 
 const flat = (x0: number, x1: number, up = 0): Segment => ({

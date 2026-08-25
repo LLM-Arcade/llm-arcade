@@ -42,6 +42,9 @@ export const TUNE = {
   rollDrag: 46, // px/s^2 of passive rolling friction
   respawnSpeed: 120, // px/s the skater rolls at after a bail
   bailSpeed: 40, // px/s; under this an obstacle contact stops the skater instead
+  stumbleSpeed: 155, // px/s; under this a hazard contact stumbles, no wreck
+  hazardRearmPx: 70, // px moved from the last stumble or respawn before hazards re-arm
+  sameHazardPx: 140, // px around the last wreck where a repeat contact only stumbles
 
   ollieVel: 575, // px/s up; a 110 px rise at this gravity
   crouchFull: 0.4, // s of crouch that reaches the full preload
@@ -58,6 +61,9 @@ export const TUNE = {
   // bounded tilt driven by the spin phase rather than a full sprite rotation,
   // which would leave the skater upside down at the moment of completion.
   flipTilt: 0.55, // rad of peak tilt
+  // A flip this far through its spin lands as caught, not slammed. Bailing
+  // on a technicality the player cannot see read as random punishment.
+  flipForgive: 0.65, // fraction of flipTime
   grabTilt: 0.3, // rad of held-grab tilt
   grabRate: 60, // points per second of grab held
 
@@ -73,14 +79,14 @@ export const TUNE = {
 
   bankDelay: 1.2, // s grounded with no trick before the open line banks
   bailTumble: 0.9, // s of tumble before the respawn
-  bailClockPenalty: 6, // s taken off the district clock by a bail
+  bailClockPenalty: 3, // s taken off the district clock by a bail
   bailBackoff: 90, // px behind the bail point the respawn starts looking
   pitDepth: 120, // px below the lane before a fall counts as a pit bail
 
   cameraBias: 280, // px from the camera left edge where the skater rides
   backtrackPx: 240, // px of backtracking the camera edge allows
 
-  districtSeconds: 75, // s on the clock per district
+  districtSeconds: 120, // s on the clock per district
   districtHold: 2, // s of clear banner before the next district
 
   olliePoints: 50,
@@ -98,7 +104,11 @@ export const TUNE = {
   districtClearBonus: 500,
   timeBonusPerSecond: 8,
   timeBonusCap: 400,
-  victoryBonus: 1500,
+  lapBonus: 1500, // for completing all three districts of a lap
+  lapSpeedRamp: 0.08, // extra top speed per completed lap
+  lapSpeedRampCap: 0.4,
+  lapClockDrop: 8, // s less district clock per completed lap
+  lapClockFloor: 80, // s
   scoreCap: 80000,
 
   lineStarterLinks: 3, // links in one banked line that fire line-starter
@@ -233,6 +243,8 @@ export class Engine {
   fx: Fx[] = [];
 
   districtsCleared = 0;
+  /** Completed loops of all three districts; drives the endless ramp. */
+  lap = 0;
   tricksLanded = 0;
   bestLine = 0;
   longestGrindPx = 0;
@@ -263,6 +275,9 @@ export class Engine {
   private prevJump = false;
   private prevTrick = { a: false, b: false, c: false };
   private tumble = 0;
+  private layoutSeed: number;
+  private hazardArmX = -Infinity;
+  private lastBailX = -Infinity;
   private sparkAt = 0;
   private bailedThisRun = false;
   private gameoverSent = false;
@@ -273,6 +288,7 @@ export class Engine {
     // Layout runs off its own stream so a course never depends on how the
     // player skated the district before it.
     const layout = mulberry32(seed ^ 0x9e3779b9);
+    this.layoutSeed = seed;
     this.courses = DISTRICTS.map((_, i) => buildCourse(i, layout));
     this.course = this.courses[0];
     this.rand = mulberry32(seed);
@@ -299,6 +315,10 @@ export class Engine {
 
     this.installCourse();
     this.placeAt(this.course.startX, TUNE.respawnSpeed);
+  }
+
+  get tumbleLeft(): number {
+    return this.tumble;
   }
 
   drainEvents(): GameEvent[] {
@@ -400,6 +420,10 @@ export class Engine {
     this.airTime = 0;
     this.contacts.length = 0;
     this.grounded = false;
+    // Fresh placements start with hazards disarmed until the skater has
+    // actually travelled, so a respawn can never chain straight into the
+    // wreck that caused it.
+    this.hazardArmX = x;
   }
 
   get x() {
@@ -413,6 +437,14 @@ export class Engine {
   /** The drawn skater's board contact, which is the body's bottom edge. */
   get feetY() {
     return this.body.position.y + TUNE.bodyH / 2;
+  }
+
+  topSpeed(): number {
+    return TUNE.pushSpeed * (1 + Math.min(TUNE.lapSpeedRampCap, this.lap * TUNE.lapSpeedRamp));
+  }
+
+  lapClock(): number {
+    return Math.max(TUNE.lapClockFloor, TUNE.districtSeconds - this.lap * TUNE.lapClockDrop);
   }
 
   get multiplier() {
@@ -523,8 +555,8 @@ export class Engine {
     const dir = this.input.dir;
 
     if (this.stance === "rolling") {
-      if (dir > 0) this.vx = Math.min(TUNE.pushSpeed, this.vx + TUNE.pushAccel * sub);
-      else if (dir < 0) this.vx = Math.max(-TUNE.pushSpeed * 0.4, this.vx - TUNE.brakeAccel * sub);
+      if (dir > 0) this.vx = Math.min(this.topSpeed(), this.vx + TUNE.pushAccel * sub);
+      else if (dir < 0) this.vx = Math.max(-this.topSpeed() * 0.4, this.vx - TUNE.brakeAccel * sub);
       else if (this.vx > 0) this.vx = Math.max(0, this.vx - TUNE.rollDrag * sub);
       else if (this.vx < 0) this.vx = Math.min(0, this.vx + TUNE.rollDrag * sub);
 
@@ -538,7 +570,7 @@ export class Engine {
       this.airTime += sub;
       // Air control is deliberately weak; the line is decided before takeoff.
       if (dir !== 0) this.vx += dir * TUNE.pushAccel * TUNE.airControl * sub;
-      this.vx = Math.max(-TUNE.pushSpeed, Math.min(TUNE.pushSpeed, this.vx));
+      this.vx = Math.max(-this.topSpeed(), Math.min(this.topSpeed(), this.vx));
       if (this.jumpPressed && !this.ollied && this.airTime <= TUNE.coyote) this.ollie();
       this.stepTrick(sub);
     }
@@ -730,8 +762,14 @@ export class Engine {
   private land() {
     const t = this.trick;
     if (t && !t.complete) {
-      this.bail();
-      return;
+      if (t.kind === "grab") {
+        t.complete = true; // a grab ends when the ground does
+      } else if (t.elapsed >= TUNE.flipTime * TUNE.flipForgive) {
+        t.complete = true; // caught late, not slammed
+      } else {
+        this.bail();
+        return;
+      }
     }
 
     this.stance = "rolling";
@@ -769,21 +807,40 @@ export class Engine {
 
   private checkHazards() {
     if (Math.abs(this.vx) < TUNE.bailSpeed) return;
+    if (Math.abs(this.x - this.hazardArmX) < TUNE.hazardRearmPx) return;
+    let hit = false;
     for (const o of this.course.obstacles) {
       if (this.overlapsBox(obstacleBox(o))) {
-        this.bail();
-        return;
+        hit = true;
+        break;
       }
     }
-    // A grindable is only a grind from above. Riding into its side is the same
-    // wreck as riding into a bin.
-    for (const g of this.course.grindables) {
-      if (g === this.grind) continue;
-      if (this.overlapsBox(grindBox(g, TUNE.grindBarH))) {
-        this.bail();
-        return;
+    // A grindable is only a grind from above. Riding into its side is the
+    // same contact as riding into a bin.
+    if (!hit) {
+      for (const g of this.course.grindables) {
+        if (g === this.grind) continue;
+        if (this.overlapsBox(grindBox(g, TUNE.grindBarH))) {
+          hit = true;
+          break;
+        }
       }
     }
+    if (!hit) return;
+    // Only real speed wrecks. A slow contact is a stumble: the run and the
+    // open line survive, the skater just bonks and has to jump the hazard.
+    if (
+      Math.abs(this.vx) < TUNE.stumbleSpeed ||
+      Math.abs(this.x - this.lastBailX) < TUNE.sameHazardPx
+    ) {
+      this.vx = 0;
+      Matter.Body.setVelocity(this.body, { x: 0, y: this.body.velocity.y });
+      this.hazardArmX = this.x;
+      this.addFx("dust", this.x, this.feetY);
+      this.sfx("land");
+      return;
+    }
+    this.bail();
   }
 
   private checkPit() {
@@ -832,6 +889,7 @@ export class Engine {
     this.ollied = false;
     this.quiet = 0;
     this.tumble = TUNE.bailTumble;
+    this.lastBailX = this.x;
     this.clock = Math.max(0, this.clock - TUNE.bailClockPenalty);
     this.vx = 0;
     Matter.Body.setVelocity(this.body, { x: 0, y: 0 });
@@ -889,22 +947,30 @@ export class Engine {
     if (slug) this.achieve(slug);
 
     if (this.districtIndex >= DISTRICTS.length - 1) {
-      this.addScore(TUNE.victoryBonus);
+      // Endless: a finished lap pays the lap bonus and loops the city with
+      // fresh layouts, a faster board, and a tighter clock. The run only
+      // ends when a clock runs out.
+      this.addScore(TUNE.lapBonus);
+      this.lap++;
       this.sfx("victory");
-      this.endRun("victory");
-      return;
+    } else {
+      this.sfx("districtClear");
     }
     this.phase = "district-clear";
     this.clearTimer = TUNE.districtHold;
-    this.sfx("districtClear");
   }
 
   private advanceDistrict() {
-    this.districtIndex++;
+    this.districtIndex = (this.districtIndex + 1) % DISTRICTS.length;
+    if (this.districtIndex === 0) {
+      // New lap, new layouts: the seed shifts so the city never repeats.
+      const stream = mulberry32((this.layoutSeed ^ 0x9e3779b9) + this.lap * 7919);
+      this.courses = DISTRICTS.map((_, i) => buildCourse(i, stream));
+    }
     this.course = this.courses[this.districtIndex];
     this.installCourse();
     this.scrollX = 0;
-    this.clock = TUNE.districtSeconds;
+    this.clock = this.lapClock();
     this.placeAt(this.course.startX, TUNE.respawnSpeed);
     this.phase = "skating";
   }
@@ -924,6 +990,7 @@ export class Engine {
       score: this.score,
       stats: {
         districts_cleared: this.districtsCleared,
+        laps: this.lap,
         tricks_landed: this.tricksLanded,
         best_line: this.bestLine,
         longest_grind_px: Math.round(this.longestGrindPx),

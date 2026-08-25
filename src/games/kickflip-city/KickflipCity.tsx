@@ -56,7 +56,7 @@ const KickflipCity = ({ onScore, onAchievement }: ArcadeGameProps) => {
   const [paused, setPaused] = useState(false);
   pausedRef.current = paused;
   const [muted, setMutedState] = useState(isMuted);
-  const [hud, setHud] = useState({ score: 0, district: "", index: 1, best: 0 });
+  const [hud, setHud] = useState({ score: 0, district: "", index: 1, lap: 1, best: 0 });
 
   const coarse = useMemo(
     () => typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches,
@@ -126,12 +126,14 @@ const KickflipCity = ({ onScore, onAchievement }: ArcadeGameProps) => {
         h.score === eng.score &&
         h.district === eng.course.name &&
         h.index === eng.districtIndex + 1 &&
+        h.lap === eng.lap + 1 &&
         h.best === eng.bestLine
           ? h
           : {
               score: eng.score,
               district: eng.course.name,
               index: eng.districtIndex + 1,
+              lap: eng.lap + 1,
               best: eng.bestLine,
             },
       );
@@ -254,7 +256,7 @@ const KickflipCity = ({ onScore, onAchievement }: ArcadeGameProps) => {
           {hud.district}
         </span>
         <span className="rounded-full bg-background/10 px-2.5 py-0.5 text-[10px] tabular-nums text-mustard">
-          DISTRICT {hud.index}/3
+          LAP {hud.lap} · DISTRICT {hud.index}/3
         </span>
         <span className="hidden tabular-nums text-background/70 sm:inline">
           BEST LINE {hud.best.toLocaleString()}
