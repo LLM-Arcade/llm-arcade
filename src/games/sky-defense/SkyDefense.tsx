@@ -174,7 +174,7 @@ const SkyDefense = ({ onScore, onAchievement }: ArcadeGameProps) => {
   useEffect(() => {
     const onHide = () => {
       const phase = engineRef.current.phase;
-      if (document.hidden && phase !== "gameover" && phase !== "victory") setPaused(true);
+      if (document.hidden && phase !== "gameover") setPaused(true);
     };
     document.addEventListener("visibilitychange", onHide);
     return () => document.removeEventListener("visibilitychange", onHide);
