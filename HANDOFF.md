@@ -30,6 +30,10 @@ branch on port 8080; `/dev` lists every cabinet in dev builds.
 The quality bar and punch list live in `GAME-QUALITY-HANDOFF.md`. Jeff's
 ruling: Hyper Circuit difficulty stays exactly as shipped.
 
+**Session 22:** the 3D flagship's phase 1 GDD is at `docs/LASTWATCH-GDD.md`
+(see `LASTWATCH-HANDOFF.md`), awaiting Jeff's approval gate. No game code
+exists yet by design.
+
 **Launch math (spec section 6: 30 games at launch, 32-listed baseline).**
 Built: 15 (9 published in production, 5 local awaiting approval, TypeStorm
 held for the upload-pipeline test). NOT built: ASCIIBURG and Dead Letter

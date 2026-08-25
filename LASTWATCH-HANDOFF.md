@@ -1,5 +1,9 @@
 # Lastwatch: the 3D flagship handoff
 
+**Status 2026-08-24: phase 1 delivered.** The complete GDD is at
+`docs/LASTWATCH-GDD.md` and awaits Jeff's approval. Phase 2 (sim core +
+harness) does not start until he approves it and picks the name.
+
 The brief, context, and build contract for the most ambitious cabinet in
 the catalog: a real-time 3D co-op horde defense. Working title
 **Lastwatch** (the keep is the Lastwatch; alternates: Emberhold, The Last
