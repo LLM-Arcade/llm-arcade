@@ -18,6 +18,7 @@ import Upload from "./pages/Upload";
 import MyUploads from "./pages/MyUploads";
 import Admin from "./pages/Admin";
 import DevGame from "./pages/DevGame";
+import DevIndex from "./pages/DevIndex";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -52,6 +53,7 @@ const App = () => (
             <Route path="/uploads" element={<MyUploads />} />
             <Route path="/admin" element={<Admin />} />
             {/* Dev-only playtest route for unlaunched Track-A cabinets */}
+            {import.meta.env.DEV && <Route path="/dev" element={<DevIndex />} />}
             {import.meta.env.DEV && <Route path="/dev/:slug" element={<DevGame />} />}
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />

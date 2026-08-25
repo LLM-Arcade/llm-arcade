@@ -851,3 +851,15 @@ until the user signs in on llmarcade.fun in the driven browser.
   onto this branch with a revision 3 record. Key art is blocked on the
   image-generation outage (`media_identity_missing`) and stays the one
   missing deliverable; the row stays coming_soon.
+
+## Session 21 — Game stage becomes the page hero (desktop)
+
+- The play stage was capped at a fixed 520 px and shared its row with a
+  300 px sidebar, so on any desktop monitor the cabinet rendered small and
+  off-center. GamePlayer now scales to `min(74vh, 820px)` at the `lg`
+  breakpoint, GameDetail moves the player above the meta/sidebar grid at
+  full `max-w-7xl` width, and DevGame gets the same treatment.
+- Measured at 1440x900: the stage grew from about 800x520 (left-aligned)
+  to 1232x666 centered, and Hyper Circuit's canvas from about 740x480 to
+  935x608. Mobile and tablet layouts are unchanged; only `lg:` rules were
+  added.
