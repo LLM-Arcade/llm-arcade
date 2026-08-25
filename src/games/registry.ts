@@ -22,6 +22,11 @@ export const gameRegistry: Record<
   "hyper-circuit": lazy(() => import("./hyper-circuit/HyperCircuit")),
   // Stand-in art as well; coming_soon until its sheets are generated.
   "run-n-gunner": lazy(() => import("./run-n-gunner/RunNGunner")),
+  "the-undervault": lazy(() => import("./the-undervault/TheUndervault")),
+  "kickflip-city": lazy(() => import("./kickflip-city/KickflipCity")),
+  "sky-defense": lazy(() => import("./sky-defense/SkyDefense")),
+  "gem-columns": lazy(() => import("./gem-columns/GemColumns")),
+  brickstorm: lazy(() => import("./brickstorm/Brickstorm")),
   // The 3D flagship: co-op horde defense, keyboard only.
   lastwatch: lazy(() => import("./lastwatch/Lastwatch")),
 };
