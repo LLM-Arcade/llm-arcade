@@ -44,6 +44,13 @@ development handoffs and governs the polish lane.
   casual bot went from 18.6 s and 0 points to 104 s and 1,906.
 - **Hyper Circuit**: the player car drew at nearly twice the width of a
   rival directly ahead; player width 68 to 56, rival world width 14 to 17.
+- **Brickstorm endless** (loops with a loop speed bonus; ball ramps per
+  board instead of per run, which was outrunning casual players; casual
+  bot went from a 12-second death to clearing a full loop).
+- **Gem Columns endless** (wells loop with a fall-speed ramp; casual
+  flat-stacker survives 231 seconds).
+- **Sky Defense endless** (regions loop with a threat-speed ramp; casual
+  no-lead defender survives 105 seconds).
 
 ## Punch list, in order
 
@@ -56,13 +63,11 @@ development handoffs and governs the polish lane.
    generates from control points; add generated circuit variations (seeded
    control-point loops through the existing validator) and a cup rotation.
    Scenery can be palette-flat; the art rule allows level geometry fills.
-3. **Endless review for the rest of the catalog.** Candidates: Sky Defense
-   (loop the three regions with wave escalation after the campaign),
-   Brickstorm (endless board rotation after the kiln with speed ramp),
-   Gem Columns (endless well after the archive with rising fall speed).
-   The Undervault stays a bounded expedition by design. Each conversion
-   follows the Kickflip pattern: loop with a ramp, run ends on the
-   existing fail state, thresholds recalibrated, casual bot in the gate.
+3. **Endless review: done for Kickflip, Brickstorm, Gem Columns, and Sky
+   Defense.** The Undervault stays a bounded expedition by design. Any
+   future cabinet follows the same pattern: loop with a ramp, run ends on
+   the existing fail state, thresholds recalibrated, casual bot in the
+   gate.
 4. **Casual bots into every harness** (the bar above), including the six
    older cabinets when they next open for changes.
 
