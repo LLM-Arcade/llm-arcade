@@ -849,3 +849,37 @@ until the user signs in on llmarcade.fun in the driven browser.
   Stalker opportunism, Filcher supply raids, and Sappers that dig where
   the defenders are not. Achievements went to 12, the spec ceiling,
   weighted toward earned tactical play. Still no game code by design.
+
+## Session 23: TypeStorm upload-wizard dry run (local, no submission)
+
+- Read the wizard and review code end to end (`Upload.tsx`, `useSubmissions.ts`,
+  `ManifestEditor.tsx`, `TestFlight.tsx`, `ReviewQueue.tsx`, `useAdmin.ts`).
+  No pipeline defects found. Only Submit writes anywhere: Storage uploads and
+  the `game_submissions` insert happen in the submit mutation, so every step
+  before Submit is a safe dry run.
+- Drove the wizard on the local preview clone through steps 1 to 3 with the
+  real TypeStorm payload: full metadata, the 8-entry manifest (names, slugs,
+  hints, XP tiers 10/50/25/50/25/100/150/150), `typestorm.html`, and a
+  candidate tile. Step 1 validation passed with the live anon slug check
+  against Supabase. Step 2 accepted both files. The test flight booted the
+  cabinet in the production sandbox and ARCADE_READY registered on the
+  checklist. Nothing was submitted, locally or in production.
+- Two constraints shaped the run. The wizard is auth-gated and agents never
+  enter credentials, so the dry run used a one-line guard bypass in the
+  throwaway preview clone (uncommitted, marked `DRY-RUN BYPASS`, reverted
+  after use). And the driven browser pane was not displayed, which stops
+  requestAnimationFrame and fires the cabinet's pause-on-hidden handler, so
+  the score event that unlocks Submit cannot fire until the pane is visible.
+  The flight's remaining minute (play to three breaches, watch SCORE flip,
+  Submit unlock) needs a displayed pane.
+- Key art: Zo image generation is still down (`media_billing_target_missing`),
+  so per the handoff a typographic tile proposal now exists: falling words
+  from the game's own word bands, a mustard/cream locked `rainfall`, terra
+  danger word, THE LINE rule, olive shield pips, all in the cabinet palette.
+  Generator and PNG live at `scripts/art/typestorm-tile.ps1` and
+  `scripts/art/typestorm-tile.png` (24.7 KB). Jeff has final say on tile
+  style before the production run.
+- Production checked and untouched: llmarcade.fun shows the guest gate in the
+  driven browser, so there is no live session and Jeff signs in himself for
+  the real run. The exact production procedure and the full copy-paste
+  metadata block live in `TYPESTORM-HANDOFF.md`.

@@ -34,6 +34,12 @@ ruling: Hyper Circuit difficulty stays exactly as shipped.
 (see `LASTWATCH-HANDOFF.md`), awaiting Jeff's approval gate. No game code
 exists yet by design.
 
+**Session 23:** dry-ran TypeStorm's upload wizard locally through the
+test-flight boot, found zero defects, and submitted nothing. The validated wizard payload, the typographic key-art proposal
+(`scripts/art/typestorm-tile.png`, Jeff's call), and the production
+procedure live in `TYPESTORM-HANDOFF.md`. The production run needs Jeff
+at the keyboard with the browser pane displayed.
+
 **Launch math (spec section 6: 30 games at launch, 32-listed baseline).**
 Built: 15 (9 published in production, 5 local awaiting approval, TypeStorm
 held for the upload-pipeline test). NOT built: ASCIIBURG and Dead Letter
