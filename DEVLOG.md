@@ -959,3 +959,20 @@ until the user signs in on llmarcade.fun in the driven browser.
   next Matter cabinet: own the forward speed instead of reading vx back,
   ground from contact normals not bounding boxes, and the normal points at
   the skater (y -1 on supports).
+## Session 21 — The Undervault 🕯️ (Track A flagship, turn-based expedition)
+
+- **The Undervault** (A, `src/games/the-undervault/`, 7 ach): five seeded
+  depths behind their surround art, typography floor with sprite actors,
+  eleven monster families with traits, five gimmick bosses, four playable
+  portraits, relics, statuses, traps, a merchant, and event cards. Turn
+  contract follows Rune & Ruin; a 20-seed harness sweep proves every floor
+  reaches its boss, stair, and items with keys outside their locks.
+- The pack's manifest is wrong in three ways the pixels settled: gutters
+  were punched into a continuous frieze (cells straddle them; the slicer
+  closes gutters and cuts by measured bands), eleven families ship rather
+  than twelve (no vault leech), and seven portraits rather than eight.
+- vault-legend is 6,000: no failed harness run reaches it (best loss
+  3,975) and every clear passes it (lowest win 6,902). Live-review polish:
+  taller monster draws, bigger player token, ink underlay beneath the
+  region-panel captions, and the portrait chooser no longer auto-pauses
+  into an unclickable state when the tab hides.
