@@ -124,7 +124,8 @@ const simulate = (drive, label, seed = TUNE.seed) => {
   let prevShots = 0;
   let prevKilling = 0;
 
-  while (eng.phase !== "gameover" && eng.phase !== "victory" && steps < STEP_BUDGET) {
+  // Endless game: bots stop after one full campaign loop unless they die.
+  while (eng.phase !== "gameover" && eng.loop < 1 && steps < STEP_BUDGET) {
     drive(eng, st);
     eng.update(DT);
     steps++;
@@ -177,20 +178,12 @@ const simulate = (drive, label, seed = TUNE.seed) => {
 };
 
 const ace = simulate(driveAce, "ace bot (leads every shot, ignores decoys)");
-check(ace.eng.phase === "victory", "ace holds all three regions and reaches victory");
+check(ace.eng.loop === 1, "ace holds all three regions of the first campaign loop");
 check(ace.steps < STEP_BUDGET, "ace finishes inside the 20-minute step budget");
 check(ace.eng.score >= TUNE.legendScore, `ace scores at least ${TUNE.legendScore}`);
 check(ace.capOk, "score never exceeds the cap (ace)");
-check(ace.stats !== null, "gameover stats emitted (ace)");
-if (ace.stats) {
-  check(
-    ace.stats.regions_held === REGIONS.length &&
-      ace.stats.threats_downed > 0 &&
-      ace.stats.best_burst > 0 &&
-      ace.stats.accuracy_pct > 0,
-    "gameover stats carry regions_held, threats_downed, best_burst, accuracy_pct",
-  );
-}
+// Endless: the ace stops at the loop boundary without a gameover, so the
+// stats contract is proven on the sloppy bot's loss below.
 for (const slug of ["relay-held", "river-guardian", "observatory-held"]) {
   check(ace.achievements.has(slug), `${slug} fires in the ace run`);
 }
@@ -198,6 +191,38 @@ check(ace.achievements.has("perfect-sky"), "perfect-sky fires in the ace run");
 
 const sloppy = simulate(driveSloppy, "sloppy bot (no lead, half-second reaction)");
 check(sloppy.eng.phase === "gameover", "sloppy bot loses a region and ends the run");
+check(sloppy.stats !== null, "gameover stats emitted (sloppy)");
+if (sloppy.stats) {
+  check(
+    typeof sloppy.stats.regions_held === "number" &&
+      typeof sloppy.stats.loops === "number" &&
+      typeof sloppy.stats.threats_downed === "number",
+    "gameover stats carry regions_held, loops, threats_downed",
+  );
+}
+
+// Quality bar: a casual defender fires at where threats ARE with a one-second
+// reaction. They must survive at least the first region's worth of play.
+const driveCasual = (eng, st) => {
+  eng.input.fire = false;
+  if (st.cool === undefined) st.cool = 0;
+  if (st.cool > 0) {
+    st.cool--;
+    return;
+  }
+  const t = eng.threats.find((x) => x.diedAt === null);
+  if (!t) return;
+  const x = threatX(t, eng.time);
+  eng.input.aimX = x;
+  eng.input.aimY = t.y;
+  eng.input.fire = true;
+  st.cool = 60; // one shot per second, no lead
+};
+
+const casual = simulate(driveCasual, "casual bot (no lead, one shot per second)");
+check(casual.eng.time >= 60, "a casual defender survives at least 60 seconds");
+check(casual.eng.threatsDowned > 0, "a casual defender downs threats");
+
 check(sloppy.steps < STEP_BUDGET, "sloppy bot dies inside the step budget");
 check(sloppy.eng.score < TUNE.legendScore, "sloppy bot never reaches the legend score");
 check(sloppy.stats !== null, "gameover stats emitted (sloppy)");
@@ -452,7 +477,7 @@ const spread = [];
 for (const seed of [0x1f3a5c, 0x2b7e91, 0x44c0d3, 0x5ae217, 0x7d9b4f]) {
   const label = `ace bot (seed 0x${seed.toString(16)})`;
   const runOut = simulate(driveAce, label, seed);
-  check(runOut.eng.phase === "victory", `ace reaches victory on seed 0x${seed.toString(16)}`);
+  check(runOut.eng.loop === 1, `ace holds the campaign loop on seed 0x${seed.toString(16)}`);
   check(
     runOut.eng.score >= TUNE.legendScore,
     `ace clears the legend score on seed 0x${seed.toString(16)}`,

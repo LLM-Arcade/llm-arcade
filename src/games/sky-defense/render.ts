@@ -261,18 +261,16 @@ export const draw = (
   );
 
   if (eng.phase === "region-clear") {
+    const lapped = eng.regionIndex === 2 && eng.loop > 0;
+    if (lapped) drawSprite(ctx, spr.props["shield-icon"], BATTERY_X, BAND_TOP - 96, 64);
     text(
       ctx,
-      `${eng.region.name.toUpperCase()} HELD`,
+      lapped ? `CAMPAIGN ${eng.loop} HELD` : `${eng.region.name.toUpperCase()} HELD`,
       BATTERY_X,
       BAND_TOP - 40,
       26,
       TIER_COLOR[0],
     );
-  }
-  if (eng.phase === "victory") {
-    drawSprite(ctx, spr.props["shield-icon"], BATTERY_X, BAND_TOP - 60, 72);
-    text(ctx, "SKY HELD", BATTERY_X, BAND_TOP - 6, 28, TIER_COLOR[0]);
   }
   if (eng.phase === "gameover") {
     drawSprite(ctx, spr.props["warning-icon"], BATTERY_X, BAND_TOP - 60, 72);

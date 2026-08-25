@@ -50,10 +50,12 @@ export const TUNE = {
   batteryHitRange: 60, // px from the battery that counts as a battery hit
 
   regionClearBonus: 500,
+  loopSpeedRamp: 0.11, // extra threat speed per completed loop of all regions
+  loopSpeedCap: 0.55,
   healthPointsEach: 5, // per point of health still standing at region clear
   accuracyTarget: 0.8, // killing shots over shots fired
   accuracyBonus: 400,
-  victoryBonus: 1500,
+  loopBonus: 1500, // for holding all three regions of a loop
   scoreCap: 60000,
   /** A burst scores its summed points times min(this, kills). */
   maxBurstMultiplier: 4,
@@ -74,7 +76,7 @@ export const TUNE = {
   swarmRate: 5.0, // rad/s, wind-up swarm jitter
 } as const;
 
-export type Phase = "playing" | "region-clear" | "gameover" | "victory";
+export type Phase = "playing" | "region-clear" | "gameover";
 
 export type SfxName =
   | "fire"
@@ -232,6 +234,8 @@ export class Engine {
   regionIndex = 0;
   region: RegionDef = REGIONS[0];
   waveIndex = 0;
+  /** Completed loops of all three regions; drives the endless speed ramp. */
+  loop = 0;
 
   threats: Threat[] = [];
   interceptors: Interceptor[] = [];
@@ -317,7 +321,7 @@ export class Engine {
     const firePressed = this.input.fire && !this.prevFire;
     this.prevFire = this.input.fire;
 
-    if (this.phase === "gameover" || this.phase === "victory") return;
+    if (this.phase === "gameover") return;
 
     this.reticle = {
       x: Math.max(8, Math.min(W - 8, this.input.aimX)),
@@ -437,10 +441,12 @@ export class Engine {
 
   private advanceRegion() {
     if (this.regionIndex >= REGIONS.length - 1) {
-      this.phase = "victory";
-      this.addScore(TUNE.victoryBonus);
+      // Endless: a held campaign pays the loop bonus and starts the tour
+      // over with faster skies. The run ends only when the health is gone.
+      this.loop++;
+      this.addScore(TUNE.loopBonus);
       this.sfx("victory");
-      this.sendGameover();
+      this.startRegion(0);
       return;
     }
     this.startRegion(this.regionIndex + 1);
@@ -503,7 +509,8 @@ export class Engine {
 
   private spawn(slot: Spawn) {
     const fam = FAMILIES[slot.family];
-    const vy = fam.speed * this.region.speedMul;
+    const loopMul = 1 + Math.min(TUNE.loopSpeedCap, this.loop * TUNE.loopSpeedRamp);
+    const vy = fam.speed * this.region.speedMul * loopMul;
     for (let unit = 0; unit < fam.units; unit++) {
       const offset = fam.units > 1 ? (unit - (fam.units - 1) / 2) * 34 : 0;
       let baseX = slot.x + offset;
@@ -742,6 +749,7 @@ export class Engine {
       score: this.score,
       stats: {
         regions_held: this.regionsHeld,
+        loops: this.loop,
         threats_downed: this.threatsDowned,
         best_burst: this.bestBurst,
         accuracy_pct: this.accuracyPct,
