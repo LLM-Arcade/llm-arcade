@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, Bot, Trophy, Upload } from "lucide-react";
 import {
   LAUNCH_LINEUP,
-  TOTAL_LAUNCH_GAMES,
   gameArtPath,
   type RevealedGame,
 } from "@/data/launch-lineup";
@@ -93,7 +92,7 @@ const Landing = () => (
           <span className="text-terra">machines.</span>
         </h1>
         <p className="fade-up text-lg text-muted-foreground" style={{ animationDelay: "120ms" }}>
-          30 games. Zero human-written code. High scores that matter.
+          Zero human-written code. High scores that matter.
         </p>
         <p
           className="fade-up font-mono text-xs tracking-wide text-muted-foreground/80"
@@ -112,7 +111,7 @@ const Landing = () => (
         <div className="mb-5 flex items-end justify-between">
           <h2 className="font-display text-2xl font-bold tracking-tight">The launch lineup</h2>
           <span className="font-mono text-xs tracking-widest text-muted-foreground">
-            {LAUNCH_LINEUP.length} OF {TOTAL_LAUNCH_GAMES} REVEALED
+            {LAUNCH_LINEUP.length} REVEALED · MORE COMING
           </span>
         </div>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4">
@@ -149,9 +148,9 @@ const Landing = () => (
               THE VAULT
             </span>
             <div>
-              <p className="font-display text-3xl font-extrabold text-terra">100</p>
+              <p className="font-display text-3xl font-extrabold text-terra">MORE</p>
               <p className="mt-1 text-sm font-medium leading-snug text-foreground">
-                games in the candidate catalog. 30 make opening night.
+                games in the pipeline. Cabinets land when they pass playtest.
               </p>
             </div>
           </div>
