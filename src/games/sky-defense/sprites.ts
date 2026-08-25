@@ -31,22 +31,29 @@ export const EFFECT_NAMES = [
   "storm-cloud",
 ] as const;
 
+/**
+ * The real props-ui.png cell order, mapped by eye from the sheet because its
+ * manifest entry is wrong past cell 4: the sheet carries six building states
+ * (three intact, three damaged), the weather cells sit one later than
+ * documented, and the documented reticle/cursor cells hold radar chrome
+ * instead. Cells 9 and 14 are decorative leftovers this cabinet never draws.
+ */
 export const PROP_NAMES = [
   "house-intact",
   "bridge-intact",
   "observatory-intact",
   "house-damaged",
-  "city-damaged",
+  "bridge-damaged",
+  "observatory-damaged",
   "dust-weather",
   "storm-weather",
   "rain-weather",
-  "radar-dial",
-  "radar-sweep",
-  "target-reticle",
-  "cursor-hand",
-  "cursor-crosshair",
+  "region-frame",
+  "radar-station",
+  "radar-screen",
   "shield-icon",
   "warning-icon",
+  "arc-fragment",
   "repair-tools",
 ] as const;
 
@@ -54,8 +61,22 @@ export type ActionName = (typeof ACTION_NAMES)[number];
 export type EffectName = (typeof EFFECT_NAMES)[number];
 export type PropName = (typeof PROP_NAMES)[number];
 
-/** The first five props-ui cells; they normalize as one bottom-center family. */
-const BUILDING_CELLS = 5;
+/** The first six props-ui cells; they normalize as one bottom-center family. */
+const BUILDING_CELLS = 6;
+
+/**
+ * Several props-ui cells stack a second small motif under or over the main
+ * one (measured row runs with a clean gap between them). These cell-local
+ * rects are erased after keying so a trim cannot drag the stray motif along.
+ */
+const PROP_ERASE: { cell: number; y0: number; y1: number }[] = [
+  { cell: 4, y0: 34, y1: 52 },
+  { cell: 5, y0: 37, y1: 52 },
+  { cell: 7, y0: 39, y1: 52 },
+  { cell: 11, y0: 30, y1: 52 },
+  { cell: 12, y0: 0, y1: 18 },
+  { cell: 13, y0: 0, y1: 19 },
+];
 
 interface Rect {
   x: number;
@@ -235,6 +256,10 @@ export const loadSprites = async (): Promise<SkyDefenseSprites> => {
   const actionSheet = keyedSheet(actionImg, "battery-actions.png", 4, 1);
   const threatSheet = keyedSheet(threatImg, "threats.png", 4, 4);
   const propSheet = keyedSheet(propImg, "props-ui.png", 4, 4);
+  for (const e of PROP_ERASE) {
+    const cell = propSheet.cells[e.cell];
+    propSheet.ctx.clearRect(cell.x, cell.y + e.y0, cell.w, e.y1 - e.y0);
+  }
 
   // A threat's two cells share one crop so the 120 ms damage swap holds still.
   const threats: ThreatPair[] = [];
@@ -243,9 +268,8 @@ export const loadSprites = async (): Promise<SkyDefenseSprites> => {
     threats.push({ motion, damage });
   }
 
-  // city-damaged is the damaged frame for both the bridge and the
-  // observatory, so all five building cells crop as one family rather than as
-  // three separate pairs.
+  // All six building cells crop as one family so the intact-to-damaged swap
+  // cannot shift a building on its ground anchor.
   const buildings = cutFamily(
     propSheet,
     Array.from({ length: BUILDING_CELLS }, (_, i) => i),
