@@ -7,6 +7,34 @@
 
 const ASSETS = "/assets/games/gem-columns";
 
+/**
+ * Detached fragments to wipe, in cell-local pixels over full-height or
+ * full-width bands. Several authored cells carry a stray chip near a cell
+ * edge (a leaf beside the next-triad frame, a chip beside the droplet
+ * heart) that reads as floating debris at tile scale. Component analysis
+ * located each one; authored scatter such as cracked crumble and
+ * clear-state bursts is untouched.
+ */
+const ERASE: Record<string, { cell: number; x0: number; x1: number }[]> = {
+  "gems-set-a.png": [{ cell: 6, x0: 0, x1: 9 }],
+  "gems-set-b.png": [
+    { cell: 1, x0: 0, x1: 16 },
+    { cell: 11, x0: 0, x1: 16 },
+    { cell: 16, x0: 0, x1: 16 },
+    { cell: 21, x0: 0, x1: 16 },
+    { cell: 3, x0: 90, x1: 99 },
+    { cell: 13, x0: 90, x1: 99 },
+    { cell: 18, x0: 90, x1: 99 },
+    { cell: 23, x0: 85, x1: 99 },
+    { cell: 24, x0: 85, x1: 99 },
+  ],
+  "ui-states.png": [
+    { cell: 1, x0: 0, x1: 17 },
+    { cell: 2, x0: 0, x1: 21 },
+    { cell: 10, x0: 0, x1: 11 },
+  ],
+};
+
 export const SPECIAL_NAMES = [
   "wild-medallion",
   "bomb-seed",
@@ -136,6 +164,11 @@ const sliceGrid = (
 
   const cellW = img.width / cols;
   const cellH = img.height / rows;
+  for (const e of ERASE[file] ?? []) {
+    const cx = (e.cell % cols) * cellW;
+    const cy = Math.floor(e.cell / cols) * cellH;
+    ctx.clearRect(cx + e.x0, cy, e.x1 - e.x0 + 1, cellH);
+  }
   const frames: HTMLCanvasElement[] = [];
   for (let row = 0; row < rows; row++) {
     for (let col = 0; col < cols; col++) {
