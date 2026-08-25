@@ -146,12 +146,16 @@ export const draw = (ctx: CanvasRenderingContext2D, eng: Engine, spr: KickflipSp
     ctx.restore();
   }
 
-  // Parallax silhouettes between the panorama and the lane.
+  // Parallax silhouettes between the panorama and the lane. Only the
+  // ground-anchored kinds (olive tree, lamp posts, fence, cells 3..5) draw;
+  // the roofline tiles floated in mid-air like postcards over the panorama.
   for (const p of course.parallax) {
+    if (p.cell < 3) continue;
     const tile = spr.silhouettes[p.cell];
     const x = p.x - scroll * SILHOUETTE_PARALLAX;
     if (x < -160 || x > W + 160) continue;
-    drawSprite(ctx, tile, x, p.y, tile.width * p.scale, 0, 0.55);
+    const w = tile.width * p.scale;
+    drawStanding(ctx, tile, x, GROUND_Y - 24, w, (w * tile.height) / tile.width, 0, 0.5);
   }
 
   // Back-lane street life, never in the play lane.
