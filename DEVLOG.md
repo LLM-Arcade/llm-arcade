@@ -1017,7 +1017,7 @@ until the user signs in on llmarcade.fun in the driven browser.
   Stalker opportunism, Filcher supply raids, and Sappers that dig where
   the defenders are not. Achievements went to 12, the spec ceiling,
   weighted toward earned tactical play. Still no game code by design.
-=======
+
 ## Session 23 — Lastwatch phase 2: the whole game, headless
 
 - Built the complete Lastwatch simulation in `src/games/lastwatch/`: a
