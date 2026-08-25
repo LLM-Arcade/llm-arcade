@@ -794,3 +794,22 @@ until the user signs in on llmarcade.fun in the driven browser.
   brings in-game art to 12,955 bytes and total cabinet art to 333,039 bytes,
   31.76% of the 1 MiB budget. No engine, stage, collision, score, or balance
   code changed.
+
+## Session 21 — Kickflip City 🛹 (Track A, skate lines, Matter.js)
+
+- **Kickflip City** (A, `src/games/kickflip-city/`, 7 ach): three districts
+  on 75 s clocks, crouch-loaded ollies, flip/grab tricks as authored-pose
+  transforms (the sheet ships four states per facing, not the wishlist
+  twelve), rail grinds with a balance meter, and line scoring that banks on
+  a 1.2 s settle. A bail voids the unbanked line and six seconds.
+- Anti-spam economy from review: plain ollies pay but never grow the
+  multiplier, repeated moves in one line decay to a 0.4 floor, and
+  city-legend recalibrated to 9,000 against ace 11,170..14,185 versus a
+  never-links plodder ceiling of 5,280.
+- Live-review renders: mirror-tiled district panorama (the art has no seam
+  match), a pavement face with dimmed art below instead of a dead ink slab,
+  street life stepped off the play lane, ground-anchored parallax only, and
+  chip-backed clock/line readouts. Three engine findings recorded for the
+  next Matter cabinet: own the forward speed instead of reading vx back,
+  ground from contact normals not bounding boxes, and the normal points at
+  the skater (y -1 on supports).
