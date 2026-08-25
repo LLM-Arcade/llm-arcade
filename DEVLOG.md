@@ -794,3 +794,33 @@ until the user signs in on llmarcade.fun in the driven browser.
   brings in-game art to 12,955 bytes and total cabinet art to 333,039 bytes,
   31.76% of the 1 MiB budget. No engine, stage, collision, score, or balance
   code changed.
+
+## Session 21 — Sky Defense 🛡️ (Track A, interception)
+
+- **Sky Defense** (A, `src/games/sky-defense/`, 7 ach): interception game
+  across the Desert Relay, River City, and Mountain Observatory. Eight
+  fictional threat families (the manifest's vocabulary only), an
+  eight-bearing battery, bursts that kill only while growing, and ember
+  mines that chain. The organizing structure is the burst group: one shot
+  opens a group, its burst and every chained detonation credit it, and it
+  settles when nothing in it can still kill, so multi-kill scoring is a
+  property of the data.
+- Region health (100, +30 repair between regions) drives the horizon art
+  tiers at 67/34 and the building damage states; zero regional damage earns
+  `perfect-sky`. Accuracy at or above 80 percent pays 400 per region, so
+  balloon decoys are a real economy. `defense-legend` is 11,500, calibrated
+  against a 24-seed ace floor of 12,610 and a degraded-aim bot that tops
+  out at 11,220: a scraped win cannot reach it.
+- The desert horizon sheet is authored as 3 rows of 360x40, not the 3
+  columns its manifest claims; the corrected rects live in `sprites.ts`
+  (seam analysis confirmed y=40/y=80) and the manifest stays untouched.
+  The launch-lineup alt text for this slug described real weapons and now
+  uses the fictional vocabulary.
+- **Harness** `node scripts/harness/sky-defense.mjs` (in `test:games`):
+  lead-aiming ace wins all six seeds (spread 12,680 to 13,880), a no-lead
+  sloppy bot loses, same-seed determinism, and staged proofs for burst
+  timing, ember chains crediting one group, health tiers, the ammo cycle,
+  zero-damage balloons, the accuracy gate, and the cap.
+- Headless-built; browser play on `/dev/sky-defense` pending, and the
+  burst-growth-versus-skiff-speed lead requirement is the difficulty knob
+  to feel out (`TUNE.burstGrow`).

@@ -1,0 +1,127 @@
+{
+  "game": "sky-defense",
+  "generated": true,
+  "integrationStatus": "wire-ready only; this catalog entry intentionally has no gameplay source yet.",
+  "palette": ["#F4E6C1", "#241A12", "#B45735", "#68723C", "#C99A32"],
+  "spriteContract": {
+    "key": "#FF00FF",
+    "gutterPx": 4,
+    "slicing": "Exact integer grids. Treat magenta and alpha as transparent; no sheet has white divider bands.",
+    "anchors": { "battery": "bottom-center / tire contact", "incomingThreat": "center", "effects": "center", "buildings": "bottom-center" }
+  },
+  "budget": {
+    "limitBytes": 1048576,
+    "packBytes": 410245,
+    "keyArtBytes": 63744,
+    "totalArtBytes": 473989,
+    "remainingBytes": 574587
+  },
+  "assets": [
+    {
+      "file": "desert-relay-states.png",
+      "bytes": 80841,
+      "dimensions": [360, 120],
+      "grid": [3, 1],
+      "cell": [120, 120],
+      "order": ["intact", "damaged", "destroyed"],
+      "anchor": "full horizon",
+      "timing": { "recommended": "slow two-layer pan at 0.10 camera rate" },
+      "wiring": "Region 0 horizon; desert relay with mesas, solar receivers, relay towers, warning barriers, and escalating wreckage.",
+      "promptSummary": "Three-state desert relay horizon in terracotta, mustard, olive, cream, and ink."
+    },
+    {
+      "file": "river-city-states.png",
+      "bytes": 90405,
+      "dimensions": [330, 120],
+      "grid": [3, 1],
+      "cell": [110, 120],
+      "order": ["intact", "damaged", "destroyed"],
+      "anchor": "full horizon",
+      "timing": { "recommended": "slow two-layer pan at 0.08 camera rate" },
+      "wiring": "Region 1 horizon; river city canals, bridges, towers, and state progression. The horizontal strip has three exact 110px panels.",
+      "promptSummary": "Three-state river city horizon with arched bridges and a damaged floodplain variant."
+    },
+    {
+      "file": "mountain-observatory-states.png",
+      "bytes": 111673,
+      "dimensions": [320, 180],
+      "grid": [1, 3],
+      "cell": [320, 60],
+      "order": ["intact", "damaged", "destroyed"],
+      "anchor": "full horizon",
+      "timing": { "recommended": "slow two-layer pan at 0.06 camera rate" },
+      "wiring": "Region 2 horizon; alpine observatory with telescope dishes, lines, and progressively wrecked machinery.",
+      "promptSummary": "Three-state mountain observatory horizon with warm mustard dome machinery."
+    },
+    {
+      "file": "battery-aim.png",
+      "bytes": 9504,
+      "dimensions": [288, 96],
+      "grid": [8, 1],
+      "cell": [36, 96],
+      "order": ["far-left", "left-high", "left", "left-low", "right-low", "right", "right-high", "far-right"],
+      "anchor": "bottom-center / tire contact",
+      "timing": { "selection": "choose by quantized target bearing" },
+      "wiring": "Defense battery aim directions; clamp the firing pivot to this ordered bearing set rather than changing collision bounds.",
+      "promptSummary": "Eight authored aim directions of a small terracotta-and-mustard interceptor battery."
+    },
+    {
+      "file": "battery-actions.png",
+      "bytes": 21131,
+      "dimensions": [256, 96],
+      "grid": [4, 1],
+      "cell": [64, 96],
+      "order": ["idle", "fire", "reload", "hit"],
+      "anchor": "bottom-center / tire contact",
+      "timing": { "idleFps": 2, "fireHoldMs": 90, "reloadFps": 5, "hitHoldMs": 120 },
+      "wiring": "Action state strip for the same battery design; use with the selected aim direction or as an elevated close-up state.",
+      "promptSummary": "Defense battery idle, muzzle flash, reload elevation, and hit response."
+    },
+    {
+      "file": "threats.png",
+      "bytes": 19443,
+      "dimensions": [240, 240],
+      "grid": [4, 4],
+      "cell": [60, 60],
+      "order": ["ceramic-seed-pod-motion", "ceramic-seed-pod-damage", "clockwork-kite-motion", "clockwork-kite-damage", "ember-mine-motion", "ember-mine-damage", "balloon-decoy-motion", "balloon-decoy-damage", "beetle-drone-motion", "beetle-drone-damage", "orbiting-mask-motion", "orbiting-mask-damage", "wind-up-swarm-motion", "wind-up-swarm-damage", "leaf-sail-skiff-motion", "leaf-sail-skiff-damage"],
+      "anchor": "center",
+      "timing": { "motionFps": 6, "damageHoldMs": 120 },
+      "wiring": "Eight incoming threat families as adjacent motion/damage pairs in reading order; pair index is floor(frameIndex / 2). All silhouettes are fictional and explicitly exclude rockets, missiles, torpedoes, jets, bullets, guns, warheads, and modern aircraft.",
+      "promptSummary": "Eight clearly fictional aerial threat pairs: seed pods, clockwork kites, ember mines, balloons, beetles, ritual masks, wind-up swarms, and leaf-sail skiffs."
+    },
+    {
+      "file": "effects.png",
+      "bytes": 35065,
+      "dimensions": [208, 208],
+      "grid": [4, 4],
+      "cell": [52, 52],
+      "order": ["interceptor", "fast-bolt", "small-burst", "large-burst", "impact-star", "debris-cluster", "smoke-puff", "smoke-column", "shield-ring-small", "shield-ring-large", "repair-ring", "warning-chevron", "radar-ping", "scan-wedge", "repair-drone", "storm-cloud"],
+      "anchor": "center",
+      "timing": { "projectileFps": 0, "burstFps": 12, "ringFps": 8, "smokeFps": 5 },
+      "wiring": "Use individual cells for interceptors, impacts, debris, smoke, repair, shields, warning, and weather. Scale rings from center only.",
+      "promptSummary": "Warm solid-color interceptors, explosions, rings, debris, smoke, repair, shield, warning, and storm effects."
+    },
+    {
+      "file": "props-ui.png",
+      "bytes": 42183,
+      "dimensions": [208, 208],
+      "grid": [4, 4],
+      "cell": [52, 52],
+      "order": ["house-intact", "bridge-intact", "observatory-intact", "house-damaged", "city-damaged", "dust-weather", "storm-weather", "rain-weather", "radar-dial", "radar-sweep", "target-reticle", "cursor-hand", "cursor-crosshair", "shield-icon", "warning-icon", "repair-tools"],
+      "anchor": "bottom-center for props; center for weather and UI",
+      "timing": { "radarSweepFps": 4, "weatherFps": 5 },
+      "wiring": "City props and repair/weather/radar/cursor/UI variants. UI icons should be drawn at native size without changing hit regions.",
+      "promptSummary": "Buildings, damage states, weather, radar, cursor, shield, warning, and repair icons matching the defense palette."
+    },
+    {
+      "file": "../sky-defense.png",
+      "bytes": 63744,
+      "dimensions": [300, 300],
+      "grid": null,
+      "anchor": null,
+      "timing": null,
+      "wiring": "Catalog key art outside the gameplay pack.",
+      "promptSummary": "River-city defense battery intercepting fictional pods, kite, lantern mine, balloon, beetle, mask, swarm, and leaf-sail skiff threats."
+    }
+  ]
+}
