@@ -9,6 +9,7 @@ import type { Engine } from "../engine.ts";
 import type { DistrictId, RoomId, StructureId } from "../types.ts";
 import { BARRICADE_HP } from "../arsenal.ts";
 import { PALETTE } from "./scene.ts";
+import { cobbleTexture, plankTexture, scrubTexture, stoneTexture } from "./textures.ts";
 
 const WALL_H = 5;
 const WALL_T = 0.7;
@@ -23,14 +24,41 @@ function lambert(color: number, emissive = 0): THREE.MeshLambertMaterial {
   });
 }
 
+const STONE_TEX = stoneTexture();
+const PLANK_TEX = plankTexture();
+const COBBLE_TEX = cobbleTexture();
+const SCRUB_TEX = scrubTexture();
+
+function texLambert(tex: THREE.Texture, rx: number, ry: number, tint = 0xffffff) {
+  const t = tex.clone();
+  t.needsUpdate = true;
+  t.repeat.set(rx, ry);
+  return new THREE.MeshLambertMaterial({ map: t, color: tint, flatShading: true });
+}
+
+// Stone and floor materials cache by rounded repeat so long walls tile at
+// world scale without a material per mesh.
+const stoneCache = new Map<string, THREE.MeshLambertMaterial>();
+function stoneMat(len: number, height: number): THREE.MeshLambertMaterial {
+  const rx = Math.max(1, Math.round(len / 4));
+  const ry = Math.max(1, Math.round(height / 2.5));
+  const key = `${rx}:${ry}`;
+  let m = stoneCache.get(key);
+  if (!m) {
+    m = texLambert(STONE_TEX, rx, ry);
+    stoneCache.set(key, m);
+  }
+  return m;
+}
+
 const MAT = {
   stone: lambert(PALETTE.stone),
   stoneShade: lambert(PALETTE.stoneShade),
-  timber: lambert(PALETTE.timber),
+  timber: texLambert(PLANK_TEX, 1, 1),
   timberDark: lambert(PALETTE.timberDark),
-  floor: lambert(PALETTE.floor),
-  court: lambert(PALETTE.floorCourt),
-  grass: lambert(PALETTE.grass),
+  floor: texLambert(COBBLE_TEX, 6, 6, 0xd8c0ae),
+  court: texLambert(COBBLE_TEX, 9, 7),
+  grass: texLambert(SCRUB_TEX, 8, 8),
   banner: lambert(PALETTE.banner),
   flame: new THREE.MeshBasicMaterial({ color: PALETTE.flameHot }),
   flameCore: new THREE.MeshBasicMaterial({ color: 0xf7e2a0 }),
@@ -56,6 +84,8 @@ export class HoldView {
   private rubble = new Map<DistrictId, THREE.Group>();
   private doorSlabs = new Map<string, THREE.Mesh>();
   private barricades = new Map<StructureId, THREE.Group>();
+  private barricadeHp = new Map<StructureId, number>();
+  private shakeT = new Map<StructureId, number>();
   private fireCore: THREE.Mesh;
 
   constructor() {
@@ -131,10 +161,11 @@ export class HoldView {
       if (b - a < 0.3) continue;
       const len = b - a;
       const mid = (a + b) / 2;
+      const m = stoneMat(len, h);
       if (axis === "x") {
-        this.box(len, h, WALL_T, MAT.stone, mid, elev + h / 2, -at);
+        this.box(len, h, WALL_T, m, mid, elev + h / 2, -at);
       } else {
-        this.box(WALL_T, h, len, MAT.stone, at, elev + h / 2, -mid);
+        this.box(WALL_T, h, len, m, at, elev + h / 2, -mid);
       }
     }
     // Door lintels: the arch reads as an arch, not a missing wall.
@@ -390,9 +421,17 @@ export class HoldView {
     }
     for (const [sid, g] of this.barricades) {
       const s = eng.structures[sid];
+      const prev = this.barricadeHp.get(sid) ?? s.hp;
+      if (s.hp < prev - 0.5) this.shakeT.set(sid, 0.18);
+      this.barricadeHp.set(sid, s.hp);
+      const shake = this.shakeT.get(sid) ?? 0;
+      if (shake > 0) this.shakeT.set(sid, shake - 1 / 60);
       const planks = Math.ceil((s.hp / Math.max(1, BARRICADE_HP[Math.max(1, s.tier)])) * 5);
       g.children.forEach((plank, i) => {
         plank.visible = s.tier > 0 && s.hp > 0 && i < planks;
+        const jolt = shake > 0 ? Math.sin(time * 70 + i * 2.6) * 0.05 * (shake / 0.18) : 0;
+        plank.position.y = 0.45 + i * 0.5 + jolt;
+        plank.rotation.z = (i % 2 === 0 ? 1 : -1) * 0.05 + jolt * 0.6;
       });
     }
     // Slow flame breathing and banner sway: warmth in motion, never a

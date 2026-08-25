@@ -425,13 +425,15 @@ export default function Lastwatch({ onScore, onAchievement }: ArcadeGameProps) {
             </div>
           )}
 
-          <div className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-            <div
-              className={`h-2 w-2 rounded-full border ${
-                p.charging ? "scale-150 border-[#d9a441]" : "border-[#e8dcc0]/70"
-              }`}
-            />
-          </div>
+          {!(p.charging && WEAPONS[p.weapon.id].kind === "bow") && (
+            <div className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+              <div
+                className={`h-2 w-2 rounded-full border ${
+                  p.charging ? "scale-150 border-[#d9a441]" : "border-[#e8dcc0]/70"
+                }`}
+              />
+            </div>
+          )}
 
           <div className="pointer-events-none absolute bottom-3 left-3 w-64 space-y-1 font-mono text-[11px] text-[#e8dcc0]">
             <Bar label="HP" value={p.hp / p.maxHp} color="#c4633f" />

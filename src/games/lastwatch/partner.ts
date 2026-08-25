@@ -391,7 +391,7 @@ function moveToward(
   let tx = x;
   let ty = y;
   if (me.room !== room) {
-    const path = findPath(me.room, room, (d) => eng.doorOpen[d.id], () => 0);
+    const path = findPath(me.room, room, eng.doorPassableWatch, () => 0);
     if (path && path.length > 0) {
       const mid = doorMid(path[0]);
       tx = mid.x;

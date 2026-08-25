@@ -110,6 +110,7 @@ export interface Character {
   whetstoneWaves: number;
   attackCd: number;
   charge: number; // s primary has been held (heavy/bow charge)
+  strideAcc: number; // m walked since the last footstep sound
   charging: boolean;
   beamT: number; // s primary has been held for beam detection
   blockHeld: boolean;
@@ -240,6 +241,7 @@ export interface PendingImpact {
   splashFrac: number;
   hurts: "watch" | "gloam";
   isGlob: boolean;
+  element: "fire" | "spark" | "glob";
   by: -1 | 0 | 1; // character index that owns the damage credit
 }
 
@@ -306,6 +308,7 @@ export class Engine {
   valorRecovered = 0;
   revives = 0;
   secondWindPrice = PRICES.secondWind;
+  rebuildCostAcc = 0;
   command: CommandId = "hold-ground";
   waveCtl: WaveCtl = { queue: [], spawnT: 0, interval: 7, hornT: 0 };
   rackStock: { weapon: WeaponInstance; price: number }[] = [];
@@ -392,6 +395,7 @@ export class Engine {
       whetstoneWaves: 0,
       attackCd: 0,
       charge: 0,
+      strideAcc: 0,
       charging: false,
       beamT: 0,
       blockHeld: false,
@@ -480,7 +484,8 @@ export class Engine {
 
   private isOpen = (d: Door): boolean => this.doorOpen[d.id];
 
-  private doorPassableWatch = (d: Door): boolean => this.doorOpen[d.id];
+  doorPassableWatch = (d: Door): boolean =>
+    this.doorOpen[d.id] && !this.barricadeBlocks(d);
 
   private doorPassableGloam = (d: Door): boolean => this.doorOpen[d.id];
 
@@ -543,8 +548,8 @@ export class Engine {
         if (!crossingE && !crossingW) continue;
         if (ny < d.lo + r * 0.5 || ny > d.hi - r * 0.5) continue;
       }
-      if (isGloamMover && this.barricadeBlocks(d)) {
-        blocked = d.barricade;
+      if (this.barricadeBlocks(d)) {
+        if (isGloamMover) blocked = d.barricade;
         continue;
       }
       const tr = ROOMS[target];
@@ -935,7 +940,14 @@ export class Engine {
         mx /= ml;
         my /= ml;
       }
+      const beforeX = c.x;
+      const beforeY = c.y;
       this.moveEntity(c, mx * spd * DT, my * spd * DT, false);
+      c.strideAcc += Math.hypot(c.x - beforeX, c.y - beforeY);
+      if (c.strideAcc > 1.7) {
+        c.strideAcc = 0;
+        this.sfx(c.cls === "knight" ? "step-knight" : "step-light");
+      }
     }
 
     // Block state feeds damage resolution.
@@ -1313,6 +1325,7 @@ export class Engine {
       splashFrac: 0.6,
       hurts: "gloam",
       isGlob: false,
+      element: c.weapon.id === "cinder-rod" ? "spark" : "fire",
       by: c.idx,
     });
   }
@@ -1383,6 +1396,34 @@ export class Engine {
       return;
     }
     c.reviveT = 0;
+    // Rebuilding the boards: hold E at a damaged barricade with no Gloam
+    // pressing the door, and valor turns back into timber.
+    for (const d of DOORS) {
+      if (!d.barricade) continue;
+      const s = this.structures[d.barricade];
+      if (s.tier === 0 || s.hp >= s.maxHp) continue;
+      const mid = doorMid(d);
+      if (Math.hypot(mid.x - c.x, mid.y - c.y) > 3) continue;
+      const contested = this.gloam.some(
+        (u) => Math.hypot(u.x - mid.x, u.y - mid.y) < 2.5,
+      );
+      if (contested) continue;
+      const rate = 70; // hp per second of hammering
+      const costPerHp = (PRICES.barricadeRepairPer100 / 100) * this.mods.priceMult *
+        (this.districts.hall ? 1 - PRICES.hallRepairDiscount : 1);
+      const hp = Math.min(rate * DT, s.maxHp - s.hp, this.valor / costPerHp);
+      if (hp <= 0) return;
+      s.hp += hp;
+      this.rebuildCostAcc += hp * costPerHp;
+      if (this.rebuildCostAcc >= 1) {
+        const pay = Math.floor(this.rebuildCostAcc);
+        this.rebuildCostAcc -= pay;
+        this.valor -= pay;
+        this.valorSpent += pay;
+      }
+      if (this.tick % 30 === 0) this.sfx("structure-hit");
+      return;
+    }
     // District rubble channel.
     for (const [district, pos] of Object.entries(DISTRICT_RUBBLE) as [
       DistrictId,
@@ -2120,6 +2161,7 @@ export class Engine {
         splashFrac: 1,
         hurts: "watch",
         isGlob: true,
+        element: "glob",
         by: -1,
       });
     }

@@ -100,7 +100,7 @@ export class HeroView {
     }
   }
 
-  update(c: Character, time: number, dt: number) {
+  update(c: Character, time: number, dt: number, engTime: number) {
     const elev = elevAt(ROOMS[c.room], c.y);
     this.root.position.set(c.x, elev, -c.y);
     this.root.rotation.set(0, 0, 0);
@@ -127,12 +127,38 @@ export class HeroView {
     const w = WEAPONS[c.weapon.id];
     let armR = -swing * 0.6;
     let armL = swing * 0.6;
+    let armRYaw = 0;
+    let torsoYaw = 0;
     if (w.kind === "melee") {
-      if (c.charging) armR = -2.4; // wound up over the shoulder
-      else if (c.attackCd > 0.25) armR = 0.9; // follow-through
+      const sinceSwing = engTime - c.lastAttackAt;
+      const swingDur = Math.min(0.3, (w.cycle ?? 0.5) * 0.6);
+      if (c.charging) {
+        // Wound up over the shoulder, blade back, hips coiled. A slow
+        // tremble sells the held weight.
+        armR = -2.5 + 0.05 * Math.sin(time * 9);
+        armRYaw = 0.7;
+        torsoYaw = 0.42;
+      } else if (sinceSwing >= 0 && sinceSwing < swingDur) {
+        // The cut: a fast horizontal arc across the body, torso
+        // counter-rotating through it. Ease out so the blade snaps
+        // through the middle of the arc and settles.
+        const k = sinceSwing / swingDur;
+        const e = 1 - Math.pow(1 - k, 3);
+        armR = -2.3 + (0.15 - -2.3) * e * 0.85;
+        armRYaw = 0.8 - 2.0 * e;
+        torsoYaw = 0.35 - 0.8 * e;
+      } else if (sinceSwing >= swingDur && c.attackCd > 0) {
+        // Recovery: drift back to guard as the cooldown runs out.
+        const back = Math.min(1, (sinceSwing - swingDur) / 0.25);
+        armR = -0.5 * (1 - back) - swing * 0.6 * back;
+        armRYaw = -1.2 * (1 - back);
+        torsoYaw = -0.45 * (1 - back);
+      }
       if (c.blockHeld) {
         armL = -1.3;
         armR = -1.1;
+        armRYaw = 0;
+        torsoYaw = 0;
       }
     } else if (w.kind === "bow") {
       armL = -1.55; // bow arm forward
@@ -149,7 +175,11 @@ export class HeroView {
     }
     if (c.reviveT > 0) this.torso.rotation.x = 0.7;
     this.armR.rotation.x = armR;
+    this.armR.rotation.y = armRYaw;
+    this.torso.rotation.y = torsoYaw;
     this.armL.rotation.x = armL;
+    // A breath of idle sway keeps the figure alive between actions.
+    this.torso.position.y = 1.05 + 0.015 * Math.sin(time * 1.9);
   }
 }
 
