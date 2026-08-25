@@ -23,4 +23,5 @@ export const gameRegistry: Record<
   "gem-columns": lazy(() => import("./gem-columns/GemColumns")),
   "sky-defense": lazy(() => import("./sky-defense/SkyDefense")),
   "kickflip-city": lazy(() => import("./kickflip-city/KickflipCity")),
+  "the-undervault": lazy(() => import("./the-undervault/TheUndervault")),
 };
