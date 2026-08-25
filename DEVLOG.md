@@ -1017,3 +1017,35 @@ until the user signs in on llmarcade.fun in the driven browser.
   Stalker opportunism, Filcher supply raids, and Sappers that dig where
   the defenders are not. Achievements went to 12, the spec ceiling,
   weighted toward earned tactical play. Still no game code by design.
+=======
+## Session 23 — Lastwatch phase 2: the whole game, headless
+
+- Built the complete Lastwatch simulation in `src/games/lastwatch/`: a
+  DOM-free 60 Hz deterministic engine (seeded mulberry32, event queue,
+  relative imports) covering movement, three class kits, five weapons per
+  class with quality tiers, armor, consumables, the five-district hold
+  with convex-room portal pathing, twelve Gloam types across three
+  intelligence tiers with engine-level coordination, four milestone
+  bosses, the valor economy, downs and revives, difficulty levels,
+  scoring, and all twelve achievements.
+- `scripts/harness/lastwatch.mjs` proves the phase 2 gate and now runs in
+  `pnpm test:games`: determinism by event-log hash, an ace duo reaching
+  wave 22 on Long Watch, casual floors at all three difficulties on all
+  three classes (nine runs, every one surviving the full 300 s window),
+  a do-nothing loss, exact kit arithmetic, coordination and raid stages,
+  five partner behaviors, economy and difficulty arithmetic, district
+  effects, the flood cap, and 12/12 achievements firing in simulation.
+- The harness earned its keep before any renderer exists. It caught the
+  knight partner's heavy swing never releasing (zero melee damage all
+  run), the Shepherd besieging unkillably from outside the walls, lone
+  hexers and slit-camping lobbers softlocking waves, boss caches
+  auto-claiming before the player could choose, and a gear ladder that
+  could strand a class on its starting weapon for ten waves. Each fix is
+  an engine rule now: bosses present themselves, artillery presses in,
+  no walker outruns a sprinting archer, guaranteed rack slots never
+  offer sidegrades, and an idle leftover horde retreats instead of
+  freezing the night.
+- Calibration replaced guesses per the GDD's (cal) contract: watch-legend
+  landed at 20,000 (sloppy ceiling 1,782, skilled floor 46,438), the wave
+  budget quadratic settled at 2.2 -> 2.0, concurrency capped at 32, and
+  characters catch their breath (30% of missing HP) when the horn quiets.
