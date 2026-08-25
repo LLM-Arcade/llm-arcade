@@ -268,9 +268,9 @@ export const draw = (
   }
 
   if (eng.phase === "level-clear") {
-    drawSprite(ctx, spr.specials["level-seal"], W / 2, boardY, 170);
-  }
-  if (eng.phase === "victory") {
-    drawSprite(ctx, spr.ui["complete-laurel"], W / 2, boardY, 240);
+    // A finished loop of all three wells earns the laurel; a single well
+    // earns its seal.
+    const lapped = eng.levelIndex === 2 && eng.loop > 0;
+    drawSprite(ctx, lapped ? spr.ui["complete-laurel"] : spr.specials["level-seal"], W / 2, boardY, lapped ? 240 : 170);
   }
 };

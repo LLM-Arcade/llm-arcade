@@ -39,7 +39,9 @@ export const TUNE = {
   /** Per cell beyond three in one resolution step; pays for engineered lines. */
   bigClearGemBonus: 20,
   levelClearBonus: 400,
-  victoryBonus: 1200,
+  loopBonus: 1200, // for clearing all three wells of a loop
+  loopFallRamp: 0.35, // cells/s added to every fall speed per completed loop
+  loopFallCap: 2.1, // cells/s of total loop fall bonus
   /** s; finishing a level under this earns the speed bonus. */
   speedPar: 90,
   speedBonusPerSec: 8,
@@ -55,7 +57,7 @@ export const TUNE = {
   dangerSafeVisRow: 4,
 } as const;
 
-export type Phase = "falling" | "resolving" | "level-clear" | "gameover" | "victory";
+export type Phase = "falling" | "resolving" | "level-clear" | "gameover";
 
 export type SfxName =
   | "move"
@@ -252,6 +254,8 @@ export class Engine {
   score = 0;
   levelIndex = 0;
   level: LevelDef = LEVELS[0];
+  /** Completed loops of all three wells; drives the endless fall ramp. */
+  loop = 0;
 
   grid: Grid = newGrid();
   piece: Piece | null = null;
@@ -301,8 +305,9 @@ export class Engine {
 
   fallSpeed(): number {
     const level = this.level;
+    const loopBonus = Math.min(TUNE.loopFallCap, this.loop * TUNE.loopFallRamp);
     const ramped = level.fall + level.fallRamp * Math.floor(this.gemsThisLevel / level.rampEvery);
-    return Math.min(level.maxFall, ramped);
+    return Math.min(level.maxFall, ramped) + loopBonus;
   }
 
   update(dt: number) {
@@ -316,7 +321,7 @@ export class Engine {
     const cyclePressed = this.input.cycle && !this.prevCycle;
     this.prevCycle = this.input.cycle;
 
-    if (this.phase === "gameover" || this.phase === "victory") return;
+    if (this.phase === "gameover") return;
 
     if (this.phase === "level-clear") {
       this.stageTimer -= step;
@@ -402,10 +407,12 @@ export class Engine {
 
   private advanceLevel() {
     if (this.levelIndex >= LEVELS.length - 1) {
-      this.phase = "victory";
-      this.addScore(TUNE.victoryBonus);
+      // Endless: a cleared archive pays the loop bonus and starts the wells
+      // over with faster gems. The run ends only when the spawn blocks.
+      this.loop++;
+      this.addScore(TUNE.loopBonus);
       this.emit({ type: "sfx", sound: "victory" });
-      this.sendGameover();
+      this.startLevel(0);
       return;
     }
     this.startLevel(this.levelIndex + 1);
@@ -582,6 +589,7 @@ export class Engine {
       score: this.score,
       stats: {
         levels_cleared: this.levelsCleared,
+        loops: this.loop,
         gems_cleared: this.gemsCleared,
         max_chain: this.maxChain,
         best_cascade_gems: this.bestCascadeGems,
