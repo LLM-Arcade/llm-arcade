@@ -12,6 +12,7 @@ import CreatorProfile from "./pages/CreatorProfile";
 import Login from "./pages/Login";
 import Settings from "./pages/Settings";
 import Faq from "./pages/Faq";
+import Guides from "./pages/Guides";
 import Playtest from "./pages/Playtest";
 import Upload from "./pages/Upload";
 import MyUploads from "./pages/MyUploads";
@@ -45,6 +46,7 @@ const App = () => (
             <Route path="/signup" element={<Login />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/faq" element={<Faq />} />
+            <Route path="/guides" element={<Guides />} />
             <Route path="/playtest" element={<Playtest />} />
             <Route path="/upload" element={<Upload />} />
             <Route path="/uploads" element={<MyUploads />} />

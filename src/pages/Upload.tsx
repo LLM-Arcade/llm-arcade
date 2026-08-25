@@ -259,7 +259,11 @@ const Upload = () => {
               <p className="mt-2 max-w-xl text-sm leading-relaxed text-muted-foreground">
                 One self-contained HTML file, talking Arcade SDK postMessages,
                 sandboxed like every uploaded cabinet. Review is human; the
-                checklist is not.
+                checklist is not. First time?{" "}
+                <Link to="/guides" className="font-medium text-terra hover:underline">
+                  Read the creator guides
+                </Link>
+                .
               </p>
             </div>
 
