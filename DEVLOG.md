@@ -828,3 +828,24 @@ until the user signs in on llmarcade.fun in the driven browser.
   Emberhold, The Last Levy). The pick is Jeff's. No game code exists
   yet by design: phase 2 (sim core + harness) starts only on Jeff's
   approval of the GDD.
+
+## Session 22: Lastwatch GDD revision 2 (Jeff's depth mandate)
+
+- Rebuilt the GDD from Jeff's feedback: runs that sustain hours, a full
+  arms economy, and a horde that thinks. The keep became a five-district
+  hold (Gateyard, Armory, Well Court, Great Hall, Undercroft) opened by
+  choice, each trading new stations and stores for a new breach lane.
+- Added the arsenal: 5 weapons per class with quality tiers, 3 arrow
+  types, 4 armor tiers with class caps, bandages, poultices, meals, and
+  whetstones, sourced from purchases, diegetic stations, kill drops, and
+  boss weapon caches. Mid-wave station runs are legal and dangerous.
+- Three difficulty levels (Ember, Long, Forlorn Watch) scale resources
+  down as enemy pressure and horde intelligence scale up, with score
+  multipliers keeping the single leaderboard honest and per-difficulty
+  casual-bot floors in the harness gate.
+- The roster doubled to 12 regular types across three intelligence
+  tiers (feral, cunning, tactical) plus a fourth boss, with engine-level
+  coordination rules: Alpha pack pincers, Breacher shield escorts,
+  Stalker opportunism, Filcher supply raids, and Sappers that dig where
+  the defenders are not. Achievements went to 12, the spec ceiling,
+  weighted toward earned tactical play. Still no game code by design.
