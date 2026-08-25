@@ -61,7 +61,7 @@ const GameDetail = () => {
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <SiteHeader />
-      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-6 sm:px-6">
+      <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 sm:px-6">
         <Link
           to="/games"
           className="fade-up text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
@@ -69,12 +69,15 @@ const GameDetail = () => {
           ← Game floor
         </Link>
 
-        <div className="mt-4 grid gap-6 lg:grid-cols-[minmax(0,1fr)_300px]">
-          {/* Main column */}
-          <div className="fade-up min-w-0" style={{ animationDelay: "60ms" }}>
-            <GamePlayer game={game} />
+        {/* The cabinet is the hero: full content width, centered, above the fold */}
+        <div className="fade-up mt-4" style={{ animationDelay: "60ms" }}>
+          <GamePlayer game={game} />
+        </div>
 
-            <div className="mt-5 flex flex-wrap items-center gap-x-3 gap-y-2">
+        <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_300px]">
+          {/* Main column */}
+          <div className="fade-up min-w-0" style={{ animationDelay: "100ms" }}>
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
               <h1 className="font-display text-3xl font-extrabold tracking-tight">
                 {game.title}
               </h1>

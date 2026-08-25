@@ -851,3 +851,176 @@ until the user signs in on llmarcade.fun in the driven browser.
   onto this branch with a revision 3 record. Key art is blocked on the
   image-generation outage (`media_identity_missing`) and stays the one
   missing deliverable; the row stays coming_soon.
+
+## Session 21 — Game stage becomes the page hero (desktop)
+
+- The play stage was capped at a fixed 520 px and shared its row with a
+  300 px sidebar, so on any desktop monitor the cabinet rendered small and
+  off-center. GamePlayer now scales to `min(74vh, 820px)` at the `lg`
+  breakpoint, GameDetail moves the player above the meta/sidebar grid at
+  full `max-w-7xl` width, and DevGame gets the same treatment.
+- Measured at 1440x900: the stage grew from about 800x520 (left-aligned)
+  to 1232x666 centered, and Hyper Circuit's canvas from about 740x480 to
+  935x608. Mobile and tablet layouts are unchanged; only `lg:` rules were
+  added.
+
+## Session 21 — Brickstorm 🧱 (Track A, brick breaker, Matter.js)
+
+- **Brickstorm** (A, `src/games/brickstorm/`, 7 ach): brick breaker across
+  three boards (Pottery Workshop, Olive Greenhouse, Terracotta Kiln) built
+  from the finished session-20 art pack. Matter.js 0.20.0 (pinned, first
+  physics dependency) drives ball contacts at a fixed 120 Hz substep;
+  everything above it (damage, chains, drops, boards, scoring) is plain
+  seeded state, so the node harness replays the exact simulation. Six brick
+  materials with engine-owned hp (tile/glass 1, plaster/mosaic 2, firebrick
+  3, basalt 4) map hp to the sheet's four damage rows. Eight powerups draw
+  from a reshuffled bag so variety is guaranteed: expand, split, slow, fire,
+  shield, sticky, extra life, x2. Score cap 50,000; `storm-legend` at 12,000.
+- **Paddle deflection is the whole game feel:** the bounce angle comes from
+  hit offset with a 62-degree clamp and a 12 percent minimum deflection,
+  because a dead-center return loops forever (the ace bot proved it by
+  stalling 900 simulated seconds). Matter's velocity unit is px per 1/60 s
+  regardless of substep, so one `toMatterSpeed` helper owns the conversion.
+- **Review pass caught four bugs before browser proof:** the expand powerup
+  grew the visual paddle but never the collision body (fixed with
+  `Matter.Body.scale` plus a harness proof), ball spin and streak frames
+  shared one normalization canvas so the ball shrank at speed, powerup
+  icon/pulse pairs normalized in separate families, and auto-pause fired on
+  the victory screen.
+- **Chroma despill:** the shared soft-fringe rule kept anti-aliased magenta
+  pixels at partial alpha, which read as a purple halo on the dark playfield
+  panel and turned the crack/debris sprites into purple spider legs (banned
+  palette). The Brickstorm slicer now subtracts the magenta component
+  (min(r,b) above g) instead; a playfield readback counts zero
+  magenta-leaning pixels and the crack overlay reads charcoal with ember
+  tips. Worth porting if any other cabinet shows purple fringe on dark
+  ground.
+- **Harness** `node scripts/harness/brickstorm.mjs` (in `test:games`): ace
+  bot full-clears at 15,020 with zero lives lost and all seven slugs; grunt
+  clears board 1; idle bot proves the loss path; two same-seed runs match
+  exactly; edge proofs cover expanded-paddle contact, corner speed, double
+  destroys in one substep, multiball drain, 60 s max-speed containment,
+  serve reset, board handover, chain reset, and the score cap under forced
+  multi.
+- **Headless browser proof** (pane hidden, so rAF was simulated by stepping
+  the real engine/render modules via dynamic import): all seven assets 200,
+  zero console errors, engine step plus full 2x draw 0.33 ms avg / 1.3 ms
+  max over 120 frames, canvas exactly 16:9 at desktop and 375 px mobile
+  with no overflow, and captured frames for all three boards, multiball
+  with expanded paddle, and the board-clear badge moment. Human keyboard
+  play on `/dev/brickstorm` still pending Jeff's approval session.
+- Row seeded via `db/seed-brickstorm.sql` (upsert; a teaser row exists for
+  this slug), publish flip in `db/publish-brickstorm.sql`. Neither has been
+  run against Supabase yet.
+
+## Session 21 — Gem Columns 💎 (Track A, falling-triad puzzle)
+
+- **Gem Columns** (A, `src/games/gem-columns/`, 7 ach): falling-triad puzzle
+  over the session-20 art pack. Three wells (Artisan Foundry, Conservatory,
+  Archaeological Archive), each drawing six of the ten authored gem
+  identities; matches run horizontal, vertical, and both diagonals with
+  cascades. One `Int8Array` grid (3 hidden spawn rows + 13 visible), every
+  rule a pure function (`simulateDrop`, `findMatches`, `applyGravity`) shared
+  verbatim by the harness ace bot, seeded PRNG, framework-free.
+- **Economy depth pass (review finding):** the first build's spread between a
+  bare finish (3,885 floor) and a perfect run (4,140) was 6 percent, which
+  flattens the leaderboard, and gem-legend at 3,500 fired below the victory
+  floor. Now chains pay x3 then x6, cells past three in one step earn +20
+  each, and each well pays a speed bonus of 8/s under a 90 s par capped at
+  600. Ace seed spread became 5,996 to 6,159 and gem-legend sits at 5,000:
+  finishing alone cannot reach it, speed and cascades can.
+- **Render polish from headless frames:** next-triad preview laid out
+  horizontally to match the authored three-slot frame, score digits in ink on
+  the cream plaque band, danger meter clamped at 0 FREE, and the falling
+  piece clipped to a 44 px well-mouth window so spawning gems no longer
+  float over the surround's crown art. The Brickstorm magenta despill is
+  ported; a full-canvas spill scan counts zero magenta-leaning pixels.
+- **Harness** `node scripts/harness/gem-columns.mjs` (in `test:games`):
+  greedy ace victory on six seeds via the engine's own `simulateDrop`,
+  stacker loss path, same-seed determinism, and staged proofs for diagonal
+  matches, overlap counted once plus the big-clear bonus, three-step cascade
+  multipliers, spawn blocking, danger-dancer, and the 60,000 cap.
+- Headless browser proof: assets 200, zero console errors, engine step plus
+  full draw 0.13 ms avg / 0.6 ms max, frames captured for all three wells.
+  Seed row era corrected to Genesis to match `launch-lineup.ts`. Human play
+  on `/dev/gem-columns` still pending approval. Seed/publish SQL not run.
+- Post-playtest redesign from Jeff's feedback: the cabinet widened from
+  720x540 to 960x540 so the canvas fills the stage (210 px HUD bands plus
+  the 540 px environment exactly), the next-triad gems now sit on the
+  frame's measured ring-slot centers (the authored triplet is right of the
+  trimmed bbox center: fractions 0.352/0.636/0.909), the falling piece
+  clips to the well mouth, and the danger state lost its mid-board flashing
+  sprite and "0 FREE" text in favor of column chevrons plus the meter icon.
+
+## Session 21 — Sky Defense 🛡️ (Track A, interception)
+
+- **Sky Defense** (A, `src/games/sky-defense/`, 7 ach): interception game
+  across the Desert Relay, River City, and Mountain Observatory. Eight
+  fictional threat families (the manifest's vocabulary only), an
+  eight-bearing battery, bursts that kill only while growing, and ember
+  mines that chain. The organizing structure is the burst group: one shot
+  opens a group, its burst and every chained detonation credit it, and it
+  settles when nothing in it can still kill, so multi-kill scoring is a
+  property of the data.
+- Region health (100, +30 repair between regions) drives the horizon art
+  tiers at 67/34 and the building damage states; zero regional damage earns
+  `perfect-sky`. Accuracy at or above 80 percent pays 400 per region, so
+  balloon decoys are a real economy. `defense-legend` is 11,500, calibrated
+  against a 24-seed ace floor of 12,610 and a degraded-aim bot that tops
+  out at 11,220: a scraped win cannot reach it.
+- The desert horizon sheet is authored as 3 rows of 360x40, not the 3
+  columns its manifest claims; the corrected rects live in `sprites.ts`
+  (seam analysis confirmed y=40/y=80) and the manifest stays untouched.
+  The launch-lineup alt text for this slug described real weapons and now
+  uses the fictional vocabulary.
+- **Harness** `node scripts/harness/sky-defense.mjs` (in `test:games`):
+  lead-aiming ace wins all six seeds (spread 12,680 to 13,880), a no-lead
+  sloppy bot loses, same-seed determinism, and staged proofs for burst
+  timing, ember chains crediting one group, health tiers, the ammo cycle,
+  zero-damage balloons, the accuracy gate, and the cap.
+- Headless-built; browser play on `/dev/sky-defense` pending, and the
+  burst-growth-versus-skiff-speed lead requirement is the difficulty knob
+  to feel out (`TUNE.burstGrow`).
+- Review pass: props-ui.png diverges from its manifest past cell 4 (six
+  building states, weather shifted one cell, radar chrome where the manifest
+  claims reticle/cursor cells, two decorative leftovers). The slicer now
+  names the true cells, erases six measured stray sub-motifs after keying,
+  damaged bridges and observatories use their own authored frames, and the
+  aiming reticle comes from the effects sheet's ring cell.
+
+## Session 21 — Kickflip City 🛹 (Track A, skate lines, Matter.js)
+
+- **Kickflip City** (A, `src/games/kickflip-city/`, 7 ach): three districts
+  on 75 s clocks, crouch-loaded ollies, flip/grab tricks as authored-pose
+  transforms (the sheet ships four states per facing, not the wishlist
+  twelve), rail grinds with a balance meter, and line scoring that banks on
+  a 1.2 s settle. A bail voids the unbanked line and six seconds.
+- Anti-spam economy from review: plain ollies pay but never grow the
+  multiplier, repeated moves in one line decay to a 0.4 floor, and
+  city-legend recalibrated to 9,000 against ace 11,170..14,185 versus a
+  never-links plodder ceiling of 5,280.
+- Live-review renders: mirror-tiled district panorama (the art has no seam
+  match), a pavement face with dimmed art below instead of a dead ink slab,
+  street life stepped off the play lane, ground-anchored parallax only, and
+  chip-backed clock/line readouts. Three engine findings recorded for the
+  next Matter cabinet: own the forward speed instead of reading vx back,
+  ground from contact normals not bounding boxes, and the normal points at
+  the skater (y -1 on supports).
+
+## Session 21 — The Undervault 🕯️ (Track A flagship, turn-based expedition)
+
+- **The Undervault** (A, `src/games/the-undervault/`, 7 ach): five seeded
+  depths behind their surround art, typography floor with sprite actors,
+  eleven monster families with traits, five gimmick bosses, four playable
+  portraits, relics, statuses, traps, a merchant, and event cards. Turn
+  contract follows Rune & Ruin; a 20-seed harness sweep proves every floor
+  reaches its boss, stair, and items with keys outside their locks.
+- The pack's manifest is wrong in three ways the pixels settled: gutters
+  were punched into a continuous frieze (cells straddle them; the slicer
+  closes gutters and cuts by measured bands), eleven families ship rather
+  than twelve (no vault leech), and seven portraits rather than eight.
+- vault-legend is 6,000: no failed harness run reaches it (best loss
+  3,975) and every clear passes it (lowest win 6,902). Live-review polish:
+  taller monster draws, bigger player token, ink underlay beneath the
+  region-panel captions, and the portrait chooser no longer auto-pauses
+  into an unclickable state when the tab hides.

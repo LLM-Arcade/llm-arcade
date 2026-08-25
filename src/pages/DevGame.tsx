@@ -12,11 +12,11 @@ const DevGame = () => {
   if (!Game) return <NotFound />;
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-8">
+    <div className="mx-auto max-w-7xl px-4 py-6">
       <p className="mb-3 font-mono text-[11px] tracking-widest text-muted-foreground">
         DEV PLAYTEST · {slug}
       </p>
-      <div className="relative h-[420px] overflow-hidden rounded-2xl bg-foreground ring-1 ring-foreground/10 sm:h-[520px]">
+      <div className="relative h-[420px] overflow-hidden rounded-2xl bg-foreground ring-1 ring-foreground/10 sm:h-[520px] lg:h-[min(78vh,860px)]">
         <Suspense fallback={null}>
           <Game
             onScore={(payload) => console.log("[dev] score", payload)}

@@ -198,7 +198,11 @@ const GamePlayer = ({ game }: { game: Game }) => {
     }
   };
 
-  const heightClass = isFullscreen ? "h-full" : "h-[420px] sm:h-[520px]";
+  // Desktop gets a viewport-scaled stage so the cabinet is the page's hero
+  // instead of a fixed 520px box on every monitor.
+  const heightClass = isFullscreen
+    ? "h-full"
+    : "h-[420px] sm:h-[520px] lg:h-[min(74vh,820px)]";
 
   // ---- Coming soon: poster only ----
   if (game.status !== "published") {
