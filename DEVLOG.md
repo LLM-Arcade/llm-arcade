@@ -809,3 +809,22 @@ until the user signs in on llmarcade.fun in the driven browser.
 - Kept remote Git, Vercel, and Supabase work behind Jeff's local approval. The
   pickup prompt stops before commit, push, PR, merge, deployment, or database
   writes and requests one next approval gate.
+
+## Session 22: Lastwatch GDD (phase 1 of the 3D flagship)
+
+- Wrote `docs/LASTWATCH-GDD.md`, the complete phase 1 design for the 3D
+  co-op horde-defense flagship: opening crawl and banter pools, keep
+  layout with a top-down diagram, three full class kits with numbers,
+  six Gloam types plus three milestone bosses, wave budgets through
+  wave 20 with an endless formula, the valor economy and Watch Ledger
+  price tables, the partner AI utility spec with four harness-provable
+  staged tests, ten achievements, HUD sketches, a layered WebAudio
+  music plan, and the integrated-graphics perf budget.
+- Marked every tunable threshold **(cal)**: the harness measures real
+  populations before any of them ship. The casual-bot 90-second floor
+  from `GAME-QUALITY-HANDOFF.md` is written in as a phase 2 gate, not
+  an aspiration.
+- Name candidates proposed (Lastwatch recommended, plus The Ninth Hold,
+  Emberhold, The Last Levy). The pick is Jeff's. No game code exists
+  yet by design: phase 2 (sim core + harness) starts only on Jeff's
+  approval of the GDD.
