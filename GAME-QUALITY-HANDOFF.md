@@ -63,6 +63,9 @@ development handoffs and governs the polish lane.
    generates from control points; add generated circuit variations (seeded
    control-point loops through the existing validator) and a cup rotation.
    Scenery can be palette-flat; the art rule allows level geometry fills.
+   **Ruling 2026-08-24: the difficulty stays exactly as shipped.** Jeff
+   called it good as is. Do not soften the shield economy, the rails, or
+   the blowout DNF; more tracks yes, easier tracks no.
 3. **Endless review: done for Kickflip, Brickstorm, Gem Columns, and Sky
    Defense.** The Undervault stays a bounded expedition by design. Any
    future cabinet follows the same pattern: loop with a ramp, run ends on

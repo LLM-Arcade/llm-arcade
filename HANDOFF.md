@@ -10,15 +10,39 @@ and Google OAuth origins use it.
 
 ## Current state
 
-**Local art and game-development handoff (session 20):**
-`feature/catalog-art-local` contains uncommitted replacement art for Hyper
-Circuit, Run 'n Gunner, and Trailbound plus wire-ready packs for Brickstorm,
-Gem Columns, Sky Defense, Kickflip City, and The Undervault. All eight scoped
-games pass the 1 MiB art gate. The two deterministic cabinet harnesses,
-Trailbound browser and asset probes, and full `pnpm run ci` gate are green.
-Nothing from this local branch has been pushed,
-merged, deployed, or published. `GAME-DEVELOPMENT-HANDOFF.md` defines the
-one-game worktree procedure and starts implementation with Brickstorm.
+**Sessions 21 (2026-08-24): five cabinets built, four made endless, all
+local.** Every branch is cut from dev and committed locally; NOTHING from
+these sessions has been pushed, merged remotely, deployed, or written to
+Supabase. The single dev server runs the `local-preview` merge of every
+branch on port 8080; `/dev` lists every cabinet in dev builds.
+
+| Branch | Contents |
+|---|---|
+| `feature/catalog-art-local` | Session-20 art for 8 games, handoff docs, Hyper car-scale fix |
+| `feature/brickstorm-game` | Brickstorm cabinet, endless loops |
+| `feature/gem-columns-game` | Gem Columns cabinet, endless loops |
+| `feature/sky-defense-game` | Sky Defense cabinet, endless loops |
+| `feature/kickflip-city-game` | Kickflip City cabinet, endless laps, fairness pass |
+| `feature/the-undervault-game` | The Undervault cabinet (bounded by design) |
+| `feature/game-stage-layout` | Desktop hero stage, /dev playtest floor |
+| `local-preview` | Throwaway merge of all of the above for the one dev server |
+
+The quality bar and punch list live in `GAME-QUALITY-HANDOFF.md`. Jeff's
+ruling: Hyper Circuit difficulty stays exactly as shipped.
+
+**Launch math (spec section 6: 30 games at launch, 32-listed baseline).**
+Built: 15 (9 published in production, 5 local awaiting approval, TypeStorm
+held for the upload-pipeline test). NOT built: ASCIIBURG and Dead Letter
+Office (the two remaining flagships), Invader Wave, Lightcycle Duel,
+Jungle Plunge, River Gunner, Pill Panic, Boxing Legend, Panel Pop, Street
+Justice, Critter Rescue, Minefield Pro, Tycoon Terminal, Shadow Protocol,
+Fret Fury, Merge 2048, Road Hopper, Stack!, Wordbit. None of those has an
+art pack yet; the art production run covered only the current 14.
+
+**The release lane is entirely pending Jeff's approvals:** playtest each
+local cabinet, per-game PRs into dev, release PR to prod, Vercel deploy,
+then seed/publish SQL per game. The six session-11-to-15 cabinets still
+have no human playtest either.
 
 **Branch and release contract (session 19):** `dev` is the default
 integration branch, `prod` is the only production release branch, and
