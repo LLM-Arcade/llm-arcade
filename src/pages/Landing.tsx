@@ -98,21 +98,21 @@ const Landing = () => {
               ))
             : playable.map((game, i) => <GameTile key={game.id} game={game} index={i} />)}
 
-          {/* Playtest tile */}
+          {/* Builder tile */}
           <Link
-            to="/playtest"
+            to="/guides"
             className="group fade-up relative flex flex-col justify-between overflow-hidden rounded-2xl bg-olive p-5 shadow-sm transition-all duration-150 hover:-translate-y-1 hover:shadow-lg"
             style={{ animationDelay: "600ms" }}
           >
             <span className="font-mono text-[10px] tracking-widest text-background/80">
-              LIMITED SEATS
+              BUILD A CABINET
             </span>
             <div>
               <p className="font-display text-xl font-bold leading-snug text-background">
-                Play everything before launch
+                Make a game with AI and put it on this floor
               </p>
               <p className="mt-2 flex items-center gap-1.5 text-sm font-medium text-background/85">
-                Become a playtester
+                Read the creator guides
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
               </p>
             </div>
