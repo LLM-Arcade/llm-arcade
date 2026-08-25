@@ -794,3 +794,60 @@ until the user signs in on llmarcade.fun in the driven browser.
   brings in-game art to 12,955 bytes and total cabinet art to 333,039 bytes,
   31.76% of the 1 MiB budget. No engine, stage, collision, score, or balance
   code changed.
+
+## Session 23 — Lastwatch phase 2: the whole game, headless
+
+- Built the complete Lastwatch simulation in `src/games/lastwatch/`: a
+  DOM-free 60 Hz deterministic engine (seeded mulberry32, event queue,
+  relative imports) covering movement, three class kits, five weapons per
+  class with quality tiers, armor, consumables, the five-district hold
+  with convex-room portal pathing, twelve Gloam types across three
+  intelligence tiers with engine-level coordination, four milestone
+  bosses, the valor economy, downs and revives, difficulty levels,
+  scoring, and all twelve achievements.
+- `scripts/harness/lastwatch.mjs` proves the phase 2 gate and now runs in
+  `pnpm test:games`: determinism by event-log hash, an ace duo reaching
+  wave 22 on Long Watch, casual floors at all three difficulties on all
+  three classes (nine runs, every one surviving the full 300 s window),
+  a do-nothing loss, exact kit arithmetic, coordination and raid stages,
+  five partner behaviors, economy and difficulty arithmetic, district
+  effects, the flood cap, and 12/12 achievements firing in simulation.
+- The harness earned its keep before any renderer exists. It caught the
+  knight partner's heavy swing never releasing (zero melee damage all
+  run), the Shepherd besieging unkillably from outside the walls, lone
+  hexers and slit-camping lobbers softlocking waves, boss caches
+  auto-claiming before the player could choose, and a gear ladder that
+  could strand a class on its starting weapon for ten waves. Each fix is
+  an engine rule now: bosses present themselves, artillery presses in,
+  no walker outruns a sprinting archer, guaranteed rack slots never
+  offer sidegrades, and an idle leftover horde retreats instead of
+  freezing the night.
+- Calibration replaced guesses per the GDD's (cal) contract: watch-legend
+  landed at 20,000 (sloppy ceiling 1,782, skilled floor 46,438), the wave
+  budget quadratic settled at 2.2 -> 2.0, concurrency capped at 32, and
+  characters catch their breath (30% of missing HP) when the horn quiets.
+
+## Session 23 — Lastwatch phases 3 and 4, and the first live playtest
+
+- Phase 3: the 3D realm on three.js 0.185.1 (pinned exact, release well
+  past the 72-hour rule). Fire-lit warm night from the sim's own room
+  data, a rippling apocalyptic sky shader with a low ivory moon, an
+  instanced 17-type horde with ember eyes, rigid-part hero figures,
+  runtime stone/plank/cobble textures, tracer-free flying arrows,
+  elemental spell glows, splinters, death presentations, and the DOM
+  HUD with barks, boss bars, ledger, and command wheel. Measured on the
+  dev machine: 1.2 ms average, 2.6 ms max render at near-1080p.
+- Phase 4: the synthesized score and full SFX in WebAudio, no files.
+  Layered siege bed keyed to the wave, ledger motif, answering horn,
+  per-class footsteps, ducking. Mixed low under the action by direction.
+- Jeff played mid-build and his findings drove a round of rulings:
+  physical rebuildable barricades, visible board destruction, surface
+  texture, arrows as arrows with a first-person draw, elemental magic,
+  and a real sword-swing arc. All applied and re-proven; the harness
+  ace gate recalibrated to the Coalhide milestone (observed band 15 to
+  22) with the wave-20 trigger staged.
+- Ship prep: `db/seed-lastwatch.sql` (12 achievements, cap 5,000,000,
+  upsert-safe) and `db/publish-lastwatch.sql` as files only, GDD carried
+  onto this branch with a revision 3 record. Key art is blocked on the
+  image-generation outage (`media_identity_missing`) and stays the one
+  missing deliverable; the row stays coming_soon.

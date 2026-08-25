@@ -22,4 +22,6 @@ export const gameRegistry: Record<
   "hyper-circuit": lazy(() => import("./hyper-circuit/HyperCircuit")),
   // Stand-in art as well; coming_soon until its sheets are generated.
   "run-n-gunner": lazy(() => import("./run-n-gunner/RunNGunner")),
+  // The 3D flagship: co-op horde defense, keyboard only.
+  lastwatch: lazy(() => import("./lastwatch/Lastwatch")),
 };
