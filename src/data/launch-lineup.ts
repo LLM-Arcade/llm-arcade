@@ -35,7 +35,6 @@ export interface RevealedGame {
   featured?: boolean;
 }
 
-export const TOTAL_LAUNCH_GAMES = 30;
 
 export const LAUNCH_LINEUP: RevealedGame[] = [
   {

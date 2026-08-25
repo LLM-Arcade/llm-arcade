@@ -3,7 +3,6 @@ import SiteHeader from "@/components/layout/SiteHeader";
 import SiteFooter from "@/components/layout/SiteFooter";
 import GameTile from "@/components/arcade/GameTile";
 import { useGames } from "@/hooks/useGames";
-import { TOTAL_LAUNCH_GAMES } from "@/data/launch-lineup";
 
 const Games = () => {
   const { data: games, isLoading } = useGames();
@@ -28,7 +27,7 @@ const Games = () => {
             </p>
           </div>
           <span className="font-mono text-xs tracking-widest text-muted-foreground">
-            {playable} PLAYABLE · {games?.length ?? 0} OF {TOTAL_LAUNCH_GAMES} REVEALED
+            {playable} PLAYABLE · MORE ON THE WAY
           </span>
         </div>
 
