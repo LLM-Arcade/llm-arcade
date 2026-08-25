@@ -10,6 +10,13 @@ and Google OAuth origins use it.
 
 ## Current state
 
+**Session 23: Lastwatch, the 3D flagship, is playable end to end on
+`feature/lastwatch-game`** (engine + harness + three.js realm + synth
+audio + live playtest round one). `/dev/lastwatch` on the worktree's dev
+server; `pnpm test:games` now includes its harness. Blocked on: key art
+(image generation down) and Jeff's final playtest verdict before the PR
+to dev. Seed and publish SQL are files under `db/`, unrun.
+
 **Branch and release contract (session 19):** `dev` is the default
 integration branch, `prod` is the only production release branch, and
 legacy `main` is frozen. Cabinet work uses one

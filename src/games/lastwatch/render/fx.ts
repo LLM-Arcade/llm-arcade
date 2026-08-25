@@ -257,6 +257,17 @@ export class FxView {
     }
   }
 
+  // A death is a presentation: the hide gutters out as ember light with a
+  // dark bloom, scaled to the body that fell.
+  deathBurst(x: number, h: number, z: number, size: number) {
+    this.burst(x, h, z, 0x3a3028, 3, size * 1.2);
+    this.burst(x, h + 0.3, z, ELEMENT_COLOR.fire, 4, size * 0.7);
+  }
+
+  hitSpark(x: number, h: number, z: number) {
+    this.puff(x, h, z, ELEMENT_COLOR.fire, 0.35, 0.14, 0.6);
+  }
+
   private splinterBurst(x: number, h: number, z: number) {
     for (let i = 0; i < 5; i++) {
       const s = this.splinters[this.splinterCursor++ % SPLINTER_MAX];

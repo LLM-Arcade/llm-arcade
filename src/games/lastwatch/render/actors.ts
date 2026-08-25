@@ -341,10 +341,16 @@ const HORDE_TYPES: GloamType[] = [
   "cracktusk", "shepherd", "coalhide", "packlord",
 ];
 
+export interface HordeFxHooks {
+  death: (x: number, h: number, z: number, size: number) => void;
+  hit: (x: number, h: number, z: number) => void;
+}
+
 export class HordeView {
   group = new THREE.Group();
   private meshes = new Map<GloamType, THREE.InstancedMesh>();
   private shadows: THREE.InstancedMesh;
+  private tracked = new Map<number, { x: number; y: number; elev: number; hp: number; radius: number; height: number }>();
   private m = new THREE.Matrix4();
   private q = new THREE.Quaternion();
   private v = new THREE.Vector3();
@@ -367,9 +373,32 @@ export class HordeView {
     this.group.add(this.shadows);
   }
 
-  update(eng: Engine, time: number) {
+  update(eng: Engine, time: number, fx?: HordeFxHooks) {
     const counts = new Map<GloamType, number>();
     let shadowCount = 0;
+    const seen = new Set<number>();
+    for (const u of eng.gloam) {
+      seen.add(u.id);
+      const prev = this.tracked.get(u.id);
+      const elevNow = elevAt(ROOMS[u.room], u.y);
+      if (prev && fx && u.hp < prev.hp - 0.5) {
+        fx.hit(u.x, elevNow + u.height * 0.6, -u.y);
+      }
+      this.tracked.set(u.id, {
+        x: u.x,
+        y: u.y,
+        elev: elevNow,
+        hp: u.hp,
+        radius: u.radius,
+        height: u.height,
+      });
+    }
+    for (const [id, rec] of this.tracked) {
+      if (!seen.has(id)) {
+        fx?.death(rec.x, rec.elev + rec.height * 0.4, -rec.y, rec.radius + 0.4);
+        this.tracked.delete(id);
+      }
+    }
     for (const u of eng.gloam) {
       const mesh = this.meshes.get(u.type);
       if (!mesh) continue;

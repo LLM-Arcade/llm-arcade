@@ -101,7 +101,10 @@ export class RenderRoot {
   frame(eng: Engine, dt: number, attract: boolean): number {
     this.time += dt;
     this.hold.update(eng, this.time);
-    this.horde.update(eng, this.time);
+    this.horde.update(eng, this.time, {
+      death: (x, h, z, size) => this.fx.deathBurst(x, h, z, size),
+      hit: (x, h, z) => this.fx.hitSpark(x, h, z),
+    });
     this.fx.update(eng, this.time);
     this.heroes[0].update(eng.chars[0], this.time, dt, eng.time);
     this.heroes[1].update(eng.chars[1], this.time, dt, eng.time);
