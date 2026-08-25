@@ -22,4 +22,5 @@ export const gameRegistry: Record<
   "hyper-circuit": lazy(() => import("./hyper-circuit/HyperCircuit")),
   // Stand-in art as well; coming_soon until its sheets are generated.
   "run-n-gunner": lazy(() => import("./run-n-gunner/RunNGunner")),
+  "kickflip-city": lazy(() => import("./kickflip-city/KickflipCity")),
 };
