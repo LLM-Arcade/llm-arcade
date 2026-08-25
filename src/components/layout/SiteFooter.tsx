@@ -18,6 +18,9 @@ const SiteFooter = () => (
         <Link to="/faq" className="transition-colors hover:text-foreground">
           FAQ
         </Link>
+        <Link to="/guides" className="transition-colors hover:text-foreground">
+          Guides
+        </Link>
         <Link to="/playtest" className="transition-colors hover:text-foreground">
           Playtest
         </Link>
