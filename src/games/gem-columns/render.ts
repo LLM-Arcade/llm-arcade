@@ -189,9 +189,9 @@ export const draw = (
     ctx.beginPath();
     ctx.rect(
       boardX0 - BOARD_PAD,
-      boardY0 - 44,
+      boardY0 - 18,
       BOARD_W + BOARD_PAD * 2,
-      BOARD_H + BOARD_PAD + 44,
+      BOARD_H + BOARD_PAD + 18,
     );
     ctx.clip();
     const state =
