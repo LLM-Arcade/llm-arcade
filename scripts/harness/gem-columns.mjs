@@ -155,7 +155,8 @@ const simulate = (drive, label, seed = TUNE.seed) => {
   let prevGems = 0;
   let seenLevels = 0;
 
-  while (eng.phase !== "gameover" && eng.phase !== "victory" && steps < STEP_BUDGET) {
+  // Endless game: bots stop after one full loop unless they die first.
+  while (eng.phase !== "gameover" && eng.loop < 1 && steps < STEP_BUDGET) {
     drive(eng, st);
     eng.update(DT);
     steps++;
@@ -203,20 +204,13 @@ const simulate = (drive, label, seed = TUNE.seed) => {
 };
 
 const ace = simulate(driveAce, "ace bot (greedy placement search)");
-check(ace.eng.phase === "victory", "ace clears all three levels and reaches victory");
+check(ace.eng.levelsCleared === 3, "ace clears all three wells of the first loop");
+check(ace.achievements.has("archive-clear"), "archive-clear fires on the first full loop");
 check(ace.steps < STEP_BUDGET, "ace finishes inside the 20-minute step budget");
 check(ace.eng.score >= TUNE.legendScore, `ace scores at least ${TUNE.legendScore}`);
 check(ace.capOk, "score never exceeds the cap (ace)");
-check(ace.stats !== null, "gameover stats emitted (ace)");
-if (ace.stats) {
-  check(
-    ace.stats.levels_cleared === LEVELS.length &&
-      ace.stats.gems_cleared > 0 &&
-      ace.stats.max_chain > 0 &&
-      ace.stats.best_cascade_gems > 0,
-    "gameover stats carry levels_cleared, gems_cleared, max_chain, best_cascade_gems",
-  );
-}
+// Endless: the ace stops at the loop boundary without a gameover, so the
+// stats contract is proven on the stacker's loss below.
 for (const slug of ["foundry-clear", "conservatory-clear", "archive-clear"]) {
   check(ace.achievements.has(slug), `${slug} fires in the ace run`);
 }
@@ -226,6 +220,55 @@ check(stacker.eng.phase === "gameover", "stacker bot reaches gameover");
 check(stacker.steps < STEP_BUDGET, "stacker bot dies inside the step budget");
 check(stacker.eng.levelsCleared === 0, "stacker bot never clears a level");
 check(stacker.stats !== null, "gameover stats emitted (stacker)");
+if (stacker.stats) {
+  check(
+    typeof stacker.stats.levels_cleared === "number" &&
+      typeof stacker.stats.loops === "number" &&
+      typeof stacker.stats.gems_cleared === "number",
+    "gameover stats carry levels_cleared, loops, gems_cleared",
+  );
+}
+
+// Quality bar: a casual puzzler flat-stacks the lowest column with slow
+// reactions and no cycling. They must get a real run, not a fast top-out.
+const driveCasual = (eng, st) => {
+  eng.input.dir = 0;
+  eng.input.cycle = false;
+  eng.input.softDrop = false;
+  if (eng.phase !== "falling" || !eng.piece) return;
+  if (st.plannedFor !== eng.piecesSpawned) {
+    st.plannedFor = eng.piecesSpawned;
+    let best = 0;
+    let bestH = Infinity;
+    for (let col = 0; col < COLS; col++) {
+      let h = 0;
+      for (let row = 0; row < ROWS; row++) {
+        if (eng.grid[cellAt(col, row)] !== EMPTY) {
+          h = ROWS - row;
+          break;
+        }
+      }
+      if (h < bestH) {
+        bestH = h;
+        best = col;
+      }
+    }
+    st.plan = { col: best };
+    st.wait = 30; // half a second of dithering before they move
+  }
+  if (st.wait > 0) {
+    st.wait--;
+    return;
+  }
+  if (eng.piece.col !== st.plan.col) {
+    eng.input.dir = st.plan.col < eng.piece.col ? -1 : 1;
+  }
+};
+
+const casual = simulate(driveCasual, "casual bot (flat-stacks, never cycles)");
+check(casual.eng.time >= 60, "a casual player survives at least 60 seconds");
+check(casual.eng.gemsCleared > 0, "a casual player clears gems by accident");
+
 
 const repeat = simulate(driveAce, "ace bot rerun (same seed)");
 check(
@@ -414,7 +457,7 @@ console.log("\nace across five more seeds");
 const spread = [];
 for (const seed of [0x1f3a5c, 0x2b7e91, 0x44c0d3, 0x5ae217, 0x7d9b4f]) {
   const run = simulate(driveAce, `ace bot (seed 0x${seed.toString(16)})`, seed);
-  check(run.eng.phase === "victory", `ace reaches victory on seed 0x${seed.toString(16)}`);
+  check(run.eng.levelsCleared === 3, `ace clears the loop on seed 0x${seed.toString(16)}`);
   check(
     run.eng.score >= TUNE.legendScore,
     `ace clears the legend score on seed 0x${seed.toString(16)}`,
