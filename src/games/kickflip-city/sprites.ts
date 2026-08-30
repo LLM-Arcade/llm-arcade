@@ -2,34 +2,44 @@
 // the despill chromaKey the last two cabinets use. The browser Image loader and
 // the canvas key a GIF exactly as they key a PNG.
 //
-// Two cutting modes. A family (a skater's rolling poses, a street-life actor's
-// three states) shares one crop rect so a frame swap cannot shift the art on
-// its anchor. Everything else is trimmed to its own content.
+// The transparent motion and crowd sheets keep their full normalized cells;
+// collision art and effects are trimmed to their own content.
 //
-// Two things in this pack need handling the grid alone does not describe, both
-// measured off the pixels rather than read off the manifest:
-//
-//  1. Most cells carry a narrow sliver of the previous cell's art against their
+// Most cells carry a narrow sliver of the previous cell's art against their
 //     left inset. A trim that swallowed it would drag a neighbour into every
 //     sprite, so a leading run that starts on the inset is dropped whenever real
 //     content follows it.
-//  2. parallax-weather.gif has a bright one-to-three pixel frame drawn on the
-//     magenta inset of every cell. It is not magenta enough for the key and not
-//     art, so those cells are cut on a fixed interior rect instead of trimmed.
 
-import type { GrindKind, ObstacleKind, PropKind } from "./course.ts";
+import { BACKDROPS, type GrindKind, type ObstacleKind, type PropKind } from "./course.ts";
 
 const ASSETS = "/assets/games/kickflip-city";
 
-export const SKATER_STATES = ["push", "coast", "ollie"] as const;
-export type SkaterState = (typeof SKATER_STATES)[number];
+export const MOTION_STATES = [
+  "coast",
+  "push-plant",
+  "push-extend",
+  "push-recover",
+  "crouch",
+  "pop",
+  "ollie-rise",
+  "ollie-apex",
+  "kickflip-start",
+  "kickflip-under",
+  "heelflip-under",
+  "catch",
+  "grab",
+  "grind",
+  "bail-air",
+  "bail-ground",
+] as const;
+export type MotionState = (typeof MOTION_STATES)[number];
 
 export type PropArtName = GrindKind | ObstacleKind | PropKind | "curb-ramp" | "stairs";
 
 /**
  * props-obstacles.gif rows 1 and 3, in sheet order. Row 2 holds worn variants
- * of row 1 that this cabinet never draws. Verified against the pixels: the
- * manifest's row order is correct for both rows.
+ * of row 1. Verified against the pixels: the manifest's row order is correct
+ * for all three rows.
  */
 const PROP_ROW_1: PropArtName[] = [
   "rail",
@@ -84,22 +94,8 @@ export const UI_NAMES = [
 ] as const;
 export type UiName = (typeof UI_NAMES)[number];
 
-/**
- * The grind cells draw the rail under the skater and put the board contact
- * about 13 px higher in the cell than the rolling poses do. The rail is erased
- * from this row down so the course's own rail is the only one on screen, and
- * the erase line becomes the pose's board contact.
- */
-const GRIND_ERASE: Record<number, number> = { 3: 62, 7: 58 };
-
-/** parallax-weather cells are cut on this inset to clear the drawn frame. */
-const PARALLAX_INSET = 7;
-
 /** Authored magenta inset on every other sheet. */
 const CELL_INSET = 4;
-
-/** Cell size of skaters.gif; the renderer scales a pose against it. */
-export const SKATER_CELL = 80;
 
 interface Rect {
   x: number;
@@ -108,25 +104,22 @@ interface Rect {
   h: number;
 }
 
-export interface SkaterArt {
-  /** [facing][state], facing 0 is left and 1 is right */
-  rolling: Record<SkaterState, HTMLCanvasElement>[];
-  grind: HTMLCanvasElement[];
+export interface SkaterMotionArt {
+  frames: Record<MotionState, HTMLCanvasElement>;
+  /** Transparent space below the pose, as a fraction of its source cell. */
+  bottomInsets: Record<MotionState, number>;
 }
 
 export interface KickflipSprites {
-  /** One entry per authored skater, indexed by district. */
-  skaters: SkaterArt[];
-  /** [family][idle, move, reactive] */
-  street: HTMLCanvasElement[][];
-  props: Record<PropArtName, HTMLCanvasElement>;
+  /** Sixteen authored motion poses per district skater. */
+  skaterMotion: SkaterMotionArt[];
+  /** [group][idle, anticipate, cheer, celebrate] */
+  crowd: HTMLCanvasElement[][];
+  /** Clean and worn collision-backed prop sets. */
+  propSets: Record<PropArtName, HTMLCanvasElement>[];
   fx: Record<FxArtName, HTMLCanvasElement>;
   ui: Record<UiName, HTMLCanvasElement>;
-  /** parallax-weather row 1, the six silhouette tiles */
-  silhouettes: HTMLCanvasElement[];
-  /** parallax-weather row 2, the six weather overlays */
-  weather: HTMLCanvasElement[];
-  /** One opaque district panorama per district. */
+  /** Twelve opaque panoramas shared by the twenty-four districts. */
   districts: HTMLImageElement[];
 }
 
@@ -259,20 +252,6 @@ const cut = (sheet: Sheet, index: number, crop: Rect): HTMLCanvasElement => {
   return out;
 };
 
-/** One shared crop across the listed cells, so their geometry stays locked. */
-const cutFamily = (sheet: Sheet, indexes: number[]): HTMLCanvasElement[] => {
-  let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
-  for (const i of indexes) {
-    const b = bounds(sheet, i);
-    x0 = Math.min(x0, b.x);
-    y0 = Math.min(y0, b.y);
-    x1 = Math.max(x1, b.x + b.w);
-    y1 = Math.max(y1, b.y + b.h);
-  }
-  const crop = { x: x0, y: y0, w: x1 - x0, h: y1 - y0 };
-  return indexes.map((i) => cut(sheet, i, crop));
-};
-
 /** Each cell trimmed to its own art. */
 const cutEach = (sheet: Sheet): HTMLCanvasElement[] =>
   sheet.cells.map((_, i) => cut(sheet, i, bounds(sheet, i)));
@@ -283,77 +262,74 @@ const cutInterior = (sheet: Sheet, inset: number): HTMLCanvasElement[] =>
     cut(sheet, i, { x: inset, y: inset, w: cell.w - inset * 2, h: cell.h - inset * 2 }),
   );
 
-const byName = <T extends string>(names: readonly T[], frames: HTMLCanvasElement[]) => {
-  const out = {} as Record<T, HTMLCanvasElement>;
+const byName = <T extends string, Value>(names: readonly T[], values: Value[]) => {
+  const out = {} as Record<T, Value>;
   names.forEach((name, i) => {
-    out[name] = frames[i];
+    out[name] = values[i];
   });
   return out;
 };
 
 export const loadSprites = async (): Promise<KickflipSprites> => {
-  const [skaterImg, streetImg, propImg, fxImg, parallaxImg, civic, market, roofs] =
+  const [
+    civicMotionImg,
+    marketMotionImg,
+    warehouseMotionImg,
+    crowdMotionImg,
+    propImg,
+    fxImg,
+    ...districts
+  ] =
     await Promise.all([
-      loadImage(`${ASSETS}/skaters.gif`),
-      loadImage(`${ASSETS}/street-life.gif`),
+      loadImage(`${ASSETS}/skater-motion-civic.png`),
+      loadImage(`${ASSETS}/skater-motion-market.png`),
+      loadImage(`${ASSETS}/skater-motion-warehouse.png`),
+      loadImage(`${ASSETS}/crowd-motion.png`),
       loadImage(`${ASSETS}/props-obstacles.gif`),
       loadImage(`${ASSETS}/pickups-fx-ui.gif`),
-      loadImage(`${ASSETS}/parallax-weather.gif`),
-      loadImage(`${ASSETS}/district-civic-steps.jpg`),
-      loadImage(`${ASSETS}/district-market-underpass.jpg`),
-      loadImage(`${ASSETS}/district-warehouse-roofs.jpg`),
+      ...BACKDROPS.map((file) => loadImage(`${ASSETS}/${file}`)),
     ]);
 
-  const skaterSheet = keyedSheet(skaterImg, "skaters.gif", 3, 8);
-  for (const [row, from] of Object.entries(GRIND_ERASE)) {
-    const first = skaterSheet.cells[Number(row) * skaterSheet.cols];
-    skaterSheet.ctx.clearRect(0, first.y + from, skaterImg.width, first.h - from);
-  }
+  const skaterMotion = [civicMotionImg, marketMotionImg, warehouseMotionImg].map(
+    (image, district) => {
+      const sheet = keyedSheet(image, `skater-motion-${district}.png`, 4, 4);
+      const bottomInsets = sheet.cells.map((cell, index) => {
+        const art = bounds(sheet, index);
+        return (cell.h - (art.y + art.h)) / cell.h;
+      });
+      return {
+        frames: byName(MOTION_STATES, cutInterior(sheet, 0)),
+        bottomInsets: byName(MOTION_STATES, bottomInsets),
+      };
+    },
+  );
 
-  const skaters: SkaterArt[] = [];
-  for (let column = 0; column < 3; column++) {
-    const at = (row: number) => row * skaterSheet.cols + column;
-    // Push, coast and ollie share one crop per skater so a state or facing swap
-    // holds the board still. The grind pose is its own two-cell family because
-    // its board contact sits on the erased rail line, not on the wheels.
-    const rolling = cutFamily(skaterSheet, [at(0), at(1), at(2), at(4), at(5), at(6)]);
-    const grind = cutFamily(skaterSheet, [at(3), at(7)]);
-    skaters.push({
-      rolling: [
-        { push: rolling[0], coast: rolling[1], ollie: rolling[2] },
-        { push: rolling[3], coast: rolling[4], ollie: rolling[5] },
-      ],
-      grind,
-    });
-  }
-
-  const streetSheet = keyedSheet(streetImg, "street-life.gif", 8, 3);
-  const street: HTMLCanvasElement[][] = [];
-  for (let column = 0; column < 8; column++) {
-    street.push(cutFamily(streetSheet, [column, 8 + column, 16 + column]));
+  const crowdFrames = cutInterior(keyedSheet(crowdMotionImg, "crowd-motion.png", 4, 4), 0);
+  const crowd: HTMLCanvasElement[][] = [];
+  for (let column = 0; column < 4; column++) {
+    crowd.push([crowdFrames[column], crowdFrames[4 + column], crowdFrames[8 + column], crowdFrames[12 + column]]);
   }
 
   const propFrames = cutEach(keyedSheet(propImg, "props-obstacles.gif", 8, 3));
-  const props = {} as Record<PropArtName, HTMLCanvasElement>;
-  PROP_ROW_1.forEach((name, i) => {
-    props[name] = propFrames[i];
-  });
-  PROP_ROW_3.forEach((name, i) => {
-    props[name] = propFrames[16 + i];
+  const propSets = [0, 8].map((rowStart) => {
+    const props = {} as Record<PropArtName, HTMLCanvasElement>;
+    PROP_ROW_1.forEach((name, i) => {
+      props[name] = propFrames[rowStart + i];
+    });
+    PROP_ROW_3.forEach((name, i) => {
+      props[name] = propFrames[16 + i];
+    });
+    return props;
   });
 
   const fxFrames = cutEach(keyedSheet(fxImg, "pickups-fx-ui.gif", 8, 3));
-  const parallaxSheet = keyedSheet(parallaxImg, "parallax-weather.gif", 6, 2);
-  const parallaxFrames = cutInterior(parallaxSheet, PARALLAX_INSET);
 
   return {
-    skaters,
-    street,
-    props,
+    skaterMotion,
+    crowd,
+    propSets,
     fx: byName(FX_NAMES, fxFrames.slice(8, 16)),
     ui: byName(UI_NAMES, fxFrames.slice(16, 24)),
-    silhouettes: parallaxFrames.slice(0, 6),
-    weather: parallaxFrames.slice(6, 12),
-    districts: [civic, market, roofs],
+    districts,
   };
 };

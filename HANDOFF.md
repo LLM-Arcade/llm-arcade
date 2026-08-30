@@ -361,6 +361,50 @@ and boss leg/cannon recoil. A 120-frame move-and-fire stress sample measured
 6.88 ms average / 7.4 ms p95 / 7.7 ms max with zero frames over 25 ms. The
 canvas holds its exact 16:9 ratio at desktop and 390 px mobile widths.
 
+## Kickflip City animation pass (local feature branch)
+
+`src/games/kickflip-city/` on `feature/kickflip-city-game` now uses three
+generated 16-pose skater sheets and one 16-frame audience sheet. The renderer
+maps push cadence, crouch, pop, ollie rise and apex, kickflip, heelflip, catch,
+grab, grind, and two bail stages to engine state. Bail art separates the rider
+from the board instead of rotating one combined sprite. A held push now advances
+through one engine-owned 880 ms stroke. The old elapsed-time and speed formula
+produced 55 pose changes in one second late in a run; the regression proof and
+live browser trace now measure four.
+
+Each skater frame keeps its normalized 128 px cell for stable pose changes, but
+the loader measures its keyed bottom edge and passes the transparent inset to
+the renderer. This makes the actual board or wheel pixel—not the empty cell
+edge—the physics contact. Live probes across Civic, Market, and Warehouse show
+effectively zero contact error; Market previously rendered 21.875 px too high.
+
+The game now has twelve gameplay-safe 640 by 360 panoramas and twenty-four
+playable spots. Civic, market, warehouse, harbor, neon alley, canal, metro,
+desert motel, rain arcade, observatory, foundry, and festival scenes each have
+two routes. Paired routes change seeded chunk order, target length, backdrop
+phase, lane palette, crowd density, and clean or worn collision art. Course
+lengths range from 3,400 to 4,700 px before chunk overrun. The opaque ride lane
+still blocks background architecture from reading as playable geometry.
+
+Crowds now start beyond the spawn corridor and range from five to ten groups
+based on the spot. All spectators remain presentation-only and react to trick
+outcomes. The game cycles the three authored skaters across the tour instead of
+using the warehouse rider for every later spot.
+
+The full Kickflip City gameplay art is 563,374 bytes. With key art, the cabinet
+totals 602,633 bytes, or 588.5 KiB, and remains below the 1 MiB limit. The focused
+proof is `node scripts/harness/kickflip-city.mjs`; it runs all twenty-four spots
+across six seeds, checks every backdrop pair, and retains the loss, physics,
+trick, grind, bail, handoff, and score-cap proofs. The full-tour grind probe
+found and locked a prior deadlock: a valid grind now keeps at least 70 px/s, so
+friction cannot strand the rider on a long rail. `pnpm art:budget` reports
+Kickflip City PASS. Desktop and 390 px browser checks cover the expanded HUD,
+16:9 canvas sizing, asset loading, overflow, and console errors. The score cap
+is now 250,000 and `db/seed-kickflip-city.sql` carries the matching catalog copy.
+
+This work is local only. It has not been committed, pushed, merged, deployed,
+or published.
+
 ## The progression engine (Phase 3, unchanged)
 
 Client never writes progression tables — SECURITY DEFINER functions +

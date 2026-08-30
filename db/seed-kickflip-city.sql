@@ -10,13 +10,13 @@ INSERT INTO games (slug, title, description, era, genre, controls, track, status
 VALUES (
   'kickflip-city',
   'Kickflip City',
-  'Three districts on one board: the civic steps, the market underpass, and the warehouse roofs. Rails, ledges, curb ramps, stair sets and roof gaps, on a 75-second clock per district. Every trick and grind extends an open line and its multiplier, and the line only banks once you settle. Bail and the whole line is gone along with six seconds.',
+  'Twenty-four skate spots across twelve distinct city environments, with alternate routes through civic plazas, markets, rooftops, harbors, neon alleys, canals, transit halls, desert motels, rain arcades, observatory hills, foundries, and festival boulevards. Rails, ledges, banks, stairs, hazards, and gaps build an open trick line that only banks once you settle.',
   'PS1',
   'Skate',
   'Arrows/AD push and brake, Down/S crouch loads a bigger ollie, Space ollies, J kickflip, K heelflip, L grab (hold), Left/Right hold your balance on a grind. P pause, M mute. Touch: brake and push pads left, TRICK and OLLIE right.',
   'A',
   'coming_soon',
-  80000
+  250000
 )
 ON CONFLICT (slug) DO UPDATE
 SET title = EXCLUDED.title,
@@ -38,10 +38,10 @@ CROSS JOIN (
     ('first-ollie', 'First Ollie', 'Bank your first line.', 'Land a trick, then settle for a beat.', 10, 1),
     ('line-starter', 'Line Starter', 'Bank a line of three links.', 'Keep tricking before the line settles.', 20, 2),
     ('rail-worker', 'Rail Worker', 'Grind 400 px in a single line.', 'Chain two grindables without banking.', 30, 3),
-    ('market-run', 'Market Run', 'Clear the market underpass.', 'District two ends at the finish line.', 30, 4),
-    ('roofline', 'Roofline', 'Clear the warehouse roofs.', 'Mind the gaps between the roofs.', 40, 5),
+    ('market-run', 'Market Run', 'Clear the market underpass.', 'Spot three ends at the finish line.', 30, 4),
+    ('roofline', 'Roofline', 'Clear the warehouse roofs.', 'Mind the gaps in spot five.', 40, 5),
     ('clean-landing', 'Clean Landing', 'Bank a five-link line without bailing all run.', 'One wreck anywhere ends the attempt.', 50, 6),
-    ('city-legend', 'City Legend', 'Score 9,000 in one run.', 'Long lines pay far more than finishing does.', 50, 7)
+    ('city-legend', 'City Legend', 'Score 70,000 in one run.', 'Long lines pay far more than finishing does.', 50, 7)
 ) AS a(slug, name, description, hint, xp, sort_order)
 WHERE g.slug = 'kickflip-city'
 ON CONFLICT (game_id, slug) DO UPDATE

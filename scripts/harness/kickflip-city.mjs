@@ -1,6 +1,6 @@
 // Kickflip City beatability harness. Run: node scripts/harness/kickflip-city.mjs
 // Proves, with exit-code semantics a reviewer can rerun:
-//   1. an ace bot clears all three districts and beats the legend threshold on
+//   1. an ace bot clears all twenty-four districts and beats the legend threshold on
 //      each of six seeds,
 //   2. a plodder bot that clears without linking never reaches that threshold,
 //      which is what the threshold is calibrated against,
@@ -11,8 +11,9 @@
 // Prints the ace spread and a per-district table.
 
 import Matter from "matter-js";
-import { GROUND_Y, surfaceYAt } from "../../src/games/kickflip-city/course.ts";
+import { BACKDROPS, DISTRICTS, GROUND_Y, surfaceYAt } from "../../src/games/kickflip-city/course.ts";
 import { Engine, TUNE } from "../../src/games/kickflip-city/engine.ts";
+import { skaterPose } from "../../src/games/kickflip-city/render.ts";
 
 let failures = 0;
 const check = (ok, label) => {
@@ -24,7 +25,7 @@ const check = (ok, label) => {
 };
 
 const DT = 1 / 60;
-const STEP_BUDGET = Math.ceil((TUNE.districtSeconds + 12) / DT) * 3;
+const STEP_BUDGET = Math.ceil((TUNE.districtSeconds + 12) / DT) * DISTRICTS.length;
 const SEEDS = [TUNE.seed, 1, 7, 4242, 90210, 0x5eed];
 const allAchievements = new Set();
 
@@ -235,7 +236,7 @@ const driveClumsy = (eng) => {
   eng.input.dir = 1;
 };
 
-const simulate = (drive, label, seed, stopDistricts = 3) => {
+const simulate = (drive, label, seed, stopDistricts = DISTRICTS.length) => {
   const eng = new Engine(seed);
   const st = { pressed: false, flipToggle: false };
   const achievements = new Set();
@@ -281,10 +282,10 @@ const simulate = (drive, label, seed, stopDistricts = 3) => {
 
   if (label) {
     console.log(`\n${label}`);
-    console.log("  district              clock   points    total   bails");
+    console.log("  district                 clock   points    total   bails");
     for (const r of rows) {
       console.log(
-        `  ${r.name.padEnd(18)} ${r.clock.toFixed(1).padStart(6)}s ${String(r.points).padStart(8)} ${String(r.total).padStart(8)} ${String(r.bails).padStart(7)}`,
+        `  ${r.name.padEnd(22)} ${r.clock.toFixed(1).padStart(6)}s ${String(r.points).padStart(8)} ${String(r.total).padStart(8)} ${String(r.bails).padStart(7)}`,
       );
     }
     console.log(
@@ -319,7 +320,7 @@ console.log(`  slugs across the six ace runs: ${[...aceSlugs].sort().join(", ")}
 for (let i = 0; i < SEEDS.length; i++) {
   const r = aceRuns[i];
   check(r.eng.lap === 1, `ace completes lap one on seed ${SEEDS[i]}`);
-  check(r.eng.districtsCleared === 3, `ace clears all three districts on seed ${SEEDS[i]}`);
+  check(r.eng.districtsCleared === DISTRICTS.length, `ace clears all ${DISTRICTS.length} districts on seed ${SEEDS[i]}`);
   check(r.eng.score >= TUNE.legendScore, `ace beats the legend threshold on seed ${SEEDS[i]}`);
   check(r.capOk, `score never exceeds the cap on seed ${SEEDS[i]}`);
   check(r.steps < STEP_BUDGET, `ace finishes inside the step budget on seed ${SEEDS[i]}`);
@@ -365,6 +366,18 @@ check(
 
 console.log("\nstaged proofs");
 
+check(DISTRICTS.length === 24, "tour contains twenty-four playable districts");
+check(BACKDROPS.length === 12, "tour contains twelve distinct backdrops");
+for (let i = 0; i < BACKDROPS.length; i++) {
+  const pair = DISTRICTS.filter((district) => district.backdropIndex === i);
+  check(pair.length === 2, `${BACKDROPS[i]} is used by exactly two routes`);
+  if (pair.length !== 2) continue;
+  check(pair[0].backdropPhase !== pair[1].backdropPhase, `${BACKDROPS[i]} routes start on different landmarks`);
+  check(pair[0].chunkOffset !== pair[1].chunkOffset, `${BACKDROPS[i]} routes bias different chunk orders`);
+  check(pair[0].targetLength !== pair[1].targetLength, `${BACKDROPS[i]} routes have different lengths`);
+  check(pair[0].propVariant !== pair[1].propVariant, `${BACKDROPS[i]} routes use different prop sets`);
+}
+
 const settle = (eng, seconds) => {
   for (let i = 0; i < Math.ceil(seconds / DT); i++) eng.update(DT);
 };
@@ -404,6 +417,35 @@ const rideAndMeasure = (eng, seconds) => {
   }
   return { worst, lost };
 };
+
+// One continuous push should read as a deliberate foot stroke, not a blur of
+// pose changes whose frequency increases with the age of the run.
+{
+  const eng = new Engine();
+  place(eng, eng.course.startX, 120);
+  eng.time = 30;
+  eng.input = { ...idle(), dir: 1 };
+  let previous = skaterPose(eng).state;
+  let changes = 0;
+  const seen = new Set([previous]);
+  for (let i = 0; i < 60; i++) {
+    eng.update(DT);
+    const state = skaterPose(eng).state;
+    if (state !== previous) changes++;
+    previous = state;
+    seen.add(state);
+  }
+  check(changes >= 3 && changes <= 7, `held push changes pose 3-7 times per second (measured ${changes})`);
+  check(
+    ["push-plant", "push-extend", "push-recover", "coast"].every((state) => seen.has(state)),
+    "held push uses the complete four-pose stroke",
+  );
+  eng.input.dir = 0;
+  eng.update(DT);
+  eng.input.dir = 1;
+  eng.update(DT);
+  check(skaterPose(eng).state === "push-plant", "a new push starts with the planted foot pose");
+}
 
 // grounded contact holds on flat pavement for ten seconds
 {
@@ -467,11 +509,14 @@ const apexRise = (crouchSeconds) => {
   eng.input.jump = true;
   eng.update(DT);
   eng.input.jump = false;
+  check(eng.crowdReaction === 1, "an ollie puts the crowd into anticipation");
   eng.input.trickA = true;
   eng.update(DT);
   eng.input.trickA = false;
+  check(eng.crowdReaction === 2, "a flip raises the crowd into its cheer cycle");
   for (let i = 0; i < 120 && eng.stance === "airborne"; i++) eng.update(DT);
   check(eng.stance === "rolling", "a completed kickflip lands clean");
+  check(eng.crowdReaction === 3, "a clean trick landing earns the celebration pose");
   check(
     eng.line.some((l) => l.label === "Kickflip" && l.points === TUNE.flipPoints),
     "the landed kickflip scores into the open line",
@@ -491,6 +536,7 @@ const apexRise = (crouchSeconds) => {
   eng.input.trickB = false;
   for (let i = 0; i < 120 && eng.stance === "airborne"; i++) eng.update(DT);
   check(eng.stance === "bailing", "an interrupted flip bails on landing");
+  check(eng.crowdReaction === 1, "a bail cancels the cheer and leaves a grounded wince");
   check(eng.line.length === 0, "the bail voids the open line");
 }
 
@@ -517,6 +563,30 @@ const apexRise = (crouchSeconds) => {
   check(eng.stance === "airborne", "space jumps off the rail");
   check(eng.line.length >= lineBefore, "jumping off the rail keeps the line open");
   check(eng.line[0].points > 0, "the grind scored while it lasted");
+}
+
+// A low-speed lock must keep moving. Friction used to reduce a valid grind to
+// zero forever on Furnace Line, leaving the player balanced but unable to exit.
+{
+  const eng = new Engine();
+  const rail = eng.course.grindables[0];
+  place(eng, rail.x0 + 20, 90);
+  Matter.Body.setPosition(eng.body, {
+    x: rail.x0 + 20,
+    y: rail.y - TUNE.bodyH / 2 - 30,
+  });
+  eng.stance = "airborne";
+  eng.vy = 0;
+  eng.input = idle();
+  for (let i = 0; i < 60 && eng.stance === "airborne"; i++) eng.update(DT);
+  check(eng.stance === "grinding", "the low-speed probe locks onto the rail");
+  eng.vx = 5;
+  const start = eng.x;
+  for (let i = 0; i < 60 && eng.stance === "grinding"; i++) {
+    eng.input.dir = eng.balance >= 0 ? 1 : -1;
+    eng.update(DT);
+  }
+  check(eng.x - start >= TUNE.grindMinSpeed * 0.8, "a locked grind cannot friction-stop on the rail");
 }
 {
   const eng = new Engine();
@@ -558,7 +628,7 @@ const apexRise = (crouchSeconds) => {
   check(fired, "grinding past 400 px in one line fires rail-worker");
 }
 
-// a bail voids the line and takes six seconds off the clock
+// a bail voids the line and takes the configured penalty off the clock
 {
   const eng = new Engine();
   place(eng, eng.course.startX, 200);
@@ -568,7 +638,7 @@ const apexRise = (crouchSeconds) => {
   const score = eng.score;
   eng.bail();
   check(eng.line.length === 0, "the bail voids the unbanked line");
-  check(Math.abs(clock - eng.clock - TUNE.bailClockPenalty) < 1e-6, "the bail costs six seconds");
+  check(Math.abs(clock - eng.clock - TUNE.bailClockPenalty) < 1e-6, "the bail costs its clock penalty");
   check(eng.score === score, "the bail leaves the banked score alone");
 }
 
@@ -586,9 +656,8 @@ const apexRise = (crouchSeconds) => {
 // a roofs pit bails, and the respawn lands on solid ground short of the gap
 {
   const eng = new Engine();
-  eng.advanceDistrict();
-  eng.advanceDistrict();
-  check(eng.districtIndex === 2, "reached the warehouse roofs");
+  while (eng.course.name !== "Warehouse Roofs") eng.advanceDistrict();
+  check(eng.course.name === "Warehouse Roofs", "reached the warehouse roofs");
   const pit = (() => {
     const sorted = [...eng.course.segments].sort((a, b) => a.x0 - b.x0);
     for (let i = 1; i < sorted.length; i++) {

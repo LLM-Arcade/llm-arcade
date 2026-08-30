@@ -1,7 +1,6 @@
-// Kickflip City course data. Three districts, each assembled from handcrafted
-// chunks in a seeded order, plus the lookups the engine, the renderer and the
-// harness bots all read. DOM-free so the node harness builds the same courses
-// the browser does.
+// Kickflip City course data. Twenty-four districts across twelve environments,
+// each assembled from handcrafted chunks in a seeded order. DOM-free so the
+// node harness builds the same courses the browser does.
 //
 // The lane is a polyline of ground segments, not a single flat line. A flat
 // segment is a run of pavement, an angled one is a curb ramp or a stair set,
@@ -48,27 +47,17 @@ export interface Obstacle {
   h: number;
 }
 
-export interface PropPlacement {
-  kind: PropKind;
+export interface CrowdPlacement {
+  family: number;
   x: number;
-  baseY: number;
-  w: number;
-  h: number;
-}
-
-export interface ParallaxPlacement {
-  cell: number;
-  x: number;
-  y: number;
+  phase: number;
   scale: number;
 }
 
-export interface StreetActor {
-  family: number;
-  x: number;
-  /** px per second, negative drifts against the skater */
-  speed: number;
-  phase: number;
+export interface CoursePalette {
+  lane: string;
+  foundation: string;
+  edge: string;
 }
 
 export interface Course {
@@ -77,12 +66,14 @@ export interface Course {
   segments: Segment[];
   grindables: Grindable[];
   obstacles: Obstacle[];
-  props: PropPlacement[];
-  parallax: ParallaxPlacement[];
-  street: StreetActor[];
+  crowd: CrowdPlacement[];
   startX: number;
   finishX: number;
   length: number;
+  backdropIndex: number;
+  backdropPhase: number;
+  propVariant: 0 | 1;
+  palette: CoursePalette;
 }
 
 /** Collision box of an obstacle kind, sized close to its authored art aspect. */
@@ -92,16 +83,6 @@ const OBSTACLE_SHAPE: Record<ObstacleKind, { w: number; h: number }> = {
   crate: { w: 45, h: 18 },
   bin: { w: 33, h: 20 },
   barrier: { w: 52, h: 19 },
-};
-
-/** Drawn size of a decorative prop, close to its authored art aspect. */
-const PROP_SHAPE: Record<PropKind, { w: number; h: number }> = {
-  "steps-sign": { w: 68, h: 26 },
-  awning: { w: 56, h: 34 },
-  vent: { w: 40, h: 25 },
-  lamp: { w: 26, h: 37 },
-  puddle: { w: 74, h: 12 },
-  "poster-frame": { w: 50, h: 37 },
 };
 
 interface ChunkSegment {
@@ -129,12 +110,6 @@ interface ChunkHazard {
   up?: number;
 }
 
-interface ChunkProp {
-  kind: PropKind;
-  x: number;
-  up?: number;
-}
-
 interface Chunk {
   name: string;
   len: number;
@@ -142,7 +117,6 @@ interface Chunk {
   segments?: ChunkSegment[];
   grinds?: ChunkGrind[];
   hazards?: ChunkHazard[];
-  props?: ChunkProp[];
 }
 
 // ---- district chunk pools -------------------------------------------------
@@ -157,7 +131,6 @@ const CIVIC_CHUNKS: Chunk[] = [
     name: "flat-rail",
     len: 540,
     grinds: [{ kind: "rail", x0: 300, x1: 500, up: 30 }],
-    props: [{ kind: "poster-frame", x: 60 }],
   },
   {
     name: "curb-kicker",
@@ -174,10 +147,6 @@ const CIVIC_CHUNKS: Chunk[] = [
     name: "bench-plaza",
     len: 460,
     grinds: [{ kind: "bench", x0: 285, x1: 420, up: 30 }],
-    props: [
-      { kind: "awning", x: 60 },
-      { kind: "lamp", x: 200 },
-    ],
   },
   {
     name: "stair-set",
@@ -189,7 +158,6 @@ const CIVIC_CHUNKS: Chunk[] = [
       { x0: 254, x1: 360, up0: 40, up1: 0, kind: "stairs" },
       { x0: 360, x1: 440 },
     ],
-    props: [{ kind: "steps-sign", x: 30 }],
   },
   {
     name: "cone-run",
@@ -199,7 +167,6 @@ const CIVIC_CHUNKS: Chunk[] = [
       { kind: "cone", x: 270 },
       { kind: "planter", x: 430 },
     ],
-    props: [{ kind: "puddle", x: 30 }],
   },
 ];
 
@@ -208,7 +175,6 @@ const MARKET_CHUNKS: Chunk[] = [
     name: "ledge-line",
     len: 630,
     grinds: [{ kind: "ledge", x0: 295, x1: 595, up: 34 }],
-    props: [{ kind: "vent", x: 45 }],
   },
   {
     name: "bin-alley",
@@ -216,10 +182,6 @@ const MARKET_CHUNKS: Chunk[] = [
     hazards: [
       { kind: "bin", x: 105 },
       { kind: "bin", x: 265 },
-    ],
-    props: [
-      { kind: "puddle", x: 45 },
-      { kind: "poster-frame", x: 350 },
     ],
   },
   {
@@ -232,13 +194,11 @@ const MARKET_CHUNKS: Chunk[] = [
       { x0: 248, x1: 380 },
     ],
     hazards: [{ kind: "barrier", x: 316 }],
-    props: [{ kind: "awning", x: 55 }],
   },
   {
     name: "rail-run",
     len: 540,
     grinds: [{ kind: "rail", x0: 300, x1: 500, up: 34 }],
-    props: [{ kind: "lamp", x: 110 }],
   },
   {
     name: "crate-stack",
@@ -247,7 +207,6 @@ const MARKET_CHUNKS: Chunk[] = [
       { kind: "crate", x: 110 },
       { kind: "crate", x: 280 },
     ],
-    props: [{ kind: "vent", x: 360 }],
   },
 ];
 
@@ -259,7 +218,6 @@ const ROOF_CHUNKS: Chunk[] = [
       { x0: 0, x1: 150 },
       { x0: 234, x1: 380 },
     ],
-    props: [{ kind: "vent", x: 60 }],
   },
   {
     name: "roof-rail",
@@ -269,7 +227,6 @@ const ROOF_CHUNKS: Chunk[] = [
       { x0: 250, x1: 530 },
     ],
     grinds: [{ kind: "rail", x0: 300, x1: 500, up: 30 }],
-    props: [{ kind: "lamp", x: 80 }],
   },
   {
     name: "vent-run",
@@ -278,7 +235,6 @@ const ROOF_CHUNKS: Chunk[] = [
       { kind: "bin", x: 120 },
       { kind: "barrier", x: 290 },
     ],
-    props: [{ kind: "vent", x: 55 }],
   },
   {
     name: "roof-kicker",
@@ -289,15 +245,372 @@ const ROOF_CHUNKS: Chunk[] = [
       { x0: 204, x1: 244, up0: 32 },
       { x0: 300, x1: 400 },
     ],
-    props: [{ kind: "poster-frame", x: 50 }],
   },
   {
     name: "long-ledge",
     len: 660,
     grinds: [{ kind: "ledge", x0: 300, x1: 620, up: 34 }],
-    props: [
-      { kind: "awning", x: 45 },
-      { kind: "poster-frame", x: 150 },
+  },
+];
+
+const HARBOR_CHUNKS: Chunk[] = [
+  {
+    name: "quay-rail",
+    len: 590,
+    grinds: [{ kind: "rail", x0: 310, x1: 550, up: 30 }],
+  },
+  {
+    name: "seawall-kicker",
+    len: 430,
+    segments: [
+      { x0: 0, x1: 118 },
+      { x0: 118, x1: 218, up0: 0, up1: 30, kind: "ramp" },
+      { x0: 218, x1: 268, up0: 30 },
+      { x0: 268, x1: 430 },
+    ],
+    hazards: [{ kind: "barrier", x: 365 }],
+  },
+  {
+    name: "pier-gap",
+    len: 450,
+    segments: [
+      { x0: 0, x1: 178 },
+      { x0: 258, x1: 450 },
+    ],
+  },
+  {
+    name: "dock-bench",
+    len: 520,
+    grinds: [{ kind: "bench", x0: 300, x1: 478, up: 30 }],
+  },
+  {
+    name: "freight-weave",
+    len: 560,
+    hazards: [
+      { kind: "barrier", x: 105 },
+      { kind: "crate", x: 292 },
+      { kind: "barrier", x: 488 },
+    ],
+  },
+];
+
+const ALLEY_CHUNKS: Chunk[] = [
+  {
+    name: "service-ledge",
+    len: 590,
+    grinds: [{ kind: "ledge", x0: 300, x1: 550, up: 32 }],
+  },
+  {
+    name: "bin-crate-line",
+    len: 470,
+    hazards: [
+      { kind: "bin", x: 108 },
+      { kind: "crate", x: 310 },
+    ],
+  },
+  {
+    name: "loading-bank",
+    len: 430,
+    segments: [
+      { x0: 0, x1: 112 },
+      { x0: 112, x1: 218, up0: 0, up1: 34, kind: "ramp" },
+      { x0: 218, x1: 270, up0: 34 },
+      { x0: 270, x1: 430 },
+    ],
+  },
+  {
+    name: "courtyard-gap",
+    len: 440,
+    segments: [
+      { x0: 0, x1: 180 },
+      { x0: 252, x1: 440 },
+    ],
+  },
+  {
+    name: "midnight-rail",
+    len: 550,
+    grinds: [{ kind: "rail", x0: 300, x1: 512, up: 34 }],
+  },
+];
+
+const CANAL_CHUNKS: Chunk[] = [
+  {
+    name: "lock-ledge",
+    len: 620,
+    grinds: [{ kind: "ledge", x0: 300, x1: 580, up: 32 }],
+  },
+  {
+    name: "planter-pair",
+    len: 470,
+    hazards: [
+      { kind: "planter", x: 108 },
+      { kind: "planter", x: 318 },
+    ],
+  },
+  {
+    name: "bridge-bank",
+    len: 440,
+    segments: [
+      { x0: 0, x1: 110 },
+      { x0: 110, x1: 220, up0: 0, up1: 38, kind: "ramp" },
+      { x0: 220, x1: 282, up0: 38 },
+      { x0: 282, x1: 440 },
+    ],
+  },
+  {
+    name: "canal-stairs",
+    len: 500,
+    segments: [
+      { x0: 0, x1: 80 },
+      { x0: 80, x1: 190, up0: 0, up1: 42, kind: "ramp" },
+      { x0: 190, x1: 286, up0: 42 },
+      { x0: 286, x1: 398, up0: 42, up1: 0, kind: "stairs" },
+      { x0: 398, x1: 500 },
+    ],
+  },
+  {
+    name: "promenade-rail",
+    len: 560,
+    grinds: [{ kind: "rail", x0: 310, x1: 522, up: 30 }],
+  },
+];
+
+const METRO_CHUNKS: Chunk[] = [
+  {
+    name: "platform-rail",
+    len: 600,
+    grinds: [{ kind: "rail", x0: 310, x1: 560, up: 34 }],
+  },
+  {
+    name: "gate-line",
+    len: 480,
+    hazards: [
+      { kind: "barrier", x: 112 },
+      { kind: "bin", x: 318 },
+    ],
+  },
+  {
+    name: "concourse-stairs",
+    len: 510,
+    segments: [
+      { x0: 0, x1: 78 },
+      { x0: 78, x1: 188, up0: 0, up1: 44, kind: "ramp" },
+      { x0: 188, x1: 286, up0: 44 },
+      { x0: 286, x1: 404, up0: 44, up1: 0, kind: "stairs" },
+      { x0: 404, x1: 510 },
+    ],
+  },
+  {
+    name: "track-gap",
+    len: 450,
+    segments: [
+      { x0: 0, x1: 176 },
+      { x0: 258, x1: 450 },
+    ],
+  },
+  {
+    name: "platform-ledge",
+    len: 650,
+    grinds: [{ kind: "ledge", x0: 300, x1: 610, up: 34 }],
+  },
+];
+
+const DESERT_CHUNKS: Chunk[] = [
+  {
+    name: "drainage-gap",
+    len: 440,
+    segments: [
+      { x0: 0, x1: 182 },
+      { x0: 252, x1: 440 },
+    ],
+  },
+  {
+    name: "motel-ledge",
+    len: 600,
+    grinds: [{ kind: "ledge", x0: 300, x1: 560, up: 30 }],
+  },
+  {
+    name: "sunset-bank",
+    len: 430,
+    segments: [
+      { x0: 0, x1: 116 },
+      { x0: 116, x1: 226, up0: 0, up1: 36, kind: "ramp" },
+      { x0: 226, x1: 282, up0: 36 },
+      { x0: 282, x1: 430 },
+    ],
+  },
+  {
+    name: "parking-weave",
+    len: 520,
+    hazards: [
+      { kind: "cone", x: 104 },
+      { kind: "barrier", x: 294 },
+      { kind: "cone", x: 466 },
+    ],
+  },
+  {
+    name: "motel-rail",
+    len: 570,
+    grinds: [{ kind: "rail", x0: 310, x1: 532, up: 32 }],
+  },
+];
+
+const ARCADE_CHUNKS: Chunk[] = [
+  {
+    name: "gallery-bench",
+    len: 540,
+    grinds: [{ kind: "bench", x0: 300, x1: 500, up: 30 }],
+  },
+  {
+    name: "planter-slalom",
+    len: 560,
+    hazards: [
+      { kind: "planter", x: 104 },
+      { kind: "bin", x: 292 },
+      { kind: "planter", x: 490 },
+    ],
+  },
+  {
+    name: "arcade-stairs",
+    len: 490,
+    segments: [
+      { x0: 0, x1: 74 },
+      { x0: 74, x1: 178, up0: 0, up1: 38, kind: "ramp" },
+      { x0: 178, x1: 274, up0: 38 },
+      { x0: 274, x1: 380, up0: 38, up1: 0, kind: "stairs" },
+      { x0: 380, x1: 490 },
+    ],
+  },
+  {
+    name: "covered-rail",
+    len: 570,
+    grinds: [{ kind: "rail", x0: 310, x1: 532, up: 32 }],
+  },
+  {
+    name: "rain-gap",
+    len: 450,
+    segments: [
+      { x0: 0, x1: 180 },
+      { x0: 258, x1: 450 },
+    ],
+  },
+];
+
+const HILL_CHUNKS: Chunk[] = [
+  {
+    name: "terrace-rail",
+    len: 590,
+    grinds: [{ kind: "rail", x0: 310, x1: 552, up: 34 }],
+  },
+  {
+    name: "hill-bank",
+    len: 470,
+    segments: [
+      { x0: 0, x1: 110 },
+      { x0: 110, x1: 238, up0: 0, up1: 46, kind: "ramp" },
+      { x0: 238, x1: 312, up0: 46 },
+      { x0: 312, x1: 470, up0: 46, up1: 0, kind: "stairs" },
+    ],
+  },
+  {
+    name: "observatory-gap",
+    len: 460,
+    segments: [
+      { x0: 0, x1: 190 },
+      { x0: 274, x1: 460 },
+    ],
+  },
+  {
+    name: "cypress-weave",
+    len: 500,
+    hazards: [
+      { kind: "planter", x: 106 },
+      { kind: "barrier", x: 316 },
+    ],
+  },
+  {
+    name: "skyline-ledge",
+    len: 660,
+    grinds: [{ kind: "ledge", x0: 300, x1: 620, up: 36 }],
+  },
+];
+
+const FOUNDRY_CHUNKS: Chunk[] = [
+  {
+    name: "pipe-rail",
+    len: 610,
+    grinds: [{ kind: "rail", x0: 310, x1: 572, up: 34 }],
+  },
+  {
+    name: "freight-stack",
+    len: 500,
+    hazards: [
+      { kind: "crate", x: 108 },
+      { kind: "barrier", x: 316 },
+    ],
+  },
+  {
+    name: "furnace-bank",
+    len: 440,
+    segments: [
+      { x0: 0, x1: 112 },
+      { x0: 112, x1: 220, up0: 0, up1: 38, kind: "ramp" },
+      { x0: 220, x1: 280, up0: 38 },
+      { x0: 280, x1: 440 },
+    ],
+  },
+  {
+    name: "loading-gap",
+    len: 460,
+    segments: [
+      { x0: 0, x1: 188 },
+      { x0: 270, x1: 460 },
+    ],
+  },
+  {
+    name: "factory-ledge",
+    len: 660,
+    grinds: [{ kind: "ledge", x0: 300, x1: 620, up: 34 }],
+  },
+];
+
+const FESTIVAL_CHUNKS: Chunk[] = [
+  {
+    name: "grandstand-rail",
+    len: 600,
+    grinds: [{ kind: "rail", x0: 310, x1: 562, up: 32 }],
+  },
+  {
+    name: "cone-final",
+    len: 550,
+    hazards: [
+      { kind: "cone", x: 104 },
+      { kind: "barrier", x: 292 },
+      { kind: "cone", x: 484 },
+    ],
+  },
+  {
+    name: "podium-ledge",
+    len: 610,
+    grinds: [{ kind: "ledge", x0: 300, x1: 570, up: 34 }],
+  },
+  {
+    name: "victory-stairs",
+    len: 510,
+    segments: [
+      { x0: 0, x1: 80 },
+      { x0: 80, x1: 192, up0: 0, up1: 44, kind: "ramp" },
+      { x0: 192, x1: 292, up0: 44 },
+      { x0: 292, x1: 410, up0: 44, up1: 0, kind: "stairs" },
+      { x0: 410, x1: 510 },
+    ],
+  },
+  {
+    name: "afterparty-gap",
+    len: 450,
+    segments: [
+      { x0: 0, x1: 180 },
+      { x0: 258, x1: 450 },
     ],
   },
 ];
@@ -306,49 +619,168 @@ export interface DistrictDef {
   name: string;
   /** slug the engine fires when this district is cleared, null for the first */
   clearSlug: string | null;
-  backdrop: string;
-  /** parallax-weather row 1 cells drawn as silhouettes behind the lane */
-  silhouettes: number[];
-  /** parallax-weather row 2 cell drawn as the weather overlay */
-  weatherCell: number;
-  /** street-life columns this district draws from */
-  streetFamilies: number[];
+  backdropIndex: number;
+  backdropPhase: number;
   chunks: Chunk[];
+  chunkOffset: number;
+  targetLength: number;
+  crowdCount: number;
+  propVariant: 0 | 1;
+  palette: CoursePalette;
 }
 
-export const DISTRICTS: DistrictDef[] = [
+export const BACKDROPS = [
+  "district-civic-steps.jpg",
+  "district-market-underpass.jpg",
+  "district-warehouse-roofs.jpg",
+  "district-harbor-boardwalk.jpg",
+  "district-neon-alley.jpg",
+  "district-canal-promenade.jpg",
+  "district-metro-concourse.jpg",
+  "district-desert-motel.jpg",
+  "district-rain-arcade.jpg",
+  "district-observatory-hill.jpg",
+  "district-foundry-yard.jpg",
+  "district-festival-boulevard.jpg",
+] as const;
+
+const PALETTES: CoursePalette[] = [
+  { lane: "#3A3027", foundation: "#241A12", edge: "#8A6A3A" },
+  { lane: "#403128", foundation: "#241A12", edge: "#9A7040" },
+  { lane: "#34312D", foundation: "#211D19", edge: "#8C7147" },
+  { lane: "#344047", foundation: "#1D2427", edge: "#8E7650" },
+  { lane: "#30283A", foundation: "#19151F", edge: "#A06A49" },
+  { lane: "#3A3B32", foundation: "#202018", edge: "#8F7A4D" },
+  { lane: "#353331", foundation: "#1E1C1A", edge: "#A06F45" },
+  { lane: "#49352B", foundation: "#281D18", edge: "#AD7748" },
+  { lane: "#343A37", foundation: "#1B211F", edge: "#8C7450" },
+  { lane: "#2E3340", foundation: "#181C25", edge: "#9A7951" },
+  { lane: "#3C302A", foundation: "#211915", edge: "#A15F37" },
+  { lane: "#433229", foundation: "#261B16", edge: "#B07C45" },
+];
+
+interface RouteDef {
+  name: string;
+  clearSlug?: string;
+  chunkOffset: number;
+  targetLength: number;
+  crowdCount: number;
+}
+
+interface EnvironmentDef {
+  chunks: Chunk[];
+  routes: [RouteDef, RouteDef];
+}
+
+const ENVIRONMENTS: EnvironmentDef[] = [
   {
-    name: "Civic Steps",
-    clearSlug: null,
-    backdrop: "district-civic-steps.jpg",
-    silhouettes: [0, 3, 4],
-    weatherCell: 0,
-    streetFamilies: [2, 5, 6, 7],
     chunks: CIVIC_CHUNKS,
+    routes: [
+      { name: "Civic Steps", chunkOffset: 0, targetLength: 3400, crowdCount: 6 },
+      { name: "Monument Line", chunkOffset: 2, targetLength: 3900, crowdCount: 7 },
+    ],
   },
   {
-    name: "Market Underpass",
-    clearSlug: "market-run",
-    backdrop: "district-market-underpass.jpg",
-    silhouettes: [1, 4, 5],
-    weatherCell: 4,
-    streetFamilies: [0, 1, 3, 5],
     chunks: MARKET_CHUNKS,
+    routes: [
+      { name: "Market Underpass", clearSlug: "market-run", chunkOffset: 0, targetLength: 3600, crowdCount: 7 },
+      { name: "Lantern Arcade", chunkOffset: 2, targetLength: 4100, crowdCount: 8 },
+    ],
   },
   {
-    name: "Warehouse Roofs",
-    clearSlug: "roofline",
-    backdrop: "district-warehouse-roofs.jpg",
-    silhouettes: [2, 5, 4],
-    weatherCell: 3,
-    streetFamilies: [0, 4, 7],
     chunks: ROOF_CHUNKS,
+    routes: [
+      { name: "Warehouse Roofs", clearSlug: "roofline", chunkOffset: 0, targetLength: 3800, crowdCount: 5 },
+      { name: "Ventline Transfer", chunkOffset: 3, targetLength: 4300, crowdCount: 5 },
+    ],
+  },
+  {
+    chunks: HARBOR_CHUNKS,
+    routes: [
+      { name: "Harbor Boardwalk", chunkOffset: 0, targetLength: 3800, crowdCount: 7 },
+      { name: "Dry Dock Dash", chunkOffset: 2, targetLength: 4300, crowdCount: 6 },
+    ],
+  },
+  {
+    chunks: ALLEY_CHUNKS,
+    routes: [
+      { name: "Neon Alley", chunkOffset: 0, targetLength: 3600, crowdCount: 6 },
+      { name: "Midnight Service", chunkOffset: 3, targetLength: 4200, crowdCount: 5 },
+    ],
+  },
+  {
+    chunks: CANAL_CHUNKS,
+    routes: [
+      { name: "Canal Promenade", chunkOffset: 0, targetLength: 3700, crowdCount: 7 },
+      { name: "Bridgewater Run", chunkOffset: 2, targetLength: 4300, crowdCount: 8 },
+    ],
+  },
+  {
+    chunks: METRO_CHUNKS,
+    routes: [
+      { name: "Metro Concourse", chunkOffset: 0, targetLength: 3900, crowdCount: 7 },
+      { name: "Last Train Line", chunkOffset: 3, targetLength: 4500, crowdCount: 6 },
+    ],
+  },
+  {
+    chunks: DESERT_CHUNKS,
+    routes: [
+      { name: "Desert Motel", chunkOffset: 0, targetLength: 3700, crowdCount: 5 },
+      { name: "Sunset Drainage", chunkOffset: 2, targetLength: 4300, crowdCount: 6 },
+    ],
+  },
+  {
+    chunks: ARCADE_CHUNKS,
+    routes: [
+      { name: "Rain Arcade", chunkOffset: 0, targetLength: 3800, crowdCount: 8 },
+      { name: "Storm Gallery", chunkOffset: 3, targetLength: 4400, crowdCount: 7 },
+    ],
+  },
+  {
+    chunks: HILL_CHUNKS,
+    routes: [
+      { name: "Observatory Hill", chunkOffset: 0, targetLength: 4000, crowdCount: 5 },
+      { name: "Skyline Descent", chunkOffset: 2, targetLength: 4600, crowdCount: 6 },
+    ],
+  },
+  {
+    chunks: FOUNDRY_CHUNKS,
+    routes: [
+      { name: "Foundry Yard", chunkOffset: 0, targetLength: 4000, crowdCount: 5 },
+      { name: "Furnace Line", chunkOffset: 3, targetLength: 4600, crowdCount: 6 },
+    ],
+  },
+  {
+    chunks: FESTIVAL_CHUNKS,
+    routes: [
+      { name: "Festival Boulevard", chunkOffset: 0, targetLength: 4100, crowdCount: 9 },
+      { name: "Afterparty Route", chunkOffset: 2, targetLength: 4700, crowdCount: 10 },
+    ],
   },
 ];
 
+const districtFrom = (
+  environment: EnvironmentDef,
+  backdropIndex: number,
+  route: RouteDef,
+  variant: 0 | 1,
+): DistrictDef => ({
+  ...route,
+  clearSlug: route.clearSlug ?? null,
+  backdropIndex,
+  backdropPhase: variant * 0.5,
+  chunks: environment.chunks,
+  propVariant: variant,
+  palette: PALETTES[backdropIndex],
+});
+
+export const DISTRICTS: DistrictDef[] = ENVIRONMENTS.flatMap((environment, backdropIndex) => [
+  districtFrom(environment, backdropIndex, environment.routes[0], 0),
+  districtFrom(environment, backdropIndex, environment.routes[1], 1),
+]);
+
 const LEAD_IN = 260; // px of clear pavement before the first chunk
 const RUN_OUT = 320; // px of clear pavement after the last chunk
-const TARGET_LENGTH = 3400; // px, the length each district aims for
 const FINISH_INSET = 70; // px the finish line sits before the course end
 
 const flat = (x0: number, x1: number, up = 0): Segment => ({
@@ -400,25 +832,13 @@ const placeChunk = (chunk: Chunk, base: number, out: Course) => {
       h: shape.h,
     });
   }
-
-  for (const p of chunk.props ?? []) {
-    const shape = PROP_SHAPE[p.kind];
-    out.props.push({
-      kind: p.kind,
-      x: base + p.x,
-      baseY: GROUND_Y - (p.up ?? 0),
-      w: shape.w,
-      h: shape.h,
-    });
-  }
 };
 
 /**
  * Fails the build when a chunk order leaves a grindable without its runway.
  * The rule is easy to break by hand and impossible to see in a chunk table, so
  * it is checked here rather than written down as a warning.
- */
-/**
+ *
  * Every hazard pair needs a landing gap wide enough to touch down between them
  * and still have room to set the next ollie up. Like the runway rule this is
  * invisible in a chunk table, so the build proves it instead of trusting the
@@ -454,20 +874,22 @@ export const buildCourse = (index: number, rand: () => number): Course => {
     segments: [],
     grindables: [],
     obstacles: [],
-    props: [],
-    parallax: [],
-    street: [],
+    crowd: [],
     startX: 120,
     finishX: 0,
     length: 0,
+    backdropIndex: def.backdropIndex,
+    backdropPhase: def.backdropPhase,
+    propVariant: def.propVariant,
+    palette: def.palette,
   };
 
   course.segments.push(flat(0, LEAD_IN));
 
   let x = LEAD_IN;
   let previous = -1;
-  while (x < TARGET_LENGTH - RUN_OUT) {
-    let pick = Math.floor(rand() * def.chunks.length);
+  while (x < def.targetLength - RUN_OUT) {
+    let pick = (Math.floor(rand() * def.chunks.length) + def.chunkOffset) % def.chunks.length;
     if (pick === previous) pick = (pick + 1) % def.chunks.length;
     previous = pick;
     const chunk = def.chunks[pick];
@@ -479,27 +901,31 @@ export const buildCourse = (index: number, rand: () => number): Course => {
   course.length = x + RUN_OUT;
   course.finishX = course.length - FINISH_INSET;
 
-  // Silhouettes drift at half the lane speed, so their layout only has to span
-  // half the course to cover it end to end.
+  // Preserve the exact old scenery draws so cleaning up presentation cannot
+  // reshuffle later districts in the shared seeded layout stream.
   for (let i = 0; i < 14; i++) {
-    const cell = def.silhouettes[Math.floor(rand() * def.silhouettes.length)];
-    course.parallax.push({
-      cell,
-      x: 60 + i * 150 + Math.floor(rand() * 60),
-      y: GROUND_Y - 34 - Math.floor(rand() * 46),
-      scale: 0.9 + rand() * 0.5,
-    });
+    rand();
+    rand();
+    rand();
+    rand();
+  }
+  for (let i = 0; i < 10; i++) {
+    rand();
+    const moving = rand() < 0.7;
+    rand();
+    if (moving) rand();
+    rand();
   }
 
-  const actors = 10;
-  for (let i = 0; i < actors; i++) {
-    const family = def.streetFamilies[Math.floor(rand() * def.streetFamilies.length)];
-    const moving = rand() < 0.7;
-    course.street.push({
-      family,
-      x: 140 + (i * course.length) / actors + Math.floor(rand() * 90),
-      speed: moving ? -22 - Math.floor(rand() * 34) : 0,
-      phase: rand() * 4,
+  const audienceGroups = def.crowdCount;
+  const audienceStart = 460;
+  const audienceSpan = Math.max(0, course.finishX - audienceStart - 220);
+  for (let i = 0; i < audienceGroups; i++) {
+    course.crowd.push({
+      family: (i + index) % 4,
+      x: audienceStart + ((i + 0.5) * audienceSpan) / audienceGroups + ((i * 37 + index * 53) % 80),
+      phase: (i * 0.73 + index * 0.41) % 4,
+      scale: 0.72 + ((i * 17 + index * 11) % 18) / 100,
     });
   }
 

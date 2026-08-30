@@ -37,6 +37,7 @@ export const TUNE = {
 
   pushSpeed: 340, // px/s, top rolling speed
   pushAccel: 320, // px/s^2 while Right is held
+  pushCycle: 0.88, // s for one planted foot, extension, recovery and coast stroke
   brakeAccel: 560, // px/s^2 while Left is held
   airControl: 0.25, // fraction of pushAccel available while airborne
   rollDrag: 46, // px/s^2 of passive rolling friction
@@ -56,20 +57,20 @@ export const TUNE = {
   groundedVyCap: 200, // px/s
 
   flipTime: 0.5, // s for a kickflip or a heelflip to complete
-  flipSpinRate: 420, // deg/s of presentation roll while a flip spins
-  // The sheet authors one ollie pose per facing, so a flip is presented as a
-  // bounded tilt driven by the spin phase rather than a full sprite rotation,
-  // which would leave the skater upside down at the moment of completion.
-  flipTilt: 0.55, // rad of peak tilt
   // A flip this far through its spin lands as caught, not slammed. Bailing
   // on a technicality the player cannot see read as random punishment.
   flipForgive: 0.65, // fraction of flipTime
   grabTilt: 0.3, // rad of held-grab tilt
   grabRate: 60, // points per second of grab held
 
+  crowdAnticipate: 0.65, // s the audience leans in after an ollie
+  crowdCheer: 0.85, // s of cheering during a trick or grind
+  crowdCelebrate: 1.15, // s of the largest reaction after a clean landing
+
   grindLockWindow: 14, // px of vertical slack that turns a landing into a grind
   grindBarH: 10, // px, collision depth of a rail bar
   grindDrag: 26, // px/s^2 of friction while grinding
+  grindMinSpeed: 70, // px/s retained on a locked grind so a rail cannot deadlock
   grindPerStep: 24, // px of grind that scores one step
   grindStepPoints: 10, // points per grind step
   grindSparkEvery: 30, // px of grind between spark effects
@@ -104,24 +105,20 @@ export const TUNE = {
   districtClearBonus: 500,
   timeBonusPerSecond: 8,
   timeBonusCap: 400,
-  lapBonus: 1500, // for completing all three districts of a lap
+  lapBonus: 6000, // for completing all twenty-four spots in a tour
   lapSpeedRamp: 0.08, // extra top speed per completed lap
   lapSpeedRampCap: 0.4,
   lapClockDrop: 8, // s less district clock per completed lap
   lapClockFloor: 80, // s
-  scoreCap: 80000,
+  scoreCap: 250000,
 
   lineStarterLinks: 3, // links in one banked line that fire line-starter
   cleanLandingLinks: 5, // links in one banked line that fire clean-landing
   railWorkerPx: 400, // px of grinding in one line that fires rail-worker
 
-  // Calibrated from the harness bots over the same six seeds AFTER the
-  // anti-spam pass (ollies never multiply, repeated moves decay). The ace,
-  // which links real tricks and grinds, scores 11,170 to 14,185. The plodder,
-  // which clears every district without linking, tops out at 5,280. 9,000
-  // sits between those populations: 70% above the best sloppy finish and 19%
-  // under the worst ace run.
-  legendScore: 9000,
+  // Recalibrated against a complete twenty-four-spot tour. The focused harness
+  // keeps this above every no-link plodder run and below every ace run.
+  legendScore: 70000,
 } as const;
 
 export type Phase = "skating" | "district-clear" | "gameover" | "victory";
@@ -129,6 +126,8 @@ export type Phase = "skating" | "district-clear" | "gameover" | "victory";
 export type Stance = "rolling" | "airborne" | "grinding" | "bailing";
 
 export type TrickKind = "kickflip" | "heelflip" | "grab";
+
+export type CrowdReaction = 0 | 1 | 2 | 3;
 
 export type SfxName =
   | "ollie"
@@ -168,8 +167,6 @@ export interface LineLink {
 export interface ActiveTrick {
   kind: TrickKind;
   elapsed: number;
-  /** deg of presentation roll accumulated so far */
-  spin: number;
   held: number;
   complete: boolean;
 }
@@ -183,7 +180,6 @@ export interface Input {
   trickC: boolean;
 }
 
-const DEG = Math.PI / 180;
 const FX_TTL = 0.45; // s
 
 const mulberry32 = (seed: number) => {
@@ -226,6 +222,7 @@ export class Engine {
   vy = 0;
   facing: 1 | -1 = 1;
   crouchTime = 0;
+  pushTime = 0;
   trick: ActiveTrick | null = null;
   /** true while airborne under the skater's own ollie */
   ollied = false;
@@ -241,9 +238,10 @@ export class Engine {
 
   scrollX = 0;
   fx: Fx[] = [];
+  crowdReaction: CrowdReaction = 0;
 
   districtsCleared = 0;
-  /** Completed loops of all three districts; drives the endless ramp. */
+  /** Completed loops of the full twenty-four-spot tour; drives the endless ramp. */
   lap = 0;
   tricksLanded = 0;
   bestLine = 0;
@@ -279,6 +277,7 @@ export class Engine {
   private hazardArmX = -Infinity;
   private lastBailX = -Infinity;
   private sparkAt = 0;
+  private crowdReactionLeft = 0;
   private bailedThisRun = false;
   private gameoverSent = false;
   private events: GameEvent[] = [];
@@ -346,6 +345,13 @@ export class Engine {
 
   private addFx(kind: FxKind, x: number, y: number) {
     this.fx.push({ kind, x, y, born: this.time });
+  }
+
+  private hypeCrowd(level: CrowdReaction, seconds: number) {
+    if (level >= this.crowdReaction || this.crowdReactionLeft <= 0) {
+      this.crowdReaction = level;
+      this.crowdReactionLeft = seconds;
+    }
   }
 
   // ---- course setup -----------------------------------------------------
@@ -417,6 +423,7 @@ export class Engine {
     this.trick = null;
     this.ollied = false;
     this.crouchTime = 0;
+    this.pushTime = 0;
     this.airTime = 0;
     this.contacts.length = 0;
     this.grounded = false;
@@ -471,6 +478,8 @@ export class Engine {
     const step = Math.min(TUNE.maxDt, dt);
     this.time += step;
     this.fx = this.fx.filter((f) => this.time - f.born < FX_TTL);
+    this.crowdReactionLeft = Math.max(0, this.crowdReactionLeft - step);
+    if (this.crowdReactionLeft === 0) this.crowdReaction = 0;
 
     if (this.phase === "gameover" || this.phase === "victory") return;
 
@@ -555,10 +564,15 @@ export class Engine {
     const dir = this.input.dir;
 
     if (this.stance === "rolling") {
-      if (dir > 0) this.vx = Math.min(this.topSpeed(), this.vx + TUNE.pushAccel * sub);
-      else if (dir < 0) this.vx = Math.max(-this.topSpeed() * 0.4, this.vx - TUNE.brakeAccel * sub);
-      else if (this.vx > 0) this.vx = Math.max(0, this.vx - TUNE.rollDrag * sub);
-      else if (this.vx < 0) this.vx = Math.min(0, this.vx + TUNE.rollDrag * sub);
+      if (dir > 0) {
+        this.vx = Math.min(this.topSpeed(), this.vx + TUNE.pushAccel * sub);
+        this.pushTime = this.input.crouch ? 0 : (this.pushTime + sub) % TUNE.pushCycle;
+      } else {
+        this.pushTime = 0;
+        if (dir < 0) this.vx = Math.max(-this.topSpeed() * 0.4, this.vx - TUNE.brakeAccel * sub);
+        else if (this.vx > 0) this.vx = Math.max(0, this.vx - TUNE.rollDrag * sub);
+        else if (this.vx < 0) this.vx = Math.min(0, this.vx + TUNE.rollDrag * sub);
+      }
 
       // Read before the crouch timer updates, so releasing crouch on the same
       // frame as the jump still spends the preload.
@@ -567,6 +581,7 @@ export class Engine {
 
       this.vx += TUNE.gravity * slopeFactor(slopeAt(this.course, this.x)) * sub;
     } else {
+      this.pushTime = 0;
       this.airTime += sub;
       // Air control is deliberately weak; the line is decided before takeoff.
       if (dir !== 0) this.vx += dir * TUNE.pushAccel * TUNE.airControl * sub;
@@ -588,13 +603,15 @@ export class Engine {
     this.airTime = 0;
     this.grind = null;
     this.addFx("ollie-streak", this.x, this.feetY);
+    this.hypeCrowd(1, TUNE.crowdAnticipate);
     this.sfx("ollie");
   }
 
   private stepTrick(sub: number) {
     if (this.trickPressed && !this.trick) {
       const kind = this.trickPressed;
-      this.trick = { kind, elapsed: 0, spin: 0, held: 0, complete: false };
+      this.trick = { kind, elapsed: 0, held: 0, complete: false };
+      this.hypeCrowd(2, TUNE.crowdCheer);
       this.sfx(kind === "grab" ? "grab" : "flip");
     }
     const t = this.trick;
@@ -606,7 +623,6 @@ export class Engine {
       else t.complete = true;
       return;
     }
-    t.spin += TUNE.flipSpinRate * sub;
     if (t.elapsed >= TUNE.flipTime) t.complete = true;
   }
 
@@ -614,7 +630,9 @@ export class Engine {
 
   private stepGrind(sub: number) {
     const rail = this.grind!;
-    this.vx -= Math.sign(this.vx) * TUNE.grindDrag * sub;
+    const direction = Math.sign(this.vx) || this.facing;
+    const speed = Math.max(TUNE.grindMinSpeed, Math.abs(this.vx) - TUNE.grindDrag * sub);
+    this.vx = direction * speed;
     this.vy = 0;
 
     const lean = this.balance === 0 ? 1 : Math.sign(this.balance);
@@ -660,6 +678,7 @@ export class Engine {
     Matter.Body.setPosition(this.body, { x: this.x, y: rail.y - TUNE.bodyH / 2 });
     this.line.push({ label: `${rail.kind} grind`, points: 0, trick: true });
     this.quiet = 0;
+    this.hypeCrowd(2, TUNE.crowdCheer);
     this.sfx("grindOn");
   }
 
@@ -775,6 +794,7 @@ export class Engine {
     this.stance = "rolling";
     this.airTime = 0;
     this.addFx("landing-puff", this.x, this.feetY);
+    this.hypeCrowd(t ? 3 : 2, t ? TUNE.crowdCelebrate : TUNE.crowdCheer);
     this.sfx("land");
 
     if (t) {
@@ -870,6 +890,7 @@ export class Engine {
     if (links >= TUNE.lineStarterLinks) this.achieve("line-starter");
     if (links >= TUNE.cleanLandingLinks && !this.bailedThisRun) this.achieve("clean-landing");
     this.addFx("combo-flash", this.x, this.feetY - 40);
+    this.hypeCrowd(links >= TUNE.lineStarterLinks ? 3 : 2, TUNE.crowdCelebrate);
     this.sfx("bank");
     this.line = [];
     this.lineGrindPx = 0;
@@ -894,6 +915,10 @@ export class Engine {
     this.vx = 0;
     Matter.Body.setVelocity(this.body, { x: 0, y: 0 });
     this.addFx("dust", this.x, this.feetY);
+    // A wreck cuts off any in-progress cheer. The anticipation pose doubles as
+    // the audience's grounded wince; nobody celebrates a slam.
+    this.crowdReaction = 1;
+    this.crowdReactionLeft = TUNE.crowdCheer;
     this.sfx("bail");
   }
 
@@ -942,6 +967,7 @@ export class Engine {
       Math.round(TUNE.timeBonusPerSecond * Math.max(0, this.clock)),
     );
     this.addScore(TUNE.districtClearBonus + timeBonus);
+    this.hypeCrowd(3, TUNE.districtHold);
     this.districtsCleared++;
     const slug = DISTRICTS[this.districtIndex].clearSlug;
     if (slug) this.achieve(slug);
@@ -999,15 +1025,6 @@ export class Engine {
   }
 
   // ---- read-only helpers the renderer and the bots share ----------------
-
-  /** Presentation tilt of the current trick, in radians. */
-  trickTilt() {
-    const t = this.trick;
-    if (!t) return 0;
-    if (t.kind === "grab") return TUNE.grabTilt;
-    const sign = t.kind === "kickflip" ? 1 : -1;
-    return Math.sin(t.spin * DEG) * TUNE.flipTilt * sign;
-  }
 
   /** The next pit in front of the skater, or null when the lane is solid. */
   nextPit(): { x0: number; x1: number } | null {

@@ -4,17 +4,16 @@
 
 import { DISTRICTS, GROUND_Y, type Course } from "./course.ts";
 import { Engine, H, TUNE, W, type FxKind } from "./engine.ts";
-import { SKATER_CELL, type FxArtName, type KickflipSprites, type SkaterState } from "./sprites.ts";
+import { type FxArtName, type KickflipSprites, type MotionState } from "./sprites.ts";
 
 const INK = "#241A12"; // warm near-black under the lane, never pure black
-const INK_EDGE = "#57422C";
 const PAPER = "#F6F1E7";
 const MUSTARD = "#D8A43A";
 const TERRA = "#B7532F";
 
 const BACKDROP_PARALLAX = 0.25;
-const SILHOUETTE_PARALLAX = 0.5;
-const STREET_PARALLAX = 0.75;
+const CROWD_PARALLAX = 0.82;
+const MOTION_DRAW_SIZE = 112;
 
 const FX_ART: Record<FxKind, FxArtName> = {
   "landing-puff": "dust-puff",
@@ -61,22 +60,25 @@ const drawStanding = (
   h: number,
   angle = 0,
   alpha = 1,
+  mirror = false,
+  bottomInset = 0,
 ) => {
   ctx.save();
   ctx.globalAlpha = alpha;
   ctx.translate(x, baseY);
+  if (mirror) ctx.scale(-1, 1);
   if (angle) ctx.rotate(angle);
-  ctx.drawImage(c, -w / 2, -h, w, h);
+  ctx.drawImage(c, -w / 2, -h + bottomInset, w, h);
   ctx.restore();
 };
 
-const LANE_FACE = 52; // px of solid pavement face under the surface line
+const LANE_FACE = 28;
 
 const drawLane = (ctx: CanvasRenderingContext2D, course: Course) => {
   for (const s of course.segments) {
-    // A solid face marks the ride surface; below it the district art shows
-    // through a dim wash instead of a dead black slab.
-    ctx.fillStyle = INK;
+    // The course owns every pixel below its top edge. Keeping the lane opaque
+    // prevents background architecture from reading as playable geometry.
+    ctx.fillStyle = course.palette.lane;
     ctx.beginPath();
     ctx.moveTo(s.x0, s.y0);
     ctx.lineTo(s.x1, s.y1);
@@ -85,7 +87,7 @@ const drawLane = (ctx: CanvasRenderingContext2D, course: Course) => {
     ctx.closePath();
     ctx.fill();
 
-    ctx.fillStyle = "rgba(36,26,18,0.55)";
+    ctx.fillStyle = course.palette.foundation;
     ctx.beginPath();
     ctx.moveTo(s.x0, s.y0 + LANE_FACE);
     ctx.lineTo(s.x1, s.y1 + LANE_FACE);
@@ -94,8 +96,8 @@ const drawLane = (ctx: CanvasRenderingContext2D, course: Course) => {
     ctx.closePath();
     ctx.fill();
 
-    ctx.strokeStyle = INK_EDGE;
-    ctx.lineWidth = 3;
+    ctx.strokeStyle = course.palette.edge;
+    ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.moveTo(s.x0, s.y0 + 1.5);
     ctx.lineTo(s.x1, s.y1 + 1.5);
@@ -103,40 +105,71 @@ const drawLane = (ctx: CanvasRenderingContext2D, course: Course) => {
   }
 };
 
-const skaterFrame = (eng: Engine, spr: KickflipSprites) => {
-  const art = spr.skaters[Math.min(eng.districtIndex, spr.skaters.length - 1)];
-  const facing = eng.facing < 0 ? 0 : 1;
-  if (eng.stance === "grinding") return { c: art.grind[facing], angle: 0 };
+export const skaterPose = (eng: Engine) => {
+  const mirror = eng.facing < 0;
+  let state: MotionState = "coast";
+  let angle = 0;
+  let xOffset = 0;
+  let yOffset = 0;
 
-  const poses = art.rolling[facing];
-  if (eng.stance === "airborne") return { c: poses.ollie, angle: eng.trickTilt() };
   if (eng.stance === "bailing") {
-    // A crash tips the skater over and holds them down, rather than the old
-    // continuous pinwheel, which read as a glitch instead of a fall.
-    const p = 1 - eng.tumbleLeft / TUNE.bailTumble;
-    const tip = -1.7 * Math.min(1, p * 1.9) * (eng.facing < 0 ? -1 : 1);
-    return { c: poses.coast, angle: tip };
+    const progress = 1 - eng.tumbleLeft / TUNE.bailTumble;
+    const airborne = progress < 0.56;
+    state = airborne ? "bail-air" : "bail-ground";
+    xOffset = eng.facing * Math.min(22, progress * 34);
+    yOffset = airborne ? -Math.sin((progress / 0.56) * Math.PI) * 18 : 0;
+    angle = airborne ? eng.facing * Math.sin(progress * Math.PI) * 0.16 : 0;
+  } else if (eng.stance === "grinding") {
+    state = "grind";
+    angle = eng.balance * 0.08;
+  } else if (eng.stance === "airborne") {
+    const trick = eng.trick;
+    if (trick?.kind === "grab") {
+      state = "grab";
+      angle = eng.facing * TUNE.grabTilt * 0.35;
+    } else if (trick) {
+      const progress = Math.min(1, trick.elapsed / TUNE.flipTime);
+      const under: MotionState = trick.kind === "kickflip" ? "kickflip-under" : "heelflip-under";
+      state = progress < 0.28 ? "kickflip-start" : progress < 0.74 ? under : "catch";
+      angle = Math.sin(progress * Math.PI * 2) * 0.07 * (trick.kind === "kickflip" ? 1 : -1);
+    } else if (eng.vy < -420) {
+      state = "pop";
+    } else if (eng.vy < -120) {
+      state = "ollie-rise";
+    } else if (eng.vy < 220) {
+      state = "ollie-apex";
+    } else {
+      state = "catch";
+    }
+  } else if (eng.input.crouch || eng.crouchTime > 0) {
+    state = "crouch";
+  } else if (eng.input.dir > 0) {
+    const phase = eng.pushTime / TUNE.pushCycle;
+    state = phase < 0.2 ? "push-plant" : phase < 0.52 ? "push-extend" : phase < 0.78 ? "push-recover" : "coast";
   }
 
-  // Pushing alternates the two authored rolling poses at a rate that rises with
-  // speed; coasting holds the coast pose.
-  if (eng.input.dir > 0 && Math.abs(eng.vx) < TUNE.pushSpeed - 6) {
-    const hz = 2 + Math.abs(eng.vx) / 60;
-    const state: SkaterState = Math.floor(eng.time * hz) % 2 === 0 ? "push" : "coast";
-    return { c: poses[state], angle: 0 };
-  }
-  return { c: poses.coast, angle: 0 };
+  return { state, angle, mirror, xOffset, yOffset };
+};
+
+const skaterFrame = (eng: Engine, spr: KickflipSprites) => {
+  const art = spr.skaterMotion[eng.districtIndex % spr.skaterMotion.length];
+  const pose = skaterPose(eng);
+  return {
+    c: art.frames[pose.state],
+    bottomInset: art.bottomInsets[pose.state] * MOTION_DRAW_SIZE,
+    ...pose,
+  };
 };
 
 export const draw = (ctx: CanvasRenderingContext2D, eng: Engine, spr: KickflipSprites) => {
   const course = eng.course;
-  const def = DISTRICTS[eng.districtIndex];
   const scroll = eng.scrollX;
+  const props = spr.propSets[course.propVariant];
 
   // District panorama, mirror-tiled: the art is not seam-matched, so every
   // other copy flips horizontally and the join always mirrors itself.
-  const backdrop = spr.districts[eng.districtIndex];
-  const off = scroll * BACKDROP_PARALLAX;
+  const backdrop = spr.districts[course.backdropIndex];
+  const off = scroll * BACKDROP_PARALLAX + course.backdropPhase * W;
   const firstTile = Math.floor(off / W);
   for (let i = 0; i < 2; i++) {
     const tile = firstTile + i;
@@ -152,30 +185,21 @@ export const draw = (ctx: CanvasRenderingContext2D, eng: Engine, spr: KickflipSp
     ctx.restore();
   }
 
-  // Parallax silhouettes between the panorama and the lane. Only the
-  // ground-anchored kinds (olive tree, lamp posts, fence, cells 3..5) draw;
-  // the roofline tiles floated in mid-air like postcards over the panorama.
-  for (const p of course.parallax) {
-    if (p.cell < 3) continue;
-    const tile = spr.silhouettes[p.cell];
-    const x = p.x - scroll * SILHOUETTE_PARALLAX;
-    if (x < -160 || x > W + 160) continue;
-    const w = tile.width * p.scale;
-    drawStanding(ctx, tile, x, GROUND_Y - 24, w, (w * tile.height) / tile.width, 0, 0.5);
-  }
-
-  // Back-lane street life, never in the play lane.
-  for (const actor of course.street) {
-    const frames = spr.street[actor.family];
-    const x = actor.x + actor.speed * eng.time - scroll * STREET_PARALLAX;
-    if (x < -90 || x > W + 90) continue;
-    const moving = actor.speed !== 0;
-    const frame = moving
-      ? frames[Math.floor(eng.time / 0.12 + actor.phase) % 2 === 0 ? 1 : 0]
-      : frames[Math.floor(eng.time / 0.18 + actor.phase) % 2 === 0 ? 0 : 2];
-    // Raised, smaller, and dimmer than the play lane, so the crowd reads as
-    // a back walkway rather than as obstacles in the skater's path.
-    drawStanding(ctx, frame, x, GROUND_Y - 26, frame.width * 0.5, frame.height * 0.5, 0, 0.65);
+  // Authored audience groups react to presentation state from the engine. The
+  // lane draws over their feet, keeping the audience unmistakably behind the
+  // collision surface instead of mixed into it.
+  for (const audience of course.crowd) {
+    const frames = spr.crowd[audience.family];
+    const x = audience.x - scroll * CROWD_PARALLAX;
+    if (x < -150 || x > W + 150) continue;
+    const reaction = eng.crowdReaction;
+    const frameIndex =
+      reaction >= 2 && Math.floor(eng.time * 7 + audience.phase) % 2 === 0
+        ? Math.max(1, reaction - 1)
+        : reaction;
+    const frame = frames[frameIndex];
+    const size = 110 * audience.scale;
+    drawStanding(ctx, frame, x, GROUND_Y, size, size, 0, 0.74);
   }
 
   ctx.save();
@@ -188,23 +212,19 @@ export const draw = (ctx: CanvasRenderingContext2D, eng: Engine, spr: KickflipSp
   // ramp rises to the right, the stair set descends to the right.
   for (const s of course.segments) {
     if (s.kind === "flat") continue;
-    const art = spr.props[s.kind === "ramp" ? "curb-ramp" : "stairs"];
+    const art = props[s.kind === "ramp" ? "curb-ramp" : "stairs"];
     const top = Math.min(s.y0, s.y1);
     drawStanding(ctx, art, (s.x0 + s.x1) / 2, Math.max(s.y0, s.y1), s.x1 - s.x0, Math.max(s.y0, s.y1) - top);
-  }
-
-  for (const p of course.props) {
-    drawStanding(ctx, spr.props[p.kind], p.x, p.baseY, p.w, p.h);
   }
 
   for (const g of course.grindables) {
     // Rails and ledges alike are drawn down to the lane, so the art's legs
     // land on the pavement whatever height the grind line sits at.
-    drawStanding(ctx, spr.props[g.kind], (g.x0 + g.x1) / 2, GROUND_Y, g.x1 - g.x0, GROUND_Y - g.y);
+    drawStanding(ctx, props[g.kind], (g.x0 + g.x1) / 2, GROUND_Y, g.x1 - g.x0, GROUND_Y - g.y);
   }
 
   for (const o of course.obstacles) {
-    drawStanding(ctx, spr.props[o.kind], o.x, o.baseY, o.w, o.h);
+    drawStanding(ctx, props[o.kind], o.x, o.baseY, o.w, o.h);
   }
 
   // Checkpoint and finish markers, pulsing on the spot.
@@ -218,9 +238,36 @@ export const draw = (ctx: CanvasRenderingContext2D, eng: Engine, spr: KickflipSp
   ctx.stroke();
   drawSprite(ctx, spr.ui.trophy, course.finishX, GROUND_Y - 112, 30 * pulse);
 
-  const { c: frame, angle } = skaterFrame(eng, spr);
-  const scale = TUNE.drawH / SKATER_CELL;
-  drawStanding(ctx, frame, eng.x, eng.feetY, frame.width * scale, frame.height * scale, angle);
+  const presentation = skaterFrame(eng, spr);
+  if (eng.stance === "rolling" && Math.abs(eng.vx) > TUNE.pushSpeed * 0.7) {
+    const streakX = eng.x - eng.facing * 48;
+    const pulse = 0.65 + Math.sin(eng.time * 15) * 0.15;
+    drawSprite(ctx, spr.fx["speed-streak"], streakX, eng.feetY - 28, 28, 0, pulse);
+  }
+  if (eng.stance === "airborne" && eng.trick && eng.trick.kind !== "grab") {
+    const progress = Math.min(1, eng.trick.elapsed / TUNE.flipTime);
+    drawSprite(
+      ctx,
+      spr.fx["flip-spin"],
+      eng.x,
+      eng.feetY - 23,
+      34 + Math.sin(progress * Math.PI) * 8,
+      (progress - 0.5) * 0.35,
+      Math.sin(progress * Math.PI) * 0.72,
+    );
+  }
+  drawStanding(
+    ctx,
+    presentation.c,
+    eng.x + presentation.xOffset,
+    eng.feetY + presentation.yOffset,
+    MOTION_DRAW_SIZE,
+    MOTION_DRAW_SIZE,
+    presentation.angle,
+    1,
+    presentation.mirror,
+    presentation.bottomInset,
+  );
 
   for (const f of eng.fx) {
     const age = (eng.time - f.born) / 0.45;
@@ -229,15 +276,6 @@ export const draw = (ctx: CanvasRenderingContext2D, eng: Engine, spr: KickflipSp
   }
 
   ctx.restore();
-
-  // Weather overlay: one tile drifting slowly across the whole frame.
-  const sky = spr.weather[def.weatherCell];
-  const drift = (eng.time * 14) % (sky.width * 1.6);
-  ctx.globalAlpha = 0.16;
-  for (let i = -1; i < Math.ceil(W / (sky.width * 1.6)) + 1; i++) {
-    ctx.drawImage(sky, i * sky.width * 1.6 - drift, 8, sky.width * 1.6, sky.height * 1.6);
-  }
-  ctx.globalAlpha = 1;
 
   // HUD. A soft ink chip keeps the readouts legible over any backdrop.
   ctx.textAlign = "center";

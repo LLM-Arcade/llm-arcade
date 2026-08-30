@@ -813,3 +813,63 @@ until the user signs in on llmarcade.fun in the driven browser.
   next Matter cabinet: own the forward speed instead of reading vx back,
   ground from contact normals not bounding boxes, and the normal points at
   the skater (y -1 on supports).
+
+## Session 21 addendum: Kickflip City animation quality pass
+
+- Replaced the four-pose presentation with three generated 4 by 4 motion
+  sheets. Each district skater now has a four-step push, crouch and pop, ollie
+  rise and apex, separate kickflip and heelflip phases, catch, grab, grind, and
+  two bail poses. The bail frames draw the rider and board apart.
+- Added four generated audience groups with idle, anticipation, cheer, and
+  celebration poses. Crowd state follows ollies, tricks, grinds, landings,
+  banks, bails, and district clears. A bail cuts off the current cheer.
+- Removed the floating silhouette overlay from the live scene. Moving street
+  traffic, weather overlays, and decorative non-collision props are now absent
+  from the live scene. Six audience groups remain because their engine-driven
+  reactions communicate trick outcomes. The old scenery random draws are
+  consumed without creating scene objects so later district geometry stays
+  exactly on the established seeded layouts.
+- Replaced all three district panoramas with generated gameplay-safe backdrops.
+  Distant architecture stays above an empty corridor, and the opaque ride lane
+  prevents fake stairs, curbs, and lower scenery from showing through the real
+  collision surface.
+- Replaced the unstable elapsed-time and speed push formula with an engine-owned
+  880 ms stroke. The new regression test reproduces the old 55 pose changes per
+  second and locks the fixed cadence to four or five, including a planted-foot
+  restart after release.
+- Normalized all four new sheets to exact 128 px cells with bottom-center
+  anchors and palette compression. The cabinet now totals 410,482 bytes and
+  passes the art budget.
+- Grounded every skater pose from its keyed opaque-pixel bounds instead of the
+  full 128 px cell edge. This removes 7 rows of transparent lift in Civic and
+  Warehouse and 25 rows in Market (21.875 px at render size) while leaving the
+  physics contact, jump arc, and authored trick motion unchanged.
+- Browser checks covered Civic, Market, Warehouse, a self-timed held-D trace,
+  and a 390 px viewport. The trace produced plant, extend, recover, coast, plant
+  over 1009 ms; the canvas stayed 16:9 with no overflow or console errors.
+  TypeScript and the focused Kickflip harness pass. No score, collision,
+  course-balance, achievement, release, or database behavior changed.
+
+## Session 21 addendum: Kickflip City twenty-four-spot tour
+
+- Expanded the tour from three districts to twenty-four spots across twelve
+  environments. The nine new generated backdrops cover harbor, neon alley,
+  canal, metro, desert motel, rain arcade, observatory, foundry, and festival
+  settings. All ship at 640 by 360 with an opaque, obstacle-free play corridor.
+- Gave every environment two real route definitions. The pair changes course
+  length, chunk bias, landmark phase, crowd count, lane palette, and which row
+  of collision-backed prop art is used. New chunk pools add waterfront gaps,
+  transit platforms, drainage channels, hill banks, factory loading lines, and
+  festival finals without adding decorative collision lies.
+- Moved crowds beyond the spawn corridor, varied them from five to ten groups,
+  and cycled the three skaters across later spots. The HUD now reports
+  `TOUR 1 · SPOT n/24`.
+- A six-seed full-tour proof exposed a valid grind that could friction-stop at
+  0.2 px/s on Furnace Line. Added a low-speed regression and retained 70 px/s
+  on locked grinds. All six ace tours now clear all twenty-four spots; scores
+  land at 110,450 to 130,440 versus 39,230 to 42,345 for no-link plodders.
+- Raised the score cap to 250,000 and the city-legend threshold to 70,000 for
+  the longer tour. The seed SQL carries the matching cap and catalog copy.
+- Gameplay art is 563,374 bytes and total cabinet art is 602,633 bytes, or
+  588.5 KiB. The art budget passes. Desktop and 390 px browser checks report
+  exact 16:9 sizing, zero overflow, all twelve backdrops loaded, and no errors.

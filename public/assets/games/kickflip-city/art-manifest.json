@@ -1,6 +1,6 @@
 {
   "slug": "kickflip-city",
-  "packVersion": 1,
+  "packVersion": 3,
   "generatedAssets": [
     {
       "file": "skaters.gif",
@@ -15,7 +15,67 @@
       "anchor": "bottom-center board contact",
       "animation": "push 110ms; coast 140ms; ollie 120ms; grind 100ms",
       "promptSummary": "Three distinct skaters with authored left/right movement and trick poses.",
-      "intendedWiring": "Select column by skater, row by facing and presentation state; never derive physics from sprite pose."
+      "intendedWiring": "Legacy source pack retained for provenance; live character presentation uses the three skater-motion sheets."
+    },
+    {
+      "file": "skater-motion-civic.png",
+      "exactBytes": 36884,
+      "dimensions": [512, 512],
+      "grid": [4, 4],
+      "frames": 16,
+      "frameOrder": "rows: coast/push plant/push extension/push recovery; crouch/pop/ollie rise/ollie apex; kickflip start/kickflip underside/heelflip underside/catch; grab/grind/bail airborne/bail ground",
+      "renderSize": [112, 112],
+      "sliceRect": [0, 0, 128, 128],
+      "cellInset": 0,
+      "anchor": "bottom-center board or bail contact",
+      "animation": "push 880ms full four-pose stroke; ollie velocity staged; flip progress staged; bail 900ms",
+      "promptSummary": "Sixteen generated motion poses for the civic skater, including separate rider and board bail art.",
+      "intendedWiring": "Presentation-only motion selected from engine stance, velocity, trick progress, and bail timer; keyed per-pose bottom inset grounds the visible board contact."
+    },
+    {
+      "file": "skater-motion-market.png",
+      "exactBytes": 40207,
+      "dimensions": [512, 512],
+      "grid": [4, 4],
+      "frames": 16,
+      "frameOrder": "same as skater-motion-civic.png",
+      "renderSize": [112, 112],
+      "sliceRect": [0, 0, 128, 128],
+      "cellInset": 0,
+      "anchor": "bottom-center board or bail contact",
+      "animation": "push 880ms full four-pose stroke; ollie velocity staged; flip progress staged; bail 900ms",
+      "promptSummary": "Sixteen generated motion poses for the market skater, including separate rider and board bail art.",
+      "intendedWiring": "Presentation-only motion selected from engine stance, velocity, trick progress, and bail timer; keyed per-pose bottom inset grounds the visible board contact."
+    },
+    {
+      "file": "skater-motion-warehouse.png",
+      "exactBytes": 41394,
+      "dimensions": [512, 512],
+      "grid": [4, 4],
+      "frames": 16,
+      "frameOrder": "same as skater-motion-civic.png",
+      "renderSize": [112, 112],
+      "sliceRect": [0, 0, 128, 128],
+      "cellInset": 0,
+      "anchor": "bottom-center board or bail contact",
+      "animation": "push 880ms full four-pose stroke; ollie velocity staged; flip progress staged; bail 900ms",
+      "promptSummary": "Sixteen generated motion poses for the warehouse skater, including separate rider and board bail art.",
+      "intendedWiring": "Presentation-only motion selected from engine stance, velocity, trick progress, and bail timer; keyed per-pose bottom inset grounds the visible board contact."
+    },
+    {
+      "file": "crowd-motion.png",
+      "exactBytes": 76000,
+      "dimensions": [512, 512],
+      "grid": [4, 4],
+      "frames": 16,
+      "frameOrder": "columns: four audience groups; rows: idle, anticipate, cheer, celebrate",
+      "renderSize": [110, 110],
+      "sliceRect": [0, 0, 128, 128],
+      "cellInset": 0,
+      "anchor": "bottom-center fixed pavement contact",
+      "animation": "reaction state with staggered 140ms cheer alternation",
+      "promptSummary": "Four grounded audience groups with four authored reaction stages and no vehicles or stalls.",
+      "intendedWiring": "React only to presentation events; never collide and never move the pavement anchor."
     },
     {
       "file": "street-life.gif",
@@ -30,7 +90,7 @@
       "anchor": "bottom-center",
       "animation": "idle 180ms; move 120ms; reactive 160ms",
       "promptSummary": "Eight distinct background traffic and pedestrian families with motion variants.",
-      "intendedWiring": "Decorative background and off-lane traffic only; keep collision lanes logic-owned."
+      "intendedWiring": "Legacy provenance only; no street-life frames load or render in the gameplay scene."
     },
     {
       "file": "props-obstacles.gif",
@@ -45,7 +105,7 @@
       "anchor": "bottom-center",
       "animation": "static",
       "promptSummary": "Course rails, ramps, ledges and district props with extra variants.",
-      "intendedWiring": "Use art only after gameplay owner maps collision geometry independently."
+      "intendedWiring": "Live scene draws only collision-backed rails, ledges, benches, ramps, stairs and hazards; alternate routes use the worn row while decorative cells stay inactive."
     },
     {
       "file": "pickups-fx-ui.gif",
@@ -75,43 +135,151 @@
       "anchor": "bottom-center",
       "animation": "weather overlay 140ms; parallax static offset",
       "promptSummary": "Parallax layers and weather-time overlays for later district variation.",
-      "intendedWiring": "Optional visual overlays; weather and time never change course collision or scoring."
+      "intendedWiring": "Legacy provenance only; the weather and silhouette sheet no longer loads over the gameplay corridor."
     },
     {
       "file": "district-civic-steps.jpg",
-      "exactBytes": 23967,
+      "exactBytes": 19939,
       "dimensions": [640, 360],
       "grid": null,
       "frames": 1,
       "renderSize": [640, 360],
       "anchor": "top-left",
       "animation": "static panorama",
-      "promptSummary": "Terracotta civic steps district with central skating lane.",
-      "intendedWiring": "District civic-steps background behind lane and prop layers."
+      "promptSummary": "Terracotta civic skyline above an empty plaster corridor and solid dark foundation.",
+      "intendedWiring": "Gameplay-safe distant backdrop; all rideable geometry and hazards draw opaquely in front."
     },
     {
       "file": "district-market-underpass.jpg",
-      "exactBytes": 33050,
+      "exactBytes": 28153,
       "dimensions": [640, 360],
       "grid": null,
       "frames": 1,
       "renderSize": [640, 360],
       "anchor": "top-left",
       "animation": "static panorama",
-      "promptSummary": "Olive market underpass district with central skating lane.",
-      "intendedWiring": "District market-underpass background behind lane and prop layers."
+      "promptSummary": "Olive market arches above a quiet masonry corridor with no foreground objects.",
+      "intendedWiring": "Gameplay-safe distant backdrop; all rideable geometry and hazards draw opaquely in front."
     },
     {
       "file": "district-warehouse-roofs.jpg",
-      "exactBytes": 34220,
+      "exactBytes": 18414,
       "dimensions": [640, 360],
       "grid": null,
       "frames": 1,
       "renderSize": [640, 360],
       "anchor": "top-left",
       "animation": "static panorama",
-      "promptSummary": "Mustard warehouse roofs district with central skating lane.",
-      "intendedWiring": "District warehouse-roofs background behind lane and prop layers."
+      "promptSummary": "Mustard warehouse skyline above a quiet panel wall and solid dark foundation.",
+      "intendedWiring": "Gameplay-safe distant backdrop; all rideable geometry, roof gaps and hazards draw opaquely in front."
+    },
+    {
+      "file": "district-harbor-boardwalk.jpg",
+      "exactBytes": 19238,
+      "dimensions": [640, 360],
+      "grid": null,
+      "frames": 1,
+      "renderSize": [640, 360],
+      "anchor": "top-left",
+      "animation": "static panorama",
+      "promptSummary": "Warm coastal harbor, cranes, ferry sheds and seawall above an empty gameplay corridor.",
+      "intendedWiring": "Shared by Harbor Boardwalk and Dry Dock Dash with different route geometry and landmark phase."
+    },
+    {
+      "file": "district-neon-alley.jpg",
+      "exactBytes": 20781,
+      "dimensions": [640, 360],
+      "grid": null,
+      "frames": 1,
+      "renderSize": [640, 360],
+      "anchor": "top-left",
+      "animation": "static panorama",
+      "promptSummary": "Night alley skyline and warm windows above an empty opaque masonry corridor.",
+      "intendedWiring": "Shared by Neon Alley and Midnight Service with different route geometry and landmark phase."
+    },
+    {
+      "file": "district-canal-promenade.jpg",
+      "exactBytes": 19181,
+      "dimensions": [640, 360],
+      "grid": null,
+      "frames": 1,
+      "renderSize": [640, 360],
+      "anchor": "top-left",
+      "animation": "static panorama",
+      "promptSummary": "Canal houses, cypress trees and a distant arched bridge above a clear stone corridor.",
+      "intendedWiring": "Shared by Canal Promenade and Bridgewater Run with different route geometry and landmark phase."
+    },
+    {
+      "file": "district-metro-concourse.jpg",
+      "exactBytes": 26918,
+      "dimensions": [640, 360],
+      "grid": null,
+      "frames": 1,
+      "renderSize": [640, 360],
+      "anchor": "top-left",
+      "animation": "static panorama",
+      "promptSummary": "Elevated railway, iron canopy and distant train above an empty tiled corridor.",
+      "intendedWiring": "Shared by Metro Concourse and Last Train Line with different route geometry and landmark phase."
+    },
+    {
+      "file": "district-desert-motel.jpg",
+      "exactBytes": 19076,
+      "dimensions": [640, 360],
+      "grid": null,
+      "frames": 1,
+      "renderSize": [640, 360],
+      "anchor": "top-left",
+      "animation": "static panorama",
+      "promptSummary": "Sunset motel strip, palms, water tower and mesas above an empty stucco corridor.",
+      "intendedWiring": "Shared by Desert Motel and Sunset Drainage with different route geometry and landmark phase."
+    },
+    {
+      "file": "district-rain-arcade.jpg",
+      "exactBytes": 24932,
+      "dimensions": [640, 360],
+      "grid": null,
+      "frames": 1,
+      "renderSize": [640, 360],
+      "anchor": "top-left",
+      "animation": "static panorama",
+      "promptSummary": "Covered iron-and-glass arcade with distant rain above an empty stone corridor.",
+      "intendedWiring": "Shared by Rain Arcade and Storm Gallery with different route geometry and landmark phase."
+    },
+    {
+      "file": "district-observatory-hill.jpg",
+      "exactBytes": 18100,
+      "dimensions": [640, 360],
+      "grid": null,
+      "frames": 1,
+      "renderSize": [640, 360],
+      "anchor": "top-left",
+      "animation": "static panorama",
+      "promptSummary": "Blue-hour observatory domes, radio dishes and distant city above a retaining wall.",
+      "intendedWiring": "Shared by Observatory Hill and Skyline Descent with different route geometry and landmark phase."
+    },
+    {
+      "file": "district-foundry-yard.jpg",
+      "exactBytes": 23829,
+      "dimensions": [640, 360],
+      "grid": null,
+      "frames": 1,
+      "renderSize": [640, 360],
+      "anchor": "top-left",
+      "animation": "static panorama",
+      "promptSummary": "Brick foundry halls, pipe bridges and smokestacks above an empty retaining wall.",
+      "intendedWiring": "Shared by Foundry Yard and Furnace Line with different route geometry and landmark phase."
+    },
+    {
+      "file": "district-festival-boulevard.jpg",
+      "exactBytes": 20096,
+      "dimensions": [640, 360],
+      "grid": null,
+      "frames": 1,
+      "renderSize": [640, 360],
+      "anchor": "top-left",
+      "animation": "static panorama",
+      "promptSummary": "Grandstands, high pennants and civic facades above an empty festival boulevard.",
+      "intendedWiring": "Shared by Festival Boulevard and Afterparty Route with different route geometry and landmark phase."
     },
     {
       "file": "../kickflip-city.png",
@@ -128,11 +296,11 @@
   ],
   "validation": {
     "spriteSheets": "exact equal-size grids with a pure #FF00FF 4px inset on every cell edge; each declared cell is nonblank",
-    "sourceInspection": "all eight pack assets plus catalog art inspected at shipped resolution",
-    "notes": "Wire-ready art only. No Kickflip City gameplay or source code was created or changed."
+    "sourceInspection": "all original sheets, catalog art, motion sheets, crowd sheet, and twelve district backdrops inspected at shipped resolution",
+    "notes": "Motion remains presentation-only. Twenty-four playable routes share twelve protected backdrops in pairs. Every corridor contains no fake obstacles; only collision-backed foreground art loads near the rider."
   },
-  "gameplayArtBytes": 201469,
+  "gameplayArtBytes": 563374,
   "keyArtBytes": 39259,
-  "totalArtBytes": 240728,
+  "totalArtBytes": 602633,
   "budgetBytes": 1048576
 }

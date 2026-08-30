@@ -5,6 +5,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { ArcadeGameProps } from "@/games/registry";
 import { Engine, H, W } from "./engine";
+import { DISTRICTS } from "./course";
 import { draw } from "./render";
 import { loadSprites, type KickflipSprites } from "./sprites";
 import { isMuted, setMuted, sfx } from "./audio";
@@ -256,7 +257,7 @@ const KickflipCity = ({ onScore, onAchievement }: ArcadeGameProps) => {
           {hud.district}
         </span>
         <span className="rounded-full bg-background/10 px-2.5 py-0.5 text-[10px] tabular-nums text-mustard">
-          LAP {hud.lap} · DISTRICT {hud.index}/3
+          TOUR {hud.lap} · SPOT {hud.index}/{DISTRICTS.length}
         </span>
         <span className="hidden tabular-nums text-background/70 sm:inline">
           BEST LINE {hud.best.toLocaleString()}
