@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, Navigate, useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { safeNextPath } from "@/lib/safe-next";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { isKnownPlayer } from "@/lib/known-player";
@@ -30,10 +31,7 @@ const Login = () => {
   // Mode comes from the route: /signup = sign-up, /login = sign-in.
   const mode: Mode = location.pathname === "/signup" ? "signup" : "signin";
 
-  const next = useMemo(() => {
-    const raw = params.get("next") ?? "/";
-    return raw.startsWith("/") && !raw.startsWith("//") ? raw : "/";
-  }, [params]);
+  const next = useMemo(() => safeNextPath(params.get("next"), window.location.origin), [params]);
 
   const hasHeldScore = useMemo(
     () => Object.keys(sessionStorage).some((k) => k.startsWith("held-score:")),
