@@ -384,6 +384,11 @@ overrides:
   'ajv@>=6.0.0 <6.14.0': '6.14.0'
   'brace-expansion@>=1.0.0 <1.1.21': '1.1.21'
   'browserslist@>=4.0.0 <4.28.7': '4.28.7'
+  # esbuild is only an optional peer of vite 8. Vite 8 accepts ^0.27.0 || ^0.28.0.
+  'esbuild@>=0.27.3 <0.28.1': '0.28.1'
+  # eslint 9.32.0 is the first release that requires @eslint/plugin-kit ^0.3.4.
+  # plugin-kit 0.3.x does not fit the ^0.2.7 range of older eslint 9 releases.
+  'eslint@>=9.0.0 <9.32.0': '9.32.0'
   'flatted@>=3.0.0 <3.4.2': '3.4.2'
   'glob@>=10.2.0 <10.5.0': '10.5.0'
   '@humanfs/node@>=0.16.0 <0.16.8': '0.16.8'
