@@ -195,7 +195,11 @@ function mountCritter() {
 
 function mountBanner() {
   if (location.pathname !== '/' || document.querySelector('.lac-banner')) return;
-  const anchor = document.getElementById('hero-title') || document.querySelector('h1 .text-terra');
+  let anchor = document.getElementById('hero-title') || document.querySelector('h1 .text-terra');
+  if (!anchor) {
+    anchor = document.querySelector('main section h1');
+    if (anchor) anchor.classList.add('lac-spotlight-title');
+  }
   const section = anchor && anchor.closest('section');
   if (!section) return;
   const banner = el('img', {
