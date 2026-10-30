@@ -10,6 +10,11 @@ and Google OAuth origins use it.
 
 ## Current state
 
+**Halloween 2026 theme on `feature/halloween-2026` (2026-10-30).** Inline
+head gate in `index.html` plus `public/halloween/`, built by the
+`halloween-website-edit` repo. Turns itself off at
+`2026-11-01T00:00:00-06:00`. Remove both on 2026-11-02. Details in DEVLOG.
+
 **Session 23: Lastwatch, the 3D flagship, is playable end to end on
 `feature/lastwatch-game`** (engine + harness + three.js realm + synth
 audio + live playtest round one). `/dev/lastwatch` on the worktree's dev

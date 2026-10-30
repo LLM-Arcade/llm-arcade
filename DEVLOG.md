@@ -1024,3 +1024,24 @@ until the user signs in on llmarcade.fun in the driven browser.
   taller monster draws, bigger player token, ink underlay beneath the
   region-panel captions, and the portrait chooser no longer auto-pauses
   into an unclickable state when the tab hides.
+
+## Halloween 2026 theme (2026-10-30, `feature/halloween-2026`)
+
+- Seasonal theme from the `halloween-website-edit` bundle, live until
+  `2026-11-01T00:00:00-06:00`. An inline gate in `index.html` writes the
+  stylesheet and boot script only before the cutoff, so after it the site
+  makes no `/halloween/` requests and looks as before.
+- Accent-only palette to respect the no purple, no blue rule: terra and
+  primary become pumpkin `24 100% 36%` (4.71:1 on paper), olive becomes
+  goblin green `135 45% 26%`, mustard becomes candy corn `38 95% 52%`.
+  The paper background and ink stay.
+- "machines." in the landing hero uses LAC Psychedelic Swirl and section
+  headings use LAC Gothic Storybook. Body, nav, and buttons keep Inter and
+  Bricolage. Jeff chose Swirl after a side-by-side comparison, noted here
+  against the "no childish retro cosplay" rule.
+- The theme stays off on `/game/*` and `/dev/*`: no palette, no critter,
+  no webs, and the boo keyword is ignored. A 1 s pathname check covers SPA
+  navigation. Verified in a browser on the built site.
+- Cleanup due 2026-11-02: delete the head gate block in `index.html` and
+  `public/halloween/`.
+
