@@ -1045,3 +1045,9 @@ until the user signs in on llmarcade.fun in the driven browser.
 - Cleanup due 2026-11-02: delete the head gate block in `index.html` and
   `public/halloween/`.
 
+
+## Halloween 2026 theme removed (2026-11-01)
+
+- The theme turned itself off at `2026-11-01T00:00:00-06:00`. This
+  removes the head gate block from `index.html` and the
+  `public/halloween/` folder. `index.html` matches its state before #31.
