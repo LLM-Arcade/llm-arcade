@@ -6,7 +6,7 @@ import { emptyInput, type InputState, type RoomId } from "./types.ts";
 import { CLASSES, KIT, upgradeEffects } from "./kits.ts";
 import { WEAPONS } from "./arsenal.ts";
 import { GLOAM } from "./gloam.ts";
-import { DOORS, ROOMS, WATCHFIRE_POS, doorMid, elevAt, findPath, hasLos } from "./hold.ts";
+import { DOORS, ROOMS, WATCHFIRE_POS, doorMid, elevAt, findPath, hasLos, type Door } from "./hold.ts";
 import type { Character, Engine, GloamUnit } from "./engine.ts";
 
 export type PartnerObjective =
@@ -333,28 +333,92 @@ const INTERIOR: Set<RoomId> = new Set([
   "rampart",
 ]);
 
+// Doors between the field and the hold: exactly one side interior.
+// Geometry never changes at runtime, only openness does.
+const HOLD_DOORS: Door[] = DOORS.filter(
+  (d) => INTERIOR.has(d.a) !== INTERIOR.has(d.b),
+);
+
+const innerRoomOf = (d: Door): RoomId => (INTERIOR.has(d.a) ? d.a : d.b);
+
+// How far from its defense stand the partner may stop and still count as
+// there. attackWith walks on until it is this close.
+const STAND_SLACK = 0.5;
+
+// The hold door an exterior unit is pressing, if any. Pressing means
+// standing inside the door's span within blade reach of its plane, so a
+// swing from the interior side connects through the slats. A radial
+// test around the midpoint admits units the LOS segment math can never
+// let a swing reach.
+function pressedDoor(eng: Engine, g: GloamUnit, reach: number): Door | null {
+  for (const d of HOLD_DOORS) {
+    if (!eng.doorOpen[d.id]) continue;
+    const span = d.axis === "x" ? g.x : g.y;
+    if (span < d.lo || span > d.hi) continue;
+    const perp = d.axis === "x" ? Math.abs(g.y - d.at) : Math.abs(g.x - d.at);
+    if (perp < reach) return d;
+  }
+  return null;
+}
+
+// Whether a swing from the defense stand of door d lands on g, with the
+// partner up to STAND_SLACK off the stand. pressedDoor admits units a
+// little farther out, so the partner takes its stand before they close.
+function swingReaches(d: Door, g: GloamUnit, me: Character): boolean {
+  const stand = doorStand(d, g);
+  const reach = (WEAPONS[me.weapon.id].reach ?? 2.4) + g.radius - STAND_SLACK;
+  return Math.hypot(stand.x - g.x, stand.y - g.y) <= reach;
+}
+
+// Where the partner stands to defend that door: just inside the plane,
+// lined up with the target along the span.
+function doorStand(d: Door, g: GloamUnit): { room: RoomId; x: number; y: number } {
+  const room = innerRoomOf(d);
+  const r = ROOMS[room];
+  const span = Math.max(d.lo + 0.5, Math.min(d.hi - 0.5, d.axis === "x" ? g.x : g.y));
+  if (d.axis === "x") {
+    return { room, x: span, y: d.at + (r.y1 <= d.at ? -0.9 : 0.9) };
+  }
+  return { room, x: d.at + (r.x1 <= d.at ? -0.9 : 0.9), y: span };
+}
+
+const pressReach = (me: Character): number =>
+  (WEAPONS[me.weapon.id].reach ?? 2.4) + 1.2;
+
 function pickTarget(eng: Engine, me: Character): GloamUnit | null {
   const player = eng.chars[0];
   const melee = WEAPONS[me.weapon.id].kind === "melee";
+  const reach = pressReach(me);
   let best: GloamUnit | null = null;
   let bestScore = -Infinity;
   for (const g of eng.gloam) {
-    // A melee partner holds the walls; it never chases into the open.
-    if (melee && !INTERIOR.has(g.room)) continue;
     const d = Math.hypot(g.x - me.x, g.y - me.y);
     if (d > 34) continue;
+    // A melee partner holds the walls. Beyond them it takes only units
+    // pressing a hold door within blade reach of the plane.
+    const exterior = melee && !INTERIOR.has(g.room);
+    const door = exterior ? pressedDoor(eng, g, reach) : null;
+    if (exterior && !door) continue;
     const sees =
       g.room === me.room ||
       hasLos(me.room, me.x, me.y, g.room, g.x, g.y, (dr) => eng.doorOpen[dr.id]);
-    if (!sees) continue;
-    let score = -d;
+    const reachable = door != null && swingReaches(door, g, me);
+    // A unit at a door the partner cannot see from where it waits is still
+    // worth the walk to the stand when a swing from there lands. Without this,
+    // a lone Hexer at the armory breach outlives the wave forever.
+    if (!sees && !reachable) continue;
+    let score = sees ? -d : -d - 500;
     if (g.type === "hexer") score += 100;
     else if (g.type === "alpha") score += 70;
     else if (g.type === "lobber") score += 50;
-    else if (g.type === "breacher" && g.state === "chew") score += 40;
     else if (GLOAM[g.type].boss) score += 30;
+    // Board-eaters jump their queue without outranking real threats.
+    if (g.state === "chew") score += 30;
     const dToPlayer = Math.hypot(g.x - player.x, g.y - player.y);
     if (dToPlayer < 4) score += 25;
+    // An exterior unit no swing from the stand can reach ranks below every
+    // unit one can, so a Hexer backing a chewer cannot hold the partner idle.
+    if (door && !reachable) score -= 1000;
     best = score > bestScore ? ((bestScore = score), g) : best;
   }
   return best;
@@ -442,8 +506,19 @@ function attackWith(
   const d = Math.hypot(target.x - me.x, target.y - me.y);
 
   if (w.kind === "melee") {
+    if (!INTERIOR.has(target.room)) {
+      // Defend from inside: walk to the pressed door and swing through
+      // the slats. The partner never follows a target out of the hold.
+      const door = pressedDoor(eng, target, pressReach(me));
+      if (!door) return;
+      const stand = doorStand(door, target);
+      if (me.room !== stand.room || Math.hypot(stand.x - me.x, stand.y - me.y) > STAND_SLACK) {
+        moveToward(eng, me, input, stand.room, stand.x, stand.y);
+        return;
+      }
+    }
     const reach = (w.reach ?? 2.4) + target.radius;
-    if (d > reach * 0.9 && brain.act === "idle") {
+    if (d > reach * 0.9 && brain.act === "idle" && INTERIOR.has(target.room)) {
       moveToward(eng, me, input, target.room, target.x, target.y);
     }
     const crowd = eng.gloam.filter(

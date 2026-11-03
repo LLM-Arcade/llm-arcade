@@ -36,6 +36,11 @@ function part(
   return m;
 }
 
+const easeOut3 = (k: number) => 1 - Math.pow(1 - k, 3);
+const HEAVY_SWING = 0.3; // s the heavy cut pose plays
+const LIGHT_SWING = 0.34; // s the light slash pose plays
+const TELL = 0.22; // leading fraction of the light slash spent winding
+
 const CLASS_COLORS: Record<ClassId, { body: number; trim: number; head: number }> = {
   knight: { body: 0x6d675e, trim: 0x8a5a44, head: 0x7d7469 },
   archer: { body: 0x5c5838, trim: 0x6f6b3f, head: 0xc9a37c },
@@ -54,6 +59,8 @@ export class HeroView {
   private walkPhase = 0;
   private prevX = 0;
   private prevY = 0;
+  private lastSwingAt = -1;
+  private swingSide = 1;
 
   constructor(cls: ClassId) {
     const c = CLASS_COLORS[cls];
@@ -129,36 +136,70 @@ export class HeroView {
     let armL = swing * 0.6;
     let armRYaw = 0;
     let torsoYaw = 0;
+    let lean = 0;
     if (w.kind === "melee") {
       const sinceSwing = engTime - c.lastAttackAt;
-      const swingDur = Math.min(0.3, (w.cycle ?? 0.5) * 0.6);
-      if (c.charging) {
+      // A fresh swing: alternate the light-slash side so combos read as
+      // swordplay, not a tic. The sim says which swings were heavy.
+      if (c.lastAttackAt > this.lastSwingAt) {
+        this.lastSwingAt = c.lastAttackAt;
+        if (!c.lastAttackHeavy) this.swingSide = -this.swingSide;
+      }
+      const heavy = c.lastAttackHeavy;
+      const swingDur = heavy ? HEAVY_SWING : LIGHT_SWING;
+      if (sinceSwing < swingDur) {
+        // The active cut outranks a re-armed windup, so a held button
+        // cannot snap the pose out of mid-arc.
+        if (heavy) {
+          // The heavy cut: the wound-up blade drops through the target,
+          // torso counter-rotating. Ease out so the blade snaps through
+          // the middle of the arc and settles.
+          const e = easeOut3(sinceSwing / swingDur);
+          armR = -2.3 + (0.15 - -2.3) * e * 0.85;
+          armRYaw = 0.8 - 2.0 * e;
+          torsoYaw = 0.35 - 0.8 * e;
+          lean = 0.14 * Math.sin(Math.PI * e);
+        } else {
+          // The light cut: a level slash that alternates sides. A short
+          // pull-back telegraphs, then the blade sweeps the horizontal
+          // arc the sim resolves, torso leaning into the cut.
+          const side = this.swingSide;
+          const k = sinceSwing / swingDur;
+          if (k < TELL) {
+            const e = k / TELL;
+            armR = -0.4 - 1.4 * e;
+            armRYaw = side * 1.05 * e;
+            torsoYaw = side * 0.35 * e;
+          } else {
+            const e = easeOut3((k - TELL) / (1 - TELL));
+            armR = -1.8 + 0.55 * e;
+            armRYaw = side * (1.05 - 2.35 * e);
+            torsoYaw = side * (0.35 - 0.85 * e);
+            lean = 0.2 * Math.sin(Math.PI * Math.min(1, e * 1.15));
+          }
+        }
+      } else if (c.charging) {
         // Wound up over the shoulder, blade back, hips coiled. A slow
         // tremble sells the held weight.
         armR = -2.5 + 0.05 * Math.sin(time * 9);
         armRYaw = 0.7;
         torsoYaw = 0.42;
-      } else if (sinceSwing >= 0 && sinceSwing < swingDur) {
-        // The cut: a fast horizontal arc across the body, torso
-        // counter-rotating through it. Ease out so the blade snaps
-        // through the middle of the arc and settles.
-        const k = sinceSwing / swingDur;
-        const e = 1 - Math.pow(1 - k, 3);
-        armR = -2.3 + (0.15 - -2.3) * e * 0.85;
-        armRYaw = 0.8 - 2.0 * e;
-        torsoYaw = 0.35 - 0.8 * e;
-      } else if (sinceSwing >= swingDur && c.attackCd > 0) {
-        // Recovery: drift back to guard as the cooldown runs out.
-        const back = Math.min(1, (sinceSwing - swingDur) / 0.25);
-        armR = -0.5 * (1 - back) - swing * 0.6 * back;
-        armRYaw = -1.2 * (1 - back);
-        torsoYaw = -0.45 * (1 - back);
+      } else if (c.attackCd > 0) {
+        // Recovery: drift back to guard across the cooldown actually
+        // left, which varies per weapon cycle.
+        const side = heavy ? 1 : this.swingSide;
+        const recDur = Math.max(0.12, (w.cycle ?? 0.5) - swingDur);
+        const back = Math.min(1, (sinceSwing - swingDur) / recDur);
+        armR = (heavy ? -0.5 : -1.25) * (1 - back) - swing * 0.6 * back;
+        armRYaw = side * -1.2 * (1 - back);
+        torsoYaw = side * -0.45 * (1 - back);
       }
       if (c.blockHeld) {
         armL = -1.3;
         armR = -1.1;
         armRYaw = 0;
         torsoYaw = 0;
+        lean = 0;
       }
     } else if (w.kind === "bow") {
       armL = -1.55; // bow arm forward
@@ -171,7 +212,9 @@ export class HeroView {
       armR = 0.8;
       armL = 0.8;
     } else {
-      this.torso.rotation.x = 0;
+      // The lean into a cut lives on the torso, so the figure's world
+      // position, shadow, and camera framing stay honest to the sim.
+      this.torso.rotation.x = lean;
     }
     if (c.reviveT > 0) this.torso.rotation.x = 0.7;
     this.armR.rotation.x = armR;
@@ -355,6 +398,7 @@ export class HordeView {
   private q = new THREE.Quaternion();
   private v = new THREE.Vector3();
   private s = new THREE.Vector3();
+  private e = new THREE.Euler();
 
   constructor() {
     for (const type of HORDE_TYPES) {
@@ -409,7 +453,7 @@ export class HordeView {
       const bob = Math.sin(time * 7 + u.id * 1.7) * 0.06;
       // Sim yaw 0 faces +x; the merged geometry faces +z.
       this.q.setFromEuler(
-        new THREE.Euler(
+        this.e.set(
           u.state === "telegraph" ? -0.25 : u.staggered > 0 ? 0.3 : 0,
           u.yaw + Math.PI / 2,
           0,

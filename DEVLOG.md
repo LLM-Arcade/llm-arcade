@@ -1025,6 +1025,53 @@ until the user signs in on llmarcade.fun in the driven browser.
   region-panel captions, and the portrait chooser no longer auto-pauses
   into an unclickable state when the tab hides.
 
+## Session 24 — Lastwatch answers the second playtest
+
+- Jeff's second live playtest ruled: the knight partner must fight the
+  horde at the boarded doors, melee swings must read as swordplay, and
+  the game grows visible gear, per-weapon animations, per-type enemy
+  looks, and a pickup-and-equip inventory. Every class keeps a melee
+  backup (knight is melee, archer has the dagger, the mage gets a staff
+  strike ticket).
+- Root cause of the idle knight: the partner's melee target filter
+  skipped every exterior unit, while sight and reach already passed
+  standing boards for all weapons. The fix went through a ten-angle
+  adversarial review that killed its own first draft. The radial
+  door-radius admission accepted units the LOS segment math could
+  never let a swing reach, the unbounded chew shortcut let the knight
+  chase board-eaters into the open field, and a rampart-positioned
+  partner live-locked swinging across the 4 m drop (proven by probe:
+  20 s of swings, zero damage, boards 300 to 124).
+- The reviewed shape: exterior units are melee targets only while
+  pressing a hold door (inside the door span, within blade reach of
+  its plane), the partner defends from an explicit stand point just
+  inside the door and never paths out of the hold, and chew priority
+  is an additive bonus so board-eaters jump their queue without
+  outranking bosses. Staged proofs: yard chewers die in 3.5 s with the
+  boards at 260/300 and the partner never leaving the hold, and the
+  rampart knight descends to land real hits. Full harness PASS, 12/12
+  achievements, with pack-breaker now staged deterministically instead
+  of riding ace-run luck.
+- Light swings rebuilt as alternating level cuts with an anticipation
+  tell, matching the sim's horizontal hit arc. Heavies keep the
+  wound-up overhead chop. The review forced three corrections: the sim
+  now stamps `lastAttackHeavy` at swing time (the view had inferred
+  heaviness from `charging`, whose 0.15 s threshold sits 7x below the
+  1.1 s heavy windup, so ordinary held clicks played the wrong
+  animation), the active cut outranks a re-armed windup so held input
+  cannot snap the pose mid-arc, and recovery eases over the cooldown
+  actually left per weapon instead of a fixed 0.25 s the starting
+  swords cut short. The forward lunge moved from the root to a torso
+  lean after review showed it detached the figure from its shadow.
+- The build-up is a ticket graph at docs/lastwatch-issues/: enemy
+  visual identity, visible equipment, per-weapon animations,
+  pickup-and-equip, mage staff strike, and renderer teardown for a
+  restart leak the review found. Frontier 01, 02, 05, 06. PR #21 into
+  dev carries all of it.
+- Lesson recorded: never run two pushes back to back in one worktree.
+  The pre-push ci gates collided over the same build outputs and the
+  second push failed until rerun serially.
+
 ## Halloween 2026 theme (2026-10-30, `feature/halloween-2026`)
 
 - Seasonal theme from the `halloween-website-edit` bundle, live until
@@ -1051,3 +1098,37 @@ until the user signs in on llmarcade.fun in the driven browser.
 - The theme turned itself off at `2026-11-01T00:00:00-06:00`. This
   removes the head gate block from `index.html` and the
   `public/halloween/` folder. `index.html` matches its state before #31.
+
+
+## Lastwatch partner reach from the defense stand (2026-11-03)
+
+- The review on PR #21 found a live-lock at the arch. A Hexer backing a
+  chewer was admitted as a target because it stood within reach of the
+  door plane, and its priority kept it chosen, but no swing from the
+  knight's stand inside the arch could reach it. A staged run left the
+  chewer at full health while the boards fell to 256/300.
+- An exterior unit a swing from the stand cannot reach now ranks below
+  every unit one can. The partner still takes its stand for units near
+  the plane, so it is in place before they close.
+- The harness stages the case and proves the chewer dies, with the
+  boards at 288/300. The ace duo deep run now reads twelve seeds
+  (mean wave 15+, a best run past 20) because one seed's depth moved
+  from 16 to 12 on this change while the twelve-seed mean rose from
+  15.75 to 16.25.
+
+## Lastwatch lone Hexer at the armory breach (2026-11-03)
+
+- The review on PR #21 kept the seed-2026 floor of wave 15. Tracing that
+  seed showed a stall, not a loss. A Hexer deals no structure damage, so
+  with its flock dead it leans on the intact armory breach barricade
+  forever. The knight waits at its yard anchor without line of sight to
+  it, so the wave never ends and the run times out at wave 12.
+- The stall came with this branch's partner changes. On dev's code no
+  seed stalls. On this branch before the fix,
+  4 of the 12 harness seeds stalled (7 of 12 before the reach ranking).
+- pickTarget now keeps a door-pressed unit the partner cannot see when a
+  swing from the door's stand reaches it, ranked below every unit it can
+  see and reach. The knight walks to the armory stand and kills the Hexer.
+- The harness stages the lone Hexer and restores the seed-2026 floor
+  beside the twelve-seed mean and best-run gates. Seeds 2020 to 2031 now
+  reach 15 22 22 16 22 15 15 21 15 15 15 22 (mean 17.92), with no stall.
