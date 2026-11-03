@@ -124,6 +124,9 @@ export interface Character {
   openTarget: DistrictId | null;
   secondWind: boolean;
   lastAttackAt: number;
+  // Whether that swing released heavy. The render layer reads this
+  // instead of guessing from charge state across frames.
+  lastAttackHeavy: boolean;
   lastDamagedAt: number;
   slowT: number;
   kills: number;
@@ -409,6 +412,7 @@ export class Engine {
       openTarget: null,
       secondWind: false,
       lastAttackAt: -99,
+      lastAttackHeavy: false,
       lastDamagedAt: -99,
       slowT: 0,
       kills: 0,
@@ -1116,6 +1120,7 @@ export class Engine {
     c.attackCd = w.cycle ?? 0.5;
     c.charge = 0;
     c.lastAttackAt = this.time;
+    c.lastAttackHeavy = heavy;
     this.sfx(heavy ? "swing-heavy" : "swing");
     const dmg = (heavy ? w.heavyDmg! : w.lightDmg!) * this.dmgMult(c);
     const arc = w.arc ?? Math.PI / 2;
