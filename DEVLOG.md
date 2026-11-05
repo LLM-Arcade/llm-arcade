@@ -1132,3 +1132,37 @@ until the user signs in on llmarcade.fun in the driven browser.
 - The harness stages the lone Hexer and restores the seed-2026 floor
   beside the twelve-seed mean and best-run gates. Seeds 2020 to 2031 now
   reach 15 22 22 16 22 15 15 21 15 15 15 22 (mean 17.92), with no stall.
+
+## Flagstone cabinet — a grid-logic slab puzzle (2026-11-05)
+
+- New Track-A cabinet: `flagstone`, a nonogram (griddler) in six slabs. The
+  clues are the only thing on screen, so the cabinet needs **zero sprite
+  sheets** — which is why it ships without any new generated art. The flat
+  fills in `render.ts` are the paper surround, the ink panel, stone cells, the
+  flag mark and hairlines, the same flat-geometry allowance Brickstorm's
+  panel and shield bar use. No programmatic sprites anywhere.
+- Puzzle bank (`src/games/flagstone/levels.ts`) is six authored grids from
+  10x10 to 15x15. Clues are **derived from the solution**, never typed, so a
+  clue cannot disagree with its picture.
+- Getting that bank right took three passes. The first drafts were hollow
+  outlines — a cairn, a kiln and a well drawn as rings of stones — and the
+  solver rejected them: two of the three read two ways, and none of them could
+  be finished by line logic alone. Every shape was redrawn solid and jagged.
+  All six now resolve to exactly one picture, reachable with line logic and no
+  guessing, which the harness proves rather than asserts.
+- Scoring lives in the engine, not the shell: 10 a stone times a multiplier
+  that steps every 8 correct stones (x1..x5), 25 a completed row or column,
+  then 200 + 100 x tier to clear a slab with a 300 flawless bonus. Five wrong
+  stones end the run. A cell pays once, so lifting and re-setting a stone
+  cannot farm score — the harness checks that too.
+- `scripts/harness/flagstone.mjs` runs in `test:games`: puzzle-bank integrity,
+  a real nonogram solver (unique solution + line-logic solvability), a perfect
+  bot that clears all six slabs for 26,000 and every achievement, a sloppy bot
+  that dies on exactly the fifth wrong stone, and the anti-farm/cursor checks.
+- Six achievements (`first-line`, `first-slab`, `clean-cut`, `hot-quarry`,
+  `three-slabs`, `quarry-legend`) plus `db/seed-flagstone.sql` and
+  `db/publish-flagstone.sql`, both **documented and not executed**.
+- Deliberately **not** added to `launch-lineup.ts`: the landing wall renders
+  key art at `public/assets/games/<slug>.png`, and that art does not exist
+  yet. Adding the row now would ship a broken tile. Until the art lands the
+  cabinet is playable at `/dev/flagstone` and stays `coming_soon` in the DB.
