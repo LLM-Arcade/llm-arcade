@@ -1,10 +1,12 @@
+import { isCloudflareBackend } from "@/lib/backend-config";
+import ArcadeImage from "@/components/arcade/ArcadeImage";
 // Admin review queue: pending submissions with sandbox preview, manifest
 // diff against the currently approved achievement set, and
 // approve / reject-with-reason (spec §4.10).
 
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/legacy-supabase";
 import {
   usePendingSubmissions,
   useReviewSubmission,
@@ -104,7 +106,7 @@ const ManifestDiff = ({ sub }: { sub: AdminSubmission }) => {
             </span>
             <span className="font-medium line-through opacity-60">{a.name}</span>
             <span className="font-mono text-[10px] text-destructive/80">
-              removed — existing unlocks will be deleted
+              {isCloudflareBackend ? "removed from active manifest — award history retained" : "removed — existing unlocks will be deleted"}
             </span>
           </div>
         ))}
@@ -177,7 +179,7 @@ const SubmissionCard = ({ sub }: { sub: AdminSubmission }) => {
         </Button>
 
         {sub.art_path && (
-          <img
+          <ArcadeImage
             src={storagePublicUrl(sub.art_path)}
             alt="Submitted key art"
             className="h-10 w-10 rounded-xl object-cover ring-1 ring-foreground/10"

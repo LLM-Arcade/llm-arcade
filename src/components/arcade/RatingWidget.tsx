@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/legacy-supabase";
 import { useAuth } from "@/contexts/AuthContext";
 import { showError } from "@/utils/toast";
 import { Star } from "lucide-react";

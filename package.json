@@ -17,6 +17,7 @@
     "test:auth": "node scripts/harness/safe-next.mjs"
   },
   "dependencies": {
+    "@clerk/react": "6.18.4",
     "@hookform/resolvers": "^3.9.0",
     "@radix-ui/react-accordion": "^1.2.0",
     "@radix-ui/react-alert-dialog": "^1.1.1",

@@ -20,7 +20,7 @@ const navLinkClass = ({ isActive }: { isActive: boolean }) =>
   }`;
 
 const SiteHeader = () => {
-  const { user, profile, signOut } = useAuth();
+  const { user, profile, signOut, isGuest } = useAuth();
   const location = useLocation();
   const cta = authCta(location.pathname + location.search);
 
@@ -69,6 +69,9 @@ const SiteHeader = () => {
                   </p>
                 </div>
                 <DropdownMenuSeparator className="bg-border" />
+                {isGuest && <DropdownMenuItem asChild className="cursor-pointer rounded-xl py-2.5 font-medium">
+                  <Link to="/login">Optional account sign-in</Link>
+                </DropdownMenuItem>}
                 <DropdownMenuItem asChild className="cursor-pointer rounded-xl py-2.5 font-medium">
                   <Link to={`/creator/${profile.username}`}>
                     <UserRound className="h-4 w-4" />
@@ -95,13 +98,13 @@ const SiteHeader = () => {
                     </Link>
                   </DropdownMenuItem>
                 )}
-                <DropdownMenuItem
+                {!isGuest && <DropdownMenuItem
                   onClick={() => void signOut()}
                   className="cursor-pointer rounded-xl py-2.5 font-medium"
                 >
                   <LogOut className="h-4 w-4" />
                   Sign out
-                </DropdownMenuItem>
+                </DropdownMenuItem>}
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (

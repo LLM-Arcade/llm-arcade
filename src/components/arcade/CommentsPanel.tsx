@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { formatDistanceToNowStrict } from "date-fns";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/legacy-supabase";
 import { useAuth } from "@/contexts/AuthContext";
 import { authCta } from "@/lib/known-player";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";

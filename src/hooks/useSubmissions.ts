@@ -3,7 +3,7 @@
 // pending game_submissions row for the admin review queue).
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/legacy-supabase";
 import { useAuth } from "@/contexts/AuthContext";
 import type { Era } from "@/data/launch-lineup";
 

@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/legacy-supabase";
+import { isCloudflareBackend } from "@/lib/backend-config";
 import { useAuth } from "@/contexts/AuthContext";
 import { authCta } from "@/lib/known-player";
 import SiteHeader from "@/components/layout/SiteHeader";
@@ -25,7 +26,7 @@ const roleChipClass: Record<string, string> = {
 };
 
 const Settings = () => {
-  const { user, profile, loading, signOut } = useAuth();
+  const { user, profile, loading, signOut, isGuest } = useAuth();
   const queryClient = useQueryClient();
 
   const [username, setUsername] = useState("");
@@ -173,18 +174,19 @@ const Settings = () => {
 
             <div>
               <label htmlFor="displayName" className="text-sm font-semibold">
-                Display name
+                {isCloudflareBackend ? "Private player name" : "Display name"}
               </label>
               <Input
                 id="displayName"
                 value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
                 maxLength={40}
-                placeholder="How your name appears on boards"
+                placeholder={isCloudflareBackend ? "Private player name" : "How your name appears on boards"}
                 className="mt-1.5 h-11 rounded-full border-border bg-background px-5"
               />
             </div>
 
+            {isCloudflareBackend && <p className="text-sm text-muted-foreground">Only your username appears publicly. Your bio is public if you add one; avoid personal details.</p>}
             <div>
               <label htmlFor="bio" className="text-sm font-semibold">
                 Bio
@@ -234,7 +236,7 @@ const Settings = () => {
           <dl className="mt-4 flex flex-col gap-3 text-sm">
             <div className="flex items-center justify-between gap-4">
               <dt className="text-muted-foreground">Email</dt>
-              <dd className="truncate font-medium">{user.email}</dd>
+              <dd className="truncate font-medium">{user.email || "Guest card · no email collected"}</dd>
             </div>
             <div className="flex items-center justify-between gap-4">
               <dt className="text-muted-foreground">Role</dt>
@@ -253,13 +255,14 @@ const Settings = () => {
               </dd>
             </div>
           </dl>
-          <Button
+          {isGuest && <p className="mt-4 text-sm text-muted-foreground">This guest card uses a 30-day cookie in this browser. Clearing cookies, switching browsers or changing devices can lose access. A username alone cannot recover it. Optional email sign-in can keep a new account linked to this card.</p>}
+          {!isGuest && <Button
             variant="outline"
             onClick={() => void signOut()}
             className="mt-5 h-10 rounded-full border-border font-medium text-muted-foreground hover:text-foreground"
           >
             Sign out
-          </Button>
+          </Button>}
         </section>
       </main>
       <SiteFooter />

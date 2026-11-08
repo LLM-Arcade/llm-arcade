@@ -1,3 +1,4 @@
+import ArcadeImage from "@/components/arcade/ArcadeImage";
 import { Link } from "react-router-dom";
 import SiteHeader from "@/components/layout/SiteHeader";
 import SiteFooter from "@/components/layout/SiteFooter";
@@ -77,7 +78,7 @@ const Home = () => {
                 to={`/game/${spotlight.slug}`}
                 className="group relative block min-h-[240px] md:min-h-[320px]"
               >
-                <img
+                <ArcadeImage
                   src={gameArt(spotlight)}
                   alt={spotlight.title}
                   className="absolute inset-0 h-full w-full object-cover transition-transform duration-200 group-hover:scale-[1.02]"

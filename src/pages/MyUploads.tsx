@@ -18,11 +18,11 @@ const statusChip: Record<GameSubmission["status"], string> = {
 };
 
 const MyUploads = () => {
-  const { user, loading } = useAuth();
+  const { user, loading, isGuest } = useAuth();
   const navigate = useNavigate();
   const { data: submissions, isLoading } = useMySubmissions();
 
-  if (!loading && !user) {
+  if (!loading && (!user || isGuest)) {
     return <Navigate to={authCta("/uploads").to} replace />;
   }
 

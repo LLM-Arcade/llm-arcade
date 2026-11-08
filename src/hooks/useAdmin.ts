@@ -3,7 +3,7 @@
 // grant here is only convenience, never the security boundary.
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/legacy-supabase";
 import type { Game } from "@/hooks/useGames";
 import type { GameSubmission } from "@/hooks/useSubmissions";
 import type { Role } from "@/contexts/AuthContext";

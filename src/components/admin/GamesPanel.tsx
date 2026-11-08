@@ -1,3 +1,4 @@
+import ArcadeImage from "@/components/arcade/ArcadeImage";
 // Admin games management: status, featured, spotlight picker, score wipes.
 
 import {
@@ -37,7 +38,7 @@ const GameRow = ({ game, isSpotlight }: { game: Game; isSpotlight: boolean }) =>
 
   return (
     <div className="flex flex-wrap items-center gap-3 rounded-2xl bg-card p-3.5 shadow-sm ring-1 ring-foreground/10">
-      <img
+      <ArcadeImage
         src={gameArt(game)}
         alt=""
         loading="lazy"

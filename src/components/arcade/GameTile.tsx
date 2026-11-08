@@ -1,3 +1,4 @@
+import ArcadeImage from "@/components/arcade/ArcadeImage";
 import { Link } from "react-router-dom";
 import { Play } from "lucide-react";
 import { gameArt, type Game } from "@/hooks/useGames";
@@ -8,7 +9,7 @@ const GameTile = ({ game, index }: { game: Game; index: number }) => (
     className="group fade-up relative overflow-hidden rounded-2xl bg-card shadow-sm ring-1 ring-foreground/10 transition-all duration-150 hover:-translate-y-1 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
     style={{ animationDelay: `${Math.min(index, 11) * 50}ms` }}
   >
-    <img
+    <ArcadeImage
       src={gameArt(game)}
       alt={game.title}
       loading="lazy"

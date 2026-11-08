@@ -1,6 +1,7 @@
 import { useAuth } from "@/contexts/AuthContext";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
 import Landing from "@/pages/Landing";
+import { isCloudflareBackend } from "@/lib/backend-config";
 
 /**
  * Pre-launch gate: guests see the Coming Soon landing until
@@ -27,7 +28,7 @@ const LaunchGate = ({ children }: { children: React.ReactNode }) => {
     return (
       <>
         <div className="bg-mustard py-1.5 text-center font-mono text-[10px] font-medium tracking-widest text-foreground">
-          PRE-LAUNCH PREVIEW · SCORES &amp; STREAKS ALREADY COUNT
+          {isCloudflareBackend ? "RECOVERY PREVIEW · NEW SCORES SAVE TO YOUR PLAYER CARD" : "PRE-LAUNCH PREVIEW · SCORES & STREAKS ALREADY COUNT"}
         </div>
         {children}
       </>

@@ -1132,3 +1132,23 @@ until the user signs in on llmarcade.fun in the driven browser.
 - The harness stages the lone Hexer and restores the seed-2026 floor
   beside the twelve-seed mean and best-run gates. Seeds 2020 to 2031 now
   reach 15 22 22 16 22 15 15 21 15 15 15 22 (mean 17.92), with no stall.
+
+
+## Cloudflare recovery implementation and isolated API preview (2026-11-08)
+
+- Added D1/Worker and frontend paths for guest cards, optional Clerk accounts,
+  scores/boards, progression, social features, submissions and admin review.
+  Guest cards collect no email; new accounts retain the card's UUID and links.
+  Public reads expose usernames rather than private email/provider names.
+- Reconstructed 15 game rows and 110 achievement definitions from source;
+  Run 'n Gunner remains playable as explicitly documented. Lastwatch retains
+  its source playtest gate. Missing metadata is marked as new configuration,
+  not recovered database content; old users/scores/uploads remain unrecovered.
+- Local integration, frontend, engine and redirect checks passed. The new
+  Arcade-only preview D1 and API Worker were deployed; configured cloud egress
+  denied the live health check. Clerk browser callback setup and original
+  Vercel preview access remain blocked. No production cutover or merge.
+- Uploads retain 5 MB HTML/2 MB artwork limits using bounded immutable chunks
+  and browser assembly. Old versions/award history survive review. No R2 or
+  paid resource enabled. Browser/deployed CPU and complete live acceptance
+  remain required before release; details in cloudflare-backend/CURRENT_STATUS.md.
