@@ -1,4 +1,4 @@
-import { authRoute, getSession, ApiError, json, type Bindings } from "./auth";
+import { authRoute, getSession, assertPlayerIntent, ApiError, json, type Bindings } from "./auth";
 import { communityQuery } from "./community";
 import { communityRpc } from "./rpc";
 import { body } from "./request";
@@ -109,6 +109,7 @@ async function route(request: Request, env: Bindings): Promise<Response> {
     if (!session) throw new ApiError(401, "Sign in to save your score.");
     const input = await body(request);
     if ("user_id" in input || "role" in input) throw new ApiError(400, "Player identity comes from your session.");
+    assertPlayerIntent(input.expected_player_id, session.user.id);
     if (typeof input.game_id !== "string" || input.game_id.length > 128 ||
         typeof input.run_id !== "string" || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(input.run_id) ||
         !Number.isSafeInteger(input.score) || Number(input.score) < 0) {

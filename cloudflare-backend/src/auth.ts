@@ -11,6 +11,12 @@ export class ApiError extends Error {
 }
 export const json = (value: unknown, status = 200) => Response.json(value, { status, headers: { "Cache-Control": "no-store" } });
 
+// This optional client intent check can only reject a request. Ownership always
+// comes from the authenticated session, never from the supplied player ID.
+export function assertPlayerIntent(expected: unknown, actual: string) {
+  if (expected !== undefined && expected !== actual) throw new ApiError(409, "Your active player changed. Start this action again.");
+}
+
 async function guestBody(request: Request) {
   if (request.headers.get("content-type")?.split(";")[0].trim() !== "application/json") throw new ApiError(415, "Send JSON for this request.");
   const reader = request.body?.getReader();
@@ -100,9 +106,24 @@ export async function authRoute(request: Request, env: Bindings): Promise<Respon
     requireOrigin(request, env);
     const identity = await readClerkIdentity(request, env);
     if (!identity) throw new ApiError(401, "Sign in with Clerk before linking an account.");
-    const email = await readVerifiedClerkEmail(identity);
-    if (!email) throw new ApiError(403, "Verify your primary email before linking your player card.");
     const existing = await env.ARCADE_DB.prepare('SELECT id FROM "user" WHERE clerk_id = ?').bind(identity.subject).first<{ id: string }>();
+    const email = await readVerifiedClerkEmail(identity, env);
+    if (!email) {
+      // Once a provider refresh observes an unverified primary address, stale
+      // verification must not keep privileged operations enabled in D1.
+      if (existing) await env.ARCADE_DB.prepare('UPDATE "user" SET emailVerified = 0 WHERE id = ? AND clerk_id = ?')
+        .bind(existing.id, identity.subject).run();
+      throw new ApiError(403, "Verify your primary email before linking your player card.");
+    }
+    if (existing) {
+      if (await env.ARCADE_DB.prepare('SELECT id FROM "user" WHERE email = ? AND id <> ?').bind(email, existing.id).first()) {
+        throw new ApiError(409, "That verified email belongs to another player record. A reviewed migration is required.");
+      }
+      // Identity and score links remain on the stable Clerk subject/UUID. Email
+      // is refreshed only from the provider's verified primary address.
+      await env.ARCADE_DB.prepare('UPDATE "user" SET email = ?, emailVerified = 1 WHERE id = ? AND clerk_id = ?')
+        .bind(email, existing.id, identity.subject).run();
+    }
     const guest = await getGuestSession(request, env);
     let userId = existing?.id;
     if (!userId) {

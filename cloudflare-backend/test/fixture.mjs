@@ -25,16 +25,23 @@ export async function fixture(options = {}) {
       const match = /^\/v1\/users\/(user_[a-z0-9_]+)$/.exec(url.pathname);
       if (url.origin === "https://api.clerk.com" && match) {
         assert.equal(request.headers.get("authorization"), "Bearer sk_test_synthetic_not_a_real_app_key");
+        assert.equal(request.headers.get("Clerk-API-Version"), "2026-05-12");
         const user = users.get(match[1]);
-        return Response.json(user ?? { errors: [{ message: "Not found" }] }, { status: user ? 200 : 404 });
+        const result = user && options.userResponse ? options.userResponse(user) : user;
+        return result instanceof Response ? result : Response.json(result ?? { errors: [{ message: "Not found" }] }, { status: result ? 200 : 404 });
       }
       throw new Error("Unexpected outbound request in isolated test: " + url.origin + url.pathname);
     } });
   const db = await runtime.getD1Database("ARCADE_DB");
   const statements = await schemaStatements(options.catalog ? allSchemas : baseSchemas);
   await db.batch(statements.map(({ sql }) => db.prepare(sql)));
-  const request = (path, options = {}) => runtime.dispatchFetch(ORIGIN + path, { ...options, redirect: "manual",
-    headers: { Origin: ORIGIN, "Content-Type": "application/json", "CF-Connecting-IP": "192.0.2.10", ...options.headers } });
+  const request = (path, options = {}) => {
+    const headers = new Headers(options.headers);
+    if (!headers.has("Origin")) headers.set("Origin", ORIGIN);
+    if (!headers.has("Content-Type")) headers.set("Content-Type", "application/json");
+    if (!headers.has("CF-Connecting-IP")) headers.set("CF-Connecting-IP", "192.0.2.10");
+    return runtime.dispatchFetch(ORIGIN + path, { ...options, redirect: "manual", headers });
+  };
   const post = (path, data, auth = "") => request(path, { method: "POST",
     headers: typeof auth === "string" ? { Cookie: auth } : auth, body: JSON.stringify(data) });
   const identity = async (values = {}) => {

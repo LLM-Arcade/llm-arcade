@@ -2,6 +2,9 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/legacy-supabase";
 import { useAuth } from "@/contexts/AuthContext";
 import { showAchievementToast } from "@/components/progression/AchievementToast";
+import { isCloudflareBackend } from "@/lib/backend-config";
+import { unlockPlayerAchievement } from "@/lib/arcade-api";
+import type { AchievementIntent } from "@/lib/player-intent";
 
 export interface GameAchievement {
   id: string;
@@ -62,21 +65,25 @@ interface UnlockResult {
  * approved manifest (achievements table) — games can't invent achievements.
  */
 export const useUnlockAchievement = (gameId: string) => {
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (slug: string) => {
+    mutationFn: async (intent: AchievementIntent) => {
+      if (isCloudflareBackend) {
+        return unlockPlayerAchievement<UnlockResult>(intent.playerId, intent.gameId, intent.slug);
+      }
       const { data, error } = await supabase.rpc("unlock_achievement", {
-        p_game_id: gameId,
-        p_slug: slug,
+        p_game_id: intent.gameId,
+        p_slug: intent.slug,
       });
       if (error) throw error;
       return data as UnlockResult;
     },
-    onSuccess: (result) => {
+    onSuccess: (result, intent) => {
       if (!result?.unlocked) return;
-      showAchievementToast(result.name ?? "Achievement", result.xp ?? 0);
-      queryClient.invalidateQueries({ queryKey: ["game-achievements", gameId] });
-      queryClient.invalidateQueries({ queryKey: ["my-unlocks", gameId] });
+      if (intent.playerId === user?.id && intent.gameId === gameId) showAchievementToast(result.name ?? "Achievement", result.xp ?? 0);
+      queryClient.invalidateQueries({ queryKey: ["game-achievements", intent.gameId] });
+      queryClient.invalidateQueries({ queryKey: ["my-unlocks", intent.gameId] });
       queryClient.invalidateQueries({ queryKey: ["profile"] });
       queryClient.invalidateQueries({ queryKey: ["activity"] });
     },

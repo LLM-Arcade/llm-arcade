@@ -79,9 +79,11 @@ export async function admin(request: Request, env: Bindings) {
 function own(input: Input, userId: string, key = "user_id") {
   if (input[key] !== undefined && input[key] !== userId) throw new ApiError(403, "You can only change your own records.");
 }
-async function publishedGame(env: Bindings, value: unknown) {
+async function socialGame(env: Bindings, value: unknown) {
   const id = text(value, 128, "game ID");
-  if (!await env.ARCADE_DB.prepare("SELECT id FROM games WHERE id = ? AND status = 'published'").bind(id).first()) throw new ApiError(404, "This game is not available.");
+  // Coming-soon cabinets deliberately invite discussion, ratings and favorites
+  // in GamePlayer. Gameplay scores and unlocks retain their published-only gate.
+  if (!await env.ARCADE_DB.prepare("SELECT id FROM games WHERE id = ? AND status <> 'archived'").bind(id).first()) throw new ApiError(404, "This game is not available.");
   return id;
 }
 
@@ -179,7 +181,7 @@ async function mutate(request: Request, env: Bindings, query: Input, table: stri
       if (!await env.ARCADE_DB.prepare('SELECT id FROM "user" WHERE id = ?').bind(target).first()) throw new ApiError(404, "This player was not found.");
       await env.ARCADE_DB.prepare("INSERT INTO follows VALUES (?, ?, ?) ON CONFLICT DO NOTHING").bind(user.id, target, now).run();
     } else {
-      const gameId = await publishedGame(env, input.game_id);
+      const gameId = await socialGame(env, input.game_id);
       if (table === "ratings") {
         only(input, ["user_id", "game_id", "rating", "updated_at"]);
         if (!Number.isInteger(input.rating) || Number(input.rating) < 1 || Number(input.rating) > 5) throw new ApiError(400, "Choose a rating from 1 to 5.");

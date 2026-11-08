@@ -14,7 +14,7 @@
     "test:games": "node scripts/harness/hyper-circuit.mjs && node scripts/harness/run-n-gunner.mjs && node scripts/harness/lastwatch.mjs && node scripts/harness/brickstorm.mjs && node scripts/harness/gem-columns.mjs && node scripts/harness/sky-defense.mjs && node scripts/harness/kickflip-city.mjs && node scripts/harness/the-undervault.mjs",
     "ci": "pnpm check && pnpm test:games && pnpm test:auth",
     "preview": "vite preview",
-    "test:auth": "node scripts/harness/safe-next.mjs"
+    "test:auth": "node scripts/harness/safe-next.mjs && node --test scripts/harness/auth-transition.mjs"
   },
   "dependencies": {
     "@clerk/react": "6.18.4",

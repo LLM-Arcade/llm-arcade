@@ -2,6 +2,27 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { fixture, cookies } from "./fixture.mjs";
 
+test("coming-soon cabinets keep social actions while scores and unlocks stay gated", async () => {
+  const app = await fixture({ accounts: false });
+  try {
+    const cookie = cookies(await app.post("/api/auth/guest", { username: "upcoming_fan" }));
+    await app.db.batch(["coming_soon", "archived"].map(status => app.db.prepare(`INSERT INTO games
+      (id,slug,title,era,track,status,score_cap,created_at,data_origin) VALUES (?,?,?,'Arcade','A',?,1000,?,'reconstructed')`)
+      .bind(status, status.replace("_", "-"), status, status, new Date().toISOString())));
+    const social = (table, gameId, values) => app.post("/api/community/query", {
+      table, operation: table === "ratings" ? "upsert" : "insert", filters: [], orders: [], values: { game_id: gameId, ...values },
+    }, cookie);
+    for (const [table, values] of [["ratings", { rating: 4 }], ["favorites", {}], ["comments", { body: "Looking forward to this cabinet." }]]) {
+      const response = await social(table, "coming_soon", values);
+      assert.equal(response.status, 200, table + ": " + await response.clone().text());
+      assert.equal((await social(table, "archived", values)).status, 404);
+    }
+    assert.equal((await app.post("/api/scores", { game_id: "coming_soon", run_id: crypto.randomUUID(), score: 10 }, cookie)).status, 404);
+    await app.db.prepare("INSERT INTO achievements (id,game_id,slug,name,xp) VALUES ('coming-unlock','coming_soon','first-step','First Step',10)").run();
+    assert.equal((await app.post("/api/community/rpc", { name: "unlock_achievement", args: { p_game_id: "coming_soon", p_slug: "first-step" } }, cookie)).status, 400);
+  } finally { await app.runtime.dispose(); }
+});
+
 test("community records preserve guest ownership, public privacy, reply integrity and admin-only signups", async () => {
   const app = await fixture();
   try {

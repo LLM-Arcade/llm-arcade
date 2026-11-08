@@ -1,4 +1,4 @@
-import { ApiError, json, requireOrigin, type Bindings } from "./auth";
+import { ApiError, assertPlayerIntent, json, requireOrigin, type Bindings } from "./auth";
 import { admin, player } from "./community";
 import { reviewSubmission } from "./submissions";
 
@@ -35,7 +35,8 @@ export async function communityRpc(request: Request, env: Bindings, input: Args)
   }
   if (name === "unlock_achievement") {
     const user = await player(request, env);
-    const args = argsFor(input, ["p_game_id", "p_slug"]), gameId = id(args.p_game_id), slug = id(args.p_slug);
+    const args = argsFor(input, ["p_game_id", "p_slug", "p_expected_player_id"]), gameId = id(args.p_game_id), slug = id(args.p_slug);
+    assertPlayerIntent(args.p_expected_player_id, user.id);
     const achievement = await env.ARCADE_DB.prepare(`SELECT a.id,a.name,a.xp FROM achievements a JOIN games g ON g.id = a.game_id
       WHERE a.game_id = ? AND a.slug = ? AND a.active = 1 AND g.status = 'published'`).bind(gameId, slug).first<{ id: string; name: string; xp: number }>();
     if (!achievement) throw new ApiError(400, "That achievement is not in the approved game manifest.");
@@ -90,11 +91,15 @@ export async function communityRpc(request: Request, env: Bindings, input: Args)
     if (!application) throw new ApiError(404, "This application was not found.");
     if (application.status !== "pending") throw new ApiError(409, "This application was already reviewed.");
     const result = await env.ARCADE_DB.batch([
+      // Apply the role only while this exact application is still pending,
+      // inside the same transaction that records the winning decision.
+      env.ARCADE_DB.prepare(`UPDATE "user" SET role = 'playtester' WHERE lower(email) = ? AND emailVerified = 1 AND clerk_id IS NOT NULL AND role = 'player' AND ? = 1
+        AND EXISTS (SELECT 1 FROM playtest_applications WHERE id = ? AND status = 'pending')`)
+        .bind(application.email, Number(args.p_approve), applicationId),
       env.ARCADE_DB.prepare("UPDATE playtest_applications SET status = ? WHERE id = ? AND status = 'pending'").bind(args.p_approve ? "approved" : "declined", applicationId),
-      env.ARCADE_DB.prepare(`UPDATE "user" SET role = 'playtester' WHERE lower(email) = ? AND emailVerified = 1 AND clerk_id IS NOT NULL AND role = 'player' AND ? = 1`)
-        .bind(application.email, Number(args.p_approve)),
     ]);
-    return json({ data: !args.p_approve ? "declined" : result[1].meta.changes ? "approved" : "approved (no account yet)" });
+    if (!result[1].meta.changes) throw new ApiError(409, "This application was already reviewed.");
+    return json({ data: !args.p_approve ? "declined" : result[0].meta.changes ? "approved" : "approved (no account yet)" });
   }
   throw new ApiError(400, "This administrator command is not implemented yet.");
 }

@@ -15,7 +15,8 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { showError, showSuccess } from "@/utils/toast";
 import { Check, Loader2, Maximize, Minimize, Play, RotateCcw, ShieldCheck } from "lucide-react";
 import { isCloudflareBackend } from "@/lib/backend-config";
-import { arcadeData, arcadePost, ArcadeApiError } from "@/lib/arcade-api";
+import { arcadeData, arcadePost, savePlayerScore, ArcadeApiError } from "@/lib/arcade-api";
+import { captureAchievementIntent, captureScoreIntent, type ScoreIntent } from "@/lib/player-intent";
 
 type Phase = "idle" | "loading" | "playing" | "over";
 type SubmitState = "idle" | "saving" | "saved" | "held" | "rate_limited" | "error";
@@ -71,34 +72,37 @@ const GamePlayer = ({ game }: { game: Game }) => {
   const unlock = useUnlockAchievement(game.id);
   const handleAchievement = (id: string) => {
     // A guest card or signed-in account owns its manifest-validated unlocks.
-    if (user) unlock.mutate(id);
+    if (user) unlock.mutate(captureAchievementIntent(user.id, game.id, id));
   };
 
   const submit = useMutation({
-    mutationFn: async (payload: ArcadeScorePayload) => {
+    mutationFn: async (intent: ScoreIntent) => {
       if (isCloudflareBackend) {
-        await arcadePost("/scores", { game_id: game.id, run_id: runIdRef.current, score: payload.score, stats: payload.stats ?? null });
+        await savePlayerScore(intent.playerId, { game_id: intent.gameId, run_id: intent.runId, score: intent.score, stats: intent.stats ?? null });
         return;
       }
       const { error } = await supabase.from("scores").insert({
-        game_id: game.id,
-        user_id: user!.id,
-        score: payload.score,
-        stats: payload.stats ?? null,
+        game_id: intent.gameId,
+        user_id: intent.playerId,
+        score: intent.score,
+        stats: intent.stats ?? null,
       });
       if (error) throw error;
     },
-    onMutate: () => setSubmitState("saving"),
-    onSuccess: () => {
-      setSubmitState("saved");
-      queryClient.invalidateQueries({ queryKey: ["leaderboard", game.id] });
-      queryClient.invalidateQueries({ queryKey: ["personal-best", game.id] });
+    onMutate: (intent) => {
+      if (intent.runId === runIdRef.current && intent.gameId === game.id && intent.playerId === user?.id) setSubmitState("saving");
+    },
+    onSuccess: (_result, intent) => {
+      if (intent.runId === runIdRef.current && intent.gameId === game.id && intent.playerId === user?.id) setSubmitState("saved");
+      queryClient.invalidateQueries({ queryKey: ["leaderboard", intent.gameId] });
+      queryClient.invalidateQueries({ queryKey: ["personal-best", intent.gameId] });
       // Progression side effects (XP, streak, badges) happen in a DB trigger
       queryClient.invalidateQueries({ queryKey: ["profile"] });
       queryClient.invalidateQueries({ queryKey: ["activity"] });
       queryClient.invalidateQueries({ queryKey: ["recent-scores"] });
     },
-    onError: (error: Error) => {
+    onError: (error: Error, intent) => {
+      if (intent.runId !== runIdRef.current || intent.gameId !== game.id || intent.playerId !== user?.id) return;
       if ((error instanceof ArcadeApiError && error.status === 429) || error.message.toLowerCase().includes("security")) {
         setSubmitState("rate_limited");
       } else {
@@ -119,7 +123,7 @@ const GamePlayer = ({ game }: { game: Game }) => {
     if (payload.score <= 0) return;
 
     if (user) {
-      submit.mutate(payload);
+      submit.mutate(captureScoreIntent(user.id, game.id, runIdRef.current, payload));
     } else {
       // Guest interception: hold the run, submit right after sign-in.
       const existing = sessionStorage.getItem(heldKey(game.slug));
@@ -161,11 +165,13 @@ const GamePlayer = ({ game }: { game: Game }) => {
         sessionStorage.removeItem(heldKey(game.slug));
         return;
       }
-      if (typeof held.run_id === "string" && /^[0-9a-f-]{36}$/i.test(held.run_id)) runIdRef.current = held.run_id;
+      const heldRunId = typeof held.run_id === "string" && /^[0-9a-f-]{36}$/i.test(held.run_id) ? held.run_id : crypto.randomUUID();
       submit.mutate(
-        { score },
+        captureScoreIntent(user.id, game.id, heldRunId, { score, stats: held.stats }),
         { onSuccess: () => {
-          sessionStorage.removeItem(heldKey(game.slug));
+          // A newer held run may have replaced this entry while the save was
+          // queued. Do not erase that newer run, or change the active run ID.
+          if (sessionStorage.getItem(heldKey(game.slug)) === raw) sessionStorage.removeItem(heldKey(game.slug));
           showSuccess("Score claimed — you're on the board.");
         } },
       );

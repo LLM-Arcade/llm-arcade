@@ -40,8 +40,9 @@ Clerk also needs `VITE_CLERK_PUBLISHABLE_KEY` and Worker-only approved keys.
   are accepted from clients. Upload/version review is tested transactionally.
 - A candidate immutable, chunked D1 file store preserves the original 5 MB HTML
   and 2 MB art limits without activating R2 or paid storage. Public HTML is
-  sandboxed, with browser-side assembly of bounded public chunks. Local CPU
-  sampling fits the per-request budget; real browser/deployed CPU acceptance
+  sandboxed, with browser-side assembly of bounded public chunks. Some local
+  chunk operations sampled below 10 ms, but account-verification samples include
+  cold/warm requests above that budget. Real browser/deployed CPU acceptance
   remains required. Capacity is 400 MiB; uploads use a verified account.
 
 Original game files and engine code have not changed. The reconstructed catalog
@@ -60,8 +61,7 @@ placeholders are removed; acceptance is still pending.
 Node 24, pnpm 11.25, separate root/backend dependency installations:
 
 ```sh
-pnpm check
-pnpm test:games
+pnpm run ci
 cd cloudflare-backend
 pnpm check
 node scripts/reconstruct-catalog.mjs
@@ -73,8 +73,14 @@ Backend tests use real local workerd/D1 with synthetic Clerk tokens and an
 isolated mock provider API. They cover signature/issuer/authorized-party/expiry,
 unverified email, guest-to-account ID retention and credential revocation,
 sole initial admin, score separation/retry/rate/cap checks, ownership, injection
-rejection, private signup access, XP/streak/award math and admin revocation.
-This is not a real Clerk, email-delivery, hosted-CI, browser or live-site test.
+rejection, private signup access, XP/streak/award math and admin revocation. Twenty
+tests include verified-email changes, concurrent upload reservations/reviews,
+coming-soon social actions, queued player intents, actual frontend file assembly
+and parity against the prior Clerk SDK request verifier. Seven frontend tests cover
+account/cache transitions. The official token verifier remains in use; provider
+responses have a fixed endpoint, pinned API version, no redirects and a body cap.
+These are synthetic provider/runtime tests. Hosted CI passed baseline 349a9f7;
+real Clerk email delivery, browser gameplay and the live site remain unverified.
 
 The local workerd compatibility date is 2026-07-30; proposed deployment uses
 2026-11-08. CPU sampling is diagnostic and does not establish deployed CPU
@@ -95,6 +101,9 @@ no secure handoff exists here. The pending process was stopped without saving
 a session or creating an app/key. Use a secure owner/browser setup and project
 secret interface; do not send passwords, callback codes or keys through chat.
 Clerk production keys/DNS still need their action-time approvals.
+See [SETUP_AND_ACCEPTANCE.md](SETUP_AND_ACCEPTANCE.md) for the exact authentication,
+credential-placement and access-repair steps. The deployed Worker is still the
+baseline build; future deployment must update it before the follow-up frontend.
 
 Remote SQL files target a NEW EMPTY Arcade database only. No automatic migration
 runs. Preserve UUIDs/links and review trigger behavior before importing any

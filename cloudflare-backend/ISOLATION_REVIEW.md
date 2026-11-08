@@ -15,7 +15,9 @@ explicit owner/admin predicates described below.
   authenticate accounts. Session digest and provider subject are never public.
 - Clerk: official SDK verifies signature, issuer, authorized party and session
   token type -> stable provider subject -> D1 user. Linking obtains the primary
-  verified email through the backend SDK, not client fields or JWT email text.
+  verified primary email through a fixed, bounded server-to-provider API read,
+  not client fields or JWT email text. The pinned official SDK verifies the JWT;
+  explicit session-only guards are compared with its previous request verifier.
 - Owner: server-only configured email plus verified Clerk identity, with a
   no-other-admin guard. Client signup cannot choose an admin role.
 - Scores, ratings, favorites, follows, comments and profile writes bind the
@@ -54,6 +56,17 @@ explicit owner/admin predicates described below.
 3. **Low, high confidence: unbounded score-reset output.** Admin score reset
    returned every deleted ID. It now returns the database change count without
    materializing historical IDs. This command has not run on real scores.
+4. **Verified email freshness.** Account linking now refreshes the current primary
+   verified email, clears obsolete verification when the provider no longer
+   verifies it, rejects collisions and retains player IDs and linked scores.
+5. **Atomic quota/review decisions.** Upload reservations enforce both rolling
+   daily count and pending capacity in the insert. Playtest role grants and
+   submission decisions use guarded transactions and reject lost decisions.
+6. **Account transitions.** Private query caches are cancelled/cleared and late
+   responses discarded across Clerk identity/session changes. Captured score and
+   unlock player intents reject queued mutations after a different player signs
+   in. These fields cannot authorize a write; server session ownership remains
+   mandatory. Same-UUID guest linking continues to work.
 
 ## Negative tests and positive controls
 
@@ -68,7 +81,7 @@ credentials. Upload/version review preserves files and unlock history.
 
 ## Outstanding verification and limits
 
-- Concurrent-link and long-pattern negative cases pass in the eleven-test local
+- Concurrent-link, long-pattern and review regression cases pass in the twenty-test local
   suite. No claim of exhaustive or externally audited security is made.
 - Actual Clerk app, primary-email delivery/recovery, real owner sign-in and
   provider-side revocation are unverified. A valid short-lived Clerk token can
@@ -81,6 +94,10 @@ credentials. Upload/version review preserves files and unlock history.
   sampled about 8.9 ms and public reads 0–6.7 ms; this is sampling, not deployed
   CPU accounting. The 5 MB monolithic approach failed the CPU budget and was
   replaced. Measure real cold/warm requests before production promotion.
+  Later synthetic account-verifier samples still include cold/warm operations
+  above 10 ms, despite a smaller bundle. The real Clerk configuration, public-key
+  or JWKS path and deployed CPU remain acceptance blockers; no weaker verification
+  or credentials were introduced to satisfy the budget.
 - Full-file assembly adds up to 40 public chunk requests for a 5 MB game, 16
   for 2 MB art. File payload capacity is 400 MiB; account upload allowance is
   12 files/day, with three pending submissions. Free shared account quotas can

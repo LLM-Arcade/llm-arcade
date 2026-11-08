@@ -1152,3 +1152,21 @@ until the user signs in on llmarcade.fun in the driven browser.
   and browser assembly. Old versions/award history survive review. No R2 or
   paid resource enabled. Browser/deployed CPU and complete live acceptance
   remain required before release; details in cloudflare-backend/CURRENT_STATUS.md.
+
+## Arcade recovery acceptance follow-up (2026-11-08)
+
+- Fixed account/session cache transitions and same-UUID guest upgrades. Queued
+  score and achievement writes carry the originating player intent and reject
+  a newly active player instead of moving the old run to that account.
+- Fixed stale Clerk primary email, concurrent upload quotas, playtest role grants
+  and competing submission reviews. Coming-soon cabinets keep their existing
+  ratings/favorites/comments while gameplay score/unlock gates remain intact.
+- Kept official Clerk signature verification while removing full management-client
+  construction; pinned and bounded primary-email reads fail closed. Signed-token
+  parity and provider-response tests retain session/issuer/authorized-party checks.
+- Twenty real local workerd/D1 tests, seven frontend account-transition tests and
+  root CI checks pass. CPU samples still exceed Workers Free's budget on some
+  account requests; deployed CPU, actual Clerk and browser acceptance are pending.
+- Kept the same branch/draft PR. No merge, new app/key/session, access expansion,
+  follow-up deployment or production cutover. Exact remaining setup and access
+  repairs are recorded in cloudflare-backend/SETUP_AND_ACCEPTANCE.md.

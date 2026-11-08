@@ -29,6 +29,15 @@ export const arcadeData = async <T>(path: string, options?: RequestInit) =>
 export const arcadePost = <T>(path: string, value: unknown) =>
   arcadeData<T>(path, { method: "POST", body: JSON.stringify(value) });
 
+// Capture playerId from the originating UI/hook. Pending mutations can outlive
+// an account transition; the server rejects a changed principal instead of
+// assigning that old run/unlock to the current token's player.
+export const savePlayerScore = (playerId: string, run: { game_id: string; run_id: string; score: number; stats?: Record<string, unknown> | null }) =>
+  arcadePost("/scores", { ...run, expected_player_id: playerId });
+
+export const unlockPlayerAchievement = <T>(playerId: string, gameId: string, slug: string) =>
+  arcadePost<T>("/community/rpc", { name: "unlock_achievement", args: { p_game_id: gameId, p_slug: slug, p_expected_player_id: playerId } });
+
 export interface CloudflarePlayer {
   id: string; username: string; name: string; email: string | null;
   emailVerified: boolean; image: string | null; role: "player" | "playtester" | "moderator" | "admin";

@@ -80,7 +80,8 @@ export async function reviewSubmission(env: Bindings, args: Input) {
   const now = new Date().toISOString();
   if (!args.p_approve) {
     if (!note) throw new ApiError(400, "Include a reason for rejection.");
-    await env.ARCADE_DB.prepare("UPDATE game_submissions SET status = 'rejected',review_note = ?,reviewed_at = ? WHERE id = ? AND status = 'pending'").bind(note, now, sub.id).run();
+    const rejected = await env.ARCADE_DB.prepare("UPDATE game_submissions SET status = 'rejected',review_note = ?,reviewed_at = ? WHERE id = ? AND status = 'pending'").bind(note, now, sub.id).run();
+    if (!rejected.meta.changes) throw new ApiError(409, "This submission was already reviewed.");
     return json({ data: null });
   }
   const meta = metadata(sub), entries = manifest(JSON.parse(sub.manifest));
@@ -110,6 +111,7 @@ export async function reviewSubmission(env: Bindings, args: Input) {
     .bind(crypto.randomUUID(),gameId,entry.slug,entry.name,entry.hint,entry.hint,entry.xp,order+1,sub.id)));
   statements.push(env.ARCADE_DB.prepare(`INSERT INTO user_badges (user_id,badge_slug,detail,earned_at) SELECT ?,'creator',?,? WHERE ${guard} ON CONFLICT DO NOTHING`).bind(sub.user_id,meta.title,now,sub.id));
   statements.push(env.ARCADE_DB.prepare("UPDATE game_submissions SET game_id=?,status='approved',review_note=?,reviewed_at=? WHERE id=? AND status='pending'").bind(gameId,note,now,sub.id));
-  await env.ARCADE_DB.batch(statements);
+  const reviewed = await env.ARCADE_DB.batch(statements);
+  if (!reviewed.at(-1)?.meta.changes) throw new ApiError(409, "This submission was already reviewed.");
   return json({ data: null });
 }

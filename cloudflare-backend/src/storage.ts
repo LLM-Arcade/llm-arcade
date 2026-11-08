@@ -60,16 +60,25 @@ export async function storageRoute(request: Request, env: Bindings): Promise<Res
     if ((pending?.n ?? 0) >= 3) throw new ApiError(429, "You already have three games awaiting review.");
     // Bound abandoned uploads too, rather than allowing unlimited reserved
     // payloads outside the submission queue. Never delete player files here.
-    const recent = await env.ARCADE_DB.prepare("SELECT count(*) AS n FROM storage_files WHERE user_id = ? AND created_at >= ?").bind(user.id, new Date(Date.now() - 86400000).toISOString()).first<{ n: number }>();
+    const since = new Date(Date.now() - 86400000).toISOString();
+    const recentFiles = () => env.ARCADE_DB.prepare("SELECT count(*) AS n FROM storage_files WHERE user_id = ? AND created_at >= ?").bind(user.id, since).first<{ n: number }>();
+    const recent = await recentFiles();
     if ((recent?.n ?? 0) >= 12) throw new ApiError(429, "Your daily upload allowance is full. Try again tomorrow.");
     const id = crypto.randomUUID();
     const result = await env.ARCADE_DB.batch([
       env.ARCADE_DB.prepare(`INSERT INTO storage_files (id,path,user_id,content_type,size,created_at)
-        SELECT ?,?,?,?,?,? WHERE (SELECT reserved_bytes FROM storage_budget WHERE id = 1) + ? <= ?`)
-        .bind(id, path, user.id, contentType, input.size, new Date().toISOString(), input.size, STORAGE_BYTES),
+        SELECT ?,?,?,?,?,? WHERE (SELECT reserved_bytes FROM storage_budget WHERE id = 1) + ? <= ?
+        AND (SELECT count(*) FROM storage_files WHERE user_id = ? AND created_at >= ?) < 12
+        AND (SELECT count(*) FROM game_submissions WHERE user_id = ? AND status = 'pending') < 3`)
+        .bind(id, path, user.id, contentType, input.size, new Date().toISOString(), input.size, STORAGE_BYTES, user.id, since, user.id),
       env.ARCADE_DB.prepare("UPDATE storage_budget SET reserved_bytes = reserved_bytes + ? WHERE id = 1 AND EXISTS (SELECT 1 FROM storage_files WHERE id = ?)").bind(input.size, id),
     ]);
-    if (!result[0].meta.changes) throw new ApiError(507, "Arcade's free file storage is full. No paid storage was enabled.");
+    if (!result[0].meta.changes) {
+      if (((await recentFiles())?.n ?? 0) >= 12) throw new ApiError(429, "Your daily upload allowance is full. Try again tomorrow.");
+      const queued = await env.ARCADE_DB.prepare("SELECT count(*) AS n FROM game_submissions WHERE user_id = ? AND status = 'pending'").bind(user.id).first<{ n: number }>();
+      if ((queued?.n ?? 0) >= 3) throw new ApiError(429, "You already have three games awaiting review.");
+      throw new ApiError(507, "Arcade's free file storage is full. No paid storage was enabled.");
+    }
     return json({ data: { id, chunkBytes: CHUNK_BYTES } }, 201);
   }
   const match = /^\/api\/storage\/files\/([0-9a-f-]{36})\/(chunks\/([0-9]{1,2})|complete)$/.exec(url.pathname);

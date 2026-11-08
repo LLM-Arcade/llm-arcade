@@ -14,11 +14,29 @@ achievements/XP/streaks/badges, activity, follows, comments/replies, ratings,
 favorites, waitlist/playtest forms, uploads/versioning/review and admin commands.
 Temporary feature placeholders were removed. Existing game files are unchanged.
 
-Eleven integration tests passed, including concurrent account linking, row
-ownership, private signup access, authorization revocation, manifest validation,
-XP caps, immutable uploads and the complete migration with SQL semicolons. Root lint/typecheck/build, game harnesses,
-redirect tests, Cloudflare-flag build and cf deploy dry-run passed locally.
-Hosted CI and real browser/provider testing remain outstanding.
+Twenty integration tests now pass, including concurrent account linking,
+row ownership, private signup access, authorization revocation, manifest validation,
+XP caps, immutable uploads and the complete migration with SQL semicolons. Root
+lint/typecheck/build, eight game harnesses, redirect checks and seven account-transition
+tests pass. Baseline commit 349a9f7 passed hosted CI run 42507075505. Follow-up
+checks and the next hosted run must be associated with their exact new commit;
+real browser/provider testing remains outstanding.
+
+The follow-up fixes stale verified primary email, daily-upload reservation races,
+conflicting playtest/submission reviews, coming-soon social actions, stale private
+query data after account changes and queued scores/unlocks moving to another
+player or a later run. Immutable mutation variables retain the original player,
+game, run, stats and achievement. Player-intent fields only reject mismatches; server identity still owns
+all writes. Guest-to-account links retain the same player UUID.
+
+The pinned official Clerk signature verifier is retained with explicit session
+token guards. Nineteen signed-token parity cases compare it with the previous
+SDK request verifier; bounded provider reads check the current verified primary
+email. This removes full management-client construction from the request path;
+it does not cache verification or relax signature/issuer/authorized-party checks.
+Synthetic CPU samples still include cold/warm requests over 10 ms. Workers Free
+CPU acceptance is unresolved, even though the bundle is smaller. Real cold/warm
+measurements, including the actual public-key/JWKS configuration, are required.
 
 ## Preview deployment completed; live HTTP test blocked
 
@@ -35,6 +53,10 @@ Deployment ID: 75febdd3e7be48a1b7edf4c33645cbed.
 Bundle SHA-256: 0bf076545a0c6ff5af249d88f6595d71656719c820c229693f9215aca259fb4a.
 API readback confirms only this D1 and the exact Worker-origin APP_ORIGIN are bound;
 there are no Clerk keys, owner email, R2 binding or other project credentials.
+This deployment contains baseline 349a9f7, not the follow-up changes. Once access,
+configuration and validation permit deployment, update the Worker before the
+matching frontend: the new achievement request adds a player-intent argument that
+the baseline Worker does not accept. No follow-up deployment was attempted.
 
 Live GET /api/health could not reach the Worker from this environment:
 Node direct DNS returned EAI_AGAIN; the configured curl proxy then denied CONNECT
@@ -73,7 +95,7 @@ The actual owner must personally verify email; nobody was pre-signed-up/admin.
 - Exact Vercel preview-origin trust configuration and API proxy. A separate
   vercel.cloudflare-preview.json is prepared; the default production config is
   unchanged. Do not retry the previously denied Vercel preview without repair.
-- Hosted CI, browser gameplay, sandbox/blob upload loading, live score/board
+- Hosted CI for the follow-up commit, browser gameplay, sandbox/blob upload loading, live score/board
   persistence and cold/warm deployed CPU measurements.
 - Review reconstructed metadata: seven games lack complete historical
   achievement labels/hints/XP; six badge identities are documented and two
@@ -84,6 +106,15 @@ The actual owner must personally verify email; nobody was pre-signed-up/admin.
   5 MB response sampled 363/109 ms and was rejected; bounded reads sampled
   0–6.7 ms and authenticated upload 8.9 ms locally, not deployed accounting.
 - Normal review and Jeff's merge approval before any production cutover.
+
+Deployment is explicitly authorized after acceptance; that does not authorize new
+credentials, hosted key placement or persistent access/security changes. See
+[SETUP_AND_ACCEPTANCE.md](SETUP_AND_ACCEPTANCE.md) for exact owner actions,
+permission repairs and tests that can run independently. If actual verified-account
+CPU exceeds Workers Free, a possible middle ground is Clerk verification in the
+existing Vercel Hobby Node API with D1 remaining behind the Worker. That would
+preserve accounts, guest cards, admin checks and scorekeeping, but needs review
+and approval for its service trust/credentials. It is not implemented or selected.
 
 The owner confirmed Workers Free/no paid subscription. Billing read remains
 403; no permission expansion or paid resource was requested. Original private
