@@ -10,6 +10,34 @@ and Google OAuth origins use it.
 
 ## Current state
 
+**Environment-specific Vercel routing (2026-11-09):** PR #2 is merged into `dev`
+at `1b214daf377f9e4b24cd180109dbd56f7fa0cad7`. The scoped follow-up replaces the
+automatic `vercel.json` with dependency-free `vercel.mjs`. Git Production builds
+use `llm-arcade-api.jeffkazzee.workers.dev`; preview, development and custom
+targets use only `llm-arcade-api-preview.jeffkazzee.workers.dev`. Both route
+same-origin `/api` and `/api/*` before the existing SPA fallback and force the
+Cloudflare backend. Production builds require a structurally valid live Clerk
+publishable key; non-production builds reject live keys and allow a development
+key or email-free guest mode. Validation includes Vite dotenv values and direct
+`pnpm build` invocations under a Vercel target. Ordinary local builds retain the
+existing backend opt-in.
+
+`pnpm test:vercel` runs the routing/key matrix and real app builds in isolated
+temporary output directories; it is part of `pnpm run ci`. These use synthetic
+keys and prove build selection, not actual Clerk ownership or live sign-in.
+The coordinator owns provider settings, exact key placement, production-only
+Worker/D1, hosted acceptance and merges. Build fresh under the Production target
+after those gates; promoting a preview artifact cannot change its baked-in key
+or rewrites. No provider or player state was changed by this source follow-up.
+
+The explicit `vercel.cloudflare-preview.json` remains supported and its build
+command rejects a Production context. Vercel CLI explicit-config users need
+65.1.0+ (the programmatic-config override fix). A source-snapshot deployment that
+renames that preview file to `vercel.json` must omit `vercel.mjs`; never submit two
+automatic configs. Prefer the automatic config for normal Git deployments.
+See `cloudflare-backend/SETUP_AND_ACCEPTANCE.md` for release checks. Earlier
+recovery notes below are historical snapshots, not fresh provider readback.
+
 **Settings lookup correction (2026-11-09):** a mounted React/actual-adapter test
 reproduced an HTTP-error lookup incorrectly showing Available with Save enabled.
 The form now distinguishes an indeterminate check from Taken/Available, offers

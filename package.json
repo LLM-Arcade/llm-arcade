@@ -12,10 +12,11 @@
     "check": "pnpm lint && pnpm typecheck && pnpm build",
     "art:budget": "node scripts/art-budget.mjs",
     "test:games": "node scripts/harness/hyper-circuit.mjs && node scripts/harness/run-n-gunner.mjs && node scripts/harness/lastwatch.mjs && node scripts/harness/brickstorm.mjs && node scripts/harness/gem-columns.mjs && node scripts/harness/sky-defense.mjs && node scripts/harness/kickflip-city.mjs && node scripts/harness/the-undervault.mjs",
-    "ci": "pnpm check && pnpm test:games && pnpm test:auth && pnpm test:settings",
+    "ci": "pnpm check && pnpm test:games && pnpm test:auth && pnpm test:settings && pnpm test:vercel",
     "preview": "vite preview",
     "test:auth": "node scripts/harness/safe-next.mjs && node --test scripts/harness/auth-transition.mjs",
-    "test:settings": "node --test scripts/harness/settings-username.mjs"
+    "test:settings": "node --test scripts/harness/settings-username.mjs",
+    "test:vercel": "node --test scripts/harness/vercel-environments.mjs"
   },
   "dependencies": {
     "@clerk/react": "6.18.4",

@@ -21,9 +21,12 @@ admin. Real players, provider passwords and actual admin accounts were not
 created. No Google OAuth flow or credentials remain in this implementation.
 
 Public responses show usernames, never private email, provider subjects or
-private player names. The legacy backend remains the default build; enable the
-migration only with `VITE_ARCADE_BACKEND=cloudflare` after preview acceptance.
-Clerk also needs `VITE_CLERK_PUBLISHABLE_KEY` and Worker-only approved keys.
+private player names. Ordinary local builds retain the legacy default unless
+`VITE_ARCADE_BACKEND=cloudflare` is set. The environment-specific Vercel config
+forces Cloudflare for managed builds, selects separate production/preview
+Workers and checks the effective `VITE_CLERK_PUBLISHABLE_KEY` before compilation.
+Clerk also needs the approved Worker-only keys. See the release checks in
+[SETUP_AND_ACCEPTANCE.md](SETUP_AND_ACCEPTANCE.md).
 
 ## Current code
 
@@ -118,12 +121,13 @@ recovered export. Never copy private backup bundles or original PR refs into
 this repository. D1 binding IDs must be explicit: a missing ID may otherwise
 cause `cf deploy` to provision resources unexpectedly.
 
-Both the Worker HTTP egress denial and earlier Vercel preview 403 remain
-unresolved and were not retried. The dedicated vercel.cloudflare-preview.json
-keeps the default production config unchanged. Relevant
-access repair, complete feature parity, hosted CI, browser acceptance and normal
-merge approval remain necessary before production cutover. Do not modify DNS
-or assume a change from the existing `www.llmarcade.fun` domain.
+The Worker HTTP egress denial and earlier Vercel preview 403 recorded by this
+executor were not retried by the routing follow-up. The coordinator owns current
+provider evidence. Automatic `vercel.mjs` now separates Production from Preview;
+the dedicated preview JSON remains an explicit override. Complete feature
+parity, hosted CI, browser acceptance and normal merge approval remain necessary
+before production cutover. Do not modify DNS or assume a change from the existing
+`www.llmarcade.fun` domain.
 
 ## Existing database storage upgrade
 
