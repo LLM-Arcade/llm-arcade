@@ -6,6 +6,15 @@ The recovery patch is isolated on task/20261108-cloudflare-recovery from
 dev a63c3b03b6c75530ab5c563d32f4c8f84f1e7280 so the existing Git-law branch is preserved.
 No merge or production cutover is authorized by a successful local check.
 
+**Routing follow-up, 2026-11-09:** PR #2 is merged into `dev` at `1b214da`.
+Source-only `vercel.mjs` now selects distinct Production and Preview API Workers,
+forces Cloudflare for managed builds and rejects the wrong Clerk key type before
+compilation. The explicit preview JSON remains compatible through its guarded
+build command. See `SETUP_AND_ACCEPTANCE.md` for config selection, snapshot/CLI
+compatibility and fresh production-build gates. This follow-up changed no
+provider state; the remaining notes are the earlier executor's recovery record,
+not fresh hosted readback.
+
 ## Implementation and verification
 
 Worker/D1 and frontend paths now cover catalog, optional Clerk accounts,
@@ -112,9 +121,9 @@ The actual owner must personally verify email; nobody was pre-signed-up/admin.
 ## Remaining acceptance and tradeoffs
 
 - Clerk setup and real signup/login/recovery/owner verification.
-- Exact Vercel preview-origin trust configuration and API proxy. A separate
-  vercel.cloudflare-preview.json is prepared; the default production config is
-  unchanged. Do not retry the previously denied Vercel preview without repair.
+- Exact Vercel preview-origin trust configuration and API proxy. The explicit
+  preview JSON remains available alongside automatic environment selection.
+  Do not retry the previously denied Vercel preview without repair.
 - Hosted CI for the follow-up commit, browser gameplay, sandbox/blob upload loading, live score/board
   persistence and cold/warm deployed CPU measurements.
 - Review reconstructed metadata: seven games lack complete historical

@@ -1,7 +1,11 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "VITE_ARCADE_BACKEND=cloudflare pnpm build",
+  "buildCommand": "node scripts/build-vercel.mjs preview",
   "rewrites": [
+    {
+      "source": "/api",
+      "destination": "https://llm-arcade-api-preview.jeffkazzee.workers.dev/api"
+    },
     {
       "source": "/api/:path*",
       "destination": "https://llm-arcade-api-preview.jeffkazzee.workers.dev/api/:path*"

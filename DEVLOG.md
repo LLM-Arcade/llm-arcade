@@ -1266,3 +1266,33 @@ until the user signs in on llmarcade.fun in the driven browser.
 - Separate pre-existing edge remains: a boss supplying the 60th kill increments
   `kills` without the normal enemy path's achievement check. The seeded 64-kill
   pass does not fix or disprove that edge; no gameplay correction is included.
+
+## Vercel production and preview routing (2026-11-09)
+
+- Following PR #2's merge into `dev` at `1b214da`, added one scoped source-only
+  follow-up for the fresh production release. Replaced the automatic static
+  config with Vercel's supported named `config` export in `vercel.mjs`, without
+  another dependency. Production and preview select distinct reviewed Worker
+  origins; same-origin `/api` and `/api/*` precede the unchanged SPA fallback.
+- Managed builds force `VITE_ARCADE_BACKEND=cloudflare`. Production requires a
+  well-formed `pk_live` whose encoded host is not a Clerk development host;
+  non-production accepts only a development key or no key for guests. Checked
+  the effective Vite dotenv/process value before compilation and froze that
+  value in the bundle. Invalid keys, missing managed-build context, conflicting
+  contexts and a config/build target mismatch stop the build without printing key values. A direct Vite
+  build cannot skip the same guard.
+- Kept the explicit preview JSON for existing deployment workflows, now with
+  the same guarded preview build command. Documented the CLI 65.1.0+ override
+  requirement and the need to omit `vercel.mjs` when a snapshot substitutes the
+  preview JSON as `vercel.json`. Rejected a second automatic static config:
+  ordinary Git preview deployments must choose the preview Worker themselves.
+- Six focused checks cover real config export/routing, target contradictions,
+  production and preview key policies, dotenv fallback/precedence and actual
+  app builds under both targets with synthetic keys and a stale backend flag.
+  Build outputs use temporary directories, preserving `dist` for existing
+  verification tools. Added `pnpm test:vercel` to the protected CI command.
+- No credentials, provider settings, data, deployment, merge or PR publication
+  are part of this source change. Hosted routing/cookies, real Clerk sign-in,
+  production-only resource identity and public gameplay/score readback remain
+  the coordinator's release acceptance gates. A preview artifact must not be
+  promoted as the production build.

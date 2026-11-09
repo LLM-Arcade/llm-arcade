@@ -102,8 +102,61 @@ will solve it. Do not switch the production Git connection during this access st
 After access repair, use the existing PR branch and dedicated
 `vercel.cloudflare-preview.json`. Set the Worker's exact `APP_ORIGIN` and Clerk
 authorized party to the actual accepted frontend preview origin; that origin
-trust change and hosted key placement need their applicable approval. The default
-`vercel.json` and production domain stay unchanged until acceptance and review.
+trust change and hosted key placement need their applicable approval. The
+production domain stays unchanged until acceptance and review.
+
+## Environment-specific Vercel release config
+
+After PR #2, the routing follow-up uses one automatic `vercel.mjs` with Vercel's
+named `config` export. No new package is needed. The config uses
+`VERCEL_TARGET_ENV` with `VERCEL_ENV` fallback; it never infers Production from
+`NODE_ENV`, Vite's production mode or a production-domain variable on a preview.
+
+| Build context | Same-origin API destination | Clerk publishable key |
+| --- | --- | --- |
+| Production | `https://llm-arcade-api.jeffkazzee.workers.dev/api/*` | Valid `pk_live`, never a development host |
+| Preview / custom / Development | `https://llm-arcade-api-preview.jeffkazzee.workers.dev/api/*` | Valid development `pk_test`, or absent for guest play |
+
+The config selects `node scripts/build-vercel.mjs production` or `preview`.
+Conflicting context or a changed target between config evaluation and build
+fails closed. Config discovery without target variables stays on the preview
+side, but an actual managed build requires explicit target context; it cannot
+silently publish that fallback. The build wrapper and Vite config validate the effective key,
+including `.env.production` fallback; missing/test keys stop Production, live
+keys stop non-production. Both managed targets force the Cloudflare flag even
+if the project has a stale flag value. Ordinary local builds retain the opt-in.
+The `/api` root and wildcard rewrites come before the existing SPA fallback;
+frontend requests remain relative and use same-origin cookies.
+
+Keep explicit preview compatibility: `vercel.cloudflare-preview.json` uses the
+same guarded preview build and only the preview Worker. For CLI
+`--local-config vercel.cloudflare-preview.json`, require Vercel CLI 65.1.0+,
+which fixes explicit overrides alongside programmatic config. If a file snapshot
+instead renames that file to `vercel.json`, omit `vercel.mjs` from the snapshot.
+Only one automatic config may be submitted. Normal Git builds use `vercel.mjs`.
+
+Source verification: `pnpm test:vercel` (also in `pnpm run ci`) checks real config
+selection, key failures, dotenv precedence and both actual app builds with
+synthetic keys in temporary output directories. It makes no provider requests
+and does not verify a key belongs to the intended Clerk instance.
+
+Before release, the coordinator must verify the production Git branch/target,
+the separately approved production-only D1/Worker and real production Clerk
+instance, exact Worker origin/authorized parties, and protected hosted checks.
+Build fresh with the Production target; do not promote a preview artifact,
+whose key and rewrites remain baked in. Then verify API content/status, cookies,
+guest play/reload, account sign-in/linking, persisted scores/leaderboards and SPA
+deep links on the actual deployment. Never print secret values for evidence.
+This source follow-up grants no provider, credential or data mutation authority.
+
+Rollback is a fresh reviewed build of the prior configuration/source, preserving
+D1/player data and old resources; do not route a preview to production as a
+shortcut. Provider promotion and rollback remain the coordinator's operations.
+
+References: [Vercel programmatic config](https://vercel.com/docs/project-configuration/vercel-ts),
+[system environment variables](https://vercel.com/docs/environment-variables/system-environment-variables),
+[CLI release notes](https://vercel.com/docs/cli/release-notes),
+[Vite environment precedence](https://vite.dev/guide/env-and-mode).
 
 ## Checks available without the blockers
 
