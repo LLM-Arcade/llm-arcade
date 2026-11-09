@@ -5,7 +5,7 @@ import GameTile from "@/components/arcade/GameTile";
 import { useGames } from "@/hooks/useGames";
 
 const Games = () => {
-  const { data: games, isLoading } = useGames();
+  const { data: games, isLoading, isError, refetch } = useGames();
   const [era, setEra] = useState("All");
 
   const eras = ["All", ...Array.from(new Set(games?.map((g) => g.era) ?? []))];
@@ -62,6 +62,12 @@ const Games = () => {
                 className="aspect-square animate-pulse rounded-2xl bg-secondary"
               />
             ))}
+          </div>
+        ) : isError ? (
+          <div role="alert" className="mt-12 text-center">
+            <h2 className="font-display text-xl font-bold">The game floor could not load.</h2>
+            <p className="mt-2 text-muted-foreground">Please try again in a moment.</p>
+            <button type="button" onClick={() => void refetch()} className="mt-4 rounded-full bg-primary px-6 py-3 font-semibold text-primary-foreground">Try again</button>
           </div>
         ) : filtered && filtered.length > 0 ? (
           <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4">

@@ -10,6 +10,34 @@ and Google OAuth origins use it.
 
 ## Current state
 
+**Settings lookup correction (2026-11-09):** a mounted React/actual-adapter test
+reproduced an HTTP-error lookup incorrectly showing Available with Save enabled.
+The form now distinguishes an indeterminate check from Taken/Available, offers
+Retry and keeps Save disabled until a valid verdict. Existing username eligibility
+and profile naming remain unchanged. Seven isolated component tests run through
+`pnpm test:settings` and the normal CI command. They use synthetic identities and
+transport only; this source correction changes no real player or provider state.
+The coordinator owns all preview configuration, migrations and deployment.
+The Run 'n Gunner harness now resets a declared RNG seed per bot and checks a
+same-seed replay; controlled baseline/candidate output matched with all original
+assertions retained. Gameplay is unchanged. Its separate boss-supplied 60th-kill
+achievement edge remains documented in the DEVLOG for game-scoped follow-up.
+
+**Cloudflare recovery / PR #2 (2026-11-09):** the isolated task branch retains
+guest cards and persistent scores plus optional Clerk accounts; production still
+uses its existing deployment. The parent confirmed creation of the free LLM Arcade
+Development app with verified email codes, passwords/email links/Google off. No
+keys have been accessed or placed. The Cloudflare FAQ now describes that flow and
+the guest cookie/recovery limits; the legacy FAQ copy stays on the legacy path.
+Backup download and Worker HTTP remain blocked by executor CONNECT 403; Vercel
+project/API access and exact preview origin remain unresolved. Preserve those
+gates: verified backup → additive storage upgrade → Worker → frontend preview →
+full acceptance before any merge or production deployment. Exact setup and key
+placement approvals: `cloudflare-backend/SETUP_AND_ACCEPTANCE.md`.
+The guest rate-limit regression now controls the clock across a minute boundary
+instead of assuming eleven HTTP requests share a wall-clock minute; HTTP route
+limiter wiring remains covered. Production rate limits are unchanged.
+
 **Session 23: Lastwatch, the 3D flagship, is playable end to end on
 `feature/lastwatch-game`** (engine + harness + three.js realm + synth
 audio + live playtest round one). `/dev/lastwatch` on the worktree's dev

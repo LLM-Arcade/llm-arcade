@@ -1,7 +1,8 @@
+import ArcadeImage from "@/components/arcade/ArcadeImage";
 import { Suspense, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/legacy-supabase";
 import { useAuth } from "@/contexts/AuthContext";
 import { useArcadeBridge, sanitizeScore, type ArcadeScorePayload } from "@/lib/arcade-sdk";
 import { authCta } from "@/lib/known-player";
@@ -13,6 +14,9 @@ import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { showError, showSuccess } from "@/utils/toast";
 import { Check, Loader2, Maximize, Minimize, Play, RotateCcw, ShieldCheck } from "lucide-react";
+import { isCloudflareBackend } from "@/lib/backend-config";
+import { arcadeData, arcadePost, savePlayerScore, ArcadeApiError } from "@/lib/arcade-api";
+import { captureAchievementIntent, captureScoreIntent, type ScoreIntent } from "@/lib/player-intent";
 
 type Phase = "idle" | "loading" | "playing" | "over";
 type SubmitState = "idle" | "saving" | "saved" | "held" | "rate_limited" | "error";
@@ -36,6 +40,7 @@ const GamePlayer = ({ game }: { game: Game }) => {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const scoredRunRef = useRef(false);
+  const runIdRef = useRef<string>(crypto.randomUUID());
 
   const TrackAGame = gameRegistry[game.slug];
 
@@ -44,6 +49,7 @@ const GamePlayer = ({ game }: { game: Game }) => {
     queryKey: ["personal-best", game.id, user?.id],
     enabled: !!user,
     queryFn: async () => {
+      if (isCloudflareBackend) return (await arcadeData<{ score: number | null }>(`/games/${encodeURIComponent(game.id)}/personal-best`)).score;
       const { data, error } = await supabase
         .from("scores")
         .select("score")
@@ -65,32 +71,39 @@ const GamePlayer = ({ game }: { game: Game }) => {
 
   const unlock = useUnlockAchievement(game.id);
   const handleAchievement = (id: string) => {
-    // Guests don't accrue unlocks — the run's score is what gets held/claimed.
-    if (user) unlock.mutate(id);
+    // A guest card or signed-in account owns its manifest-validated unlocks.
+    if (user) unlock.mutate(captureAchievementIntent(user.id, game.id, id));
   };
 
   const submit = useMutation({
-    mutationFn: async (payload: ArcadeScorePayload) => {
+    mutationFn: async (intent: ScoreIntent) => {
+      if (isCloudflareBackend) {
+        await savePlayerScore(intent.playerId, { game_id: intent.gameId, run_id: intent.runId, score: intent.score, stats: intent.stats ?? null });
+        return;
+      }
       const { error } = await supabase.from("scores").insert({
-        game_id: game.id,
-        user_id: user!.id,
-        score: payload.score,
-        stats: payload.stats ?? null,
+        game_id: intent.gameId,
+        user_id: intent.playerId,
+        score: intent.score,
+        stats: intent.stats ?? null,
       });
       if (error) throw error;
     },
-    onMutate: () => setSubmitState("saving"),
-    onSuccess: () => {
-      setSubmitState("saved");
-      queryClient.invalidateQueries({ queryKey: ["leaderboard", game.id] });
-      queryClient.invalidateQueries({ queryKey: ["personal-best", game.id] });
+    onMutate: (intent) => {
+      if (intent.runId === runIdRef.current && intent.gameId === game.id && intent.playerId === user?.id) setSubmitState("saving");
+    },
+    onSuccess: (_result, intent) => {
+      if (intent.runId === runIdRef.current && intent.gameId === game.id && intent.playerId === user?.id) setSubmitState("saved");
+      queryClient.invalidateQueries({ queryKey: ["leaderboard", intent.gameId] });
+      queryClient.invalidateQueries({ queryKey: ["personal-best", intent.gameId] });
       // Progression side effects (XP, streak, badges) happen in a DB trigger
       queryClient.invalidateQueries({ queryKey: ["profile"] });
       queryClient.invalidateQueries({ queryKey: ["activity"] });
       queryClient.invalidateQueries({ queryKey: ["recent-scores"] });
     },
-    onError: (error: Error) => {
-      if (error.message.toLowerCase().includes("security")) {
+    onError: (error: Error, intent) => {
+      if (intent.runId !== runIdRef.current || intent.gameId !== game.id || intent.playerId !== user?.id) return;
+      if ((error instanceof ArcadeApiError && error.status === 429) || error.message.toLowerCase().includes("security")) {
         setSubmitState("rate_limited");
       } else {
         setSubmitState("error");
@@ -110,16 +123,18 @@ const GamePlayer = ({ game }: { game: Game }) => {
     if (payload.score <= 0) return;
 
     if (user) {
-      submit.mutate(payload);
+      submit.mutate(captureScoreIntent(user.id, game.id, runIdRef.current, payload));
     } else {
       // Guest interception: hold the run, submit right after sign-in.
       const existing = sessionStorage.getItem(heldKey(game.slug));
       let best = payload;
+      let heldRunId = runIdRef.current;
       if (existing) {
         try {
-          const prev = JSON.parse(existing) as { score?: number };
+          const prev = JSON.parse(existing) as { score?: number; run_id?: string };
           if (typeof prev.score === "number" && prev.score > payload.score) {
             best = { ...payload, score: prev.score };
+            if (prev.run_id && /^[0-9a-f-]{36}$/i.test(prev.run_id)) heldRunId = prev.run_id;
           }
         } catch {
           // ignore corrupt held data
@@ -127,7 +142,7 @@ const GamePlayer = ({ game }: { game: Game }) => {
       }
       sessionStorage.setItem(
         heldKey(game.slug),
-        JSON.stringify({ ...best, at: Date.now() }),
+        JSON.stringify({ ...best, at: Date.now(), run_id: heldRunId }),
       );
       setSubmitState("held");
     }
@@ -138,9 +153,8 @@ const GamePlayer = ({ game }: { game: Game }) => {
     if (!user) return;
     const raw = sessionStorage.getItem(heldKey(game.slug));
     if (!raw) return;
-    sessionStorage.removeItem(heldKey(game.slug));
     try {
-      const held = JSON.parse(raw) as { score?: unknown; stats?: unknown; at?: unknown };
+      const held = JSON.parse(raw) as { score?: unknown; stats?: unknown; at?: unknown; run_id?: unknown };
       const score = sanitizeScore(held.score, game.score_cap);
       if (
         score === null ||
@@ -148,11 +162,18 @@ const GamePlayer = ({ game }: { game: Game }) => {
         typeof held.at !== "number" ||
         Date.now() - held.at > HELD_SCORE_TTL_MS
       ) {
+        sessionStorage.removeItem(heldKey(game.slug));
         return;
       }
+      const heldRunId = typeof held.run_id === "string" && /^[0-9a-f-]{36}$/i.test(held.run_id) ? held.run_id : crypto.randomUUID();
       submit.mutate(
-        { score },
-        { onSuccess: () => showSuccess("Score claimed — you're on the board.") },
+        captureScoreIntent(user.id, game.id, heldRunId, { score, stats: held.stats }),
+        { onSuccess: () => {
+          // A newer held run may have replaced this entry while the save was
+          // queued. Do not erase that newer run, or change the active run ID.
+          if (sessionStorage.getItem(heldKey(game.slug)) === raw) sessionStorage.removeItem(heldKey(game.slug));
+          showSuccess("Score claimed — you're on the board.");
+        } },
       );
     } catch {
       // ignore corrupt held data
@@ -183,9 +204,11 @@ const GamePlayer = ({ game }: { game: Game }) => {
     setRun(null);
     setSubmitState("idle");
     scoredRunRef.current = false;
+    runIdRef.current = crypto.randomUUID();
     setFrameKey((k) => k + 1);
     setPhase(TrackAGame ? "playing" : "loading");
-    void supabase.rpc("increment_play_count", { p_game_id: game.id });
+    if (isCloudflareBackend) void arcadePost(`/games/${encodeURIComponent(game.id)}/play`, {}).catch(() => {});
+    else void supabase.rpc("increment_play_count", { p_game_id: game.id });
   };
 
   const toggleFullscreen = () => {
@@ -208,7 +231,7 @@ const GamePlayer = ({ game }: { game: Game }) => {
   if (game.status !== "published") {
     return (
       <div className="relative overflow-hidden rounded-2xl ring-1 ring-foreground/10">
-        <img
+        <ArcadeImage
           src={gameArt(game)}
           alt={game.title}
           className="h-[320px] w-full object-cover sm:h-[420px]"
@@ -237,7 +260,7 @@ const GamePlayer = ({ game }: { game: Game }) => {
       <div className={`relative w-full ${heightClass}`}>
         {phase === "idle" ? (
           <>
-            <img
+            <ArcadeImage
               src={gameArt(game)}
               alt={game.title}
               className="h-full w-full object-cover opacity-80"

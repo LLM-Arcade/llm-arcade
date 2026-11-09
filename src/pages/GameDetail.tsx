@@ -1,3 +1,4 @@
+import ArcadeImage from "@/components/arcade/ArcadeImage";
 import { Link, useParams } from "react-router-dom";
 import SiteHeader from "@/components/layout/SiteHeader";
 import SiteFooter from "@/components/layout/SiteFooter";
@@ -16,7 +17,7 @@ const tabTriggerClass =
 
 const GameDetail = () => {
   const { slug = "" } = useParams();
-  const { data: game, isLoading } = useGame(slug);
+  const { data: game, isLoading, isError, refetch } = useGame(slug);
   const { data: games } = useGames();
 
   if (isLoading) {
@@ -29,6 +30,15 @@ const GameDetail = () => {
       </div>
     );
   }
+
+  if (isError) return <div className="flex min-h-screen flex-col bg-background">
+    <SiteHeader />
+    <main className="flex flex-1 flex-col items-center justify-center px-6 text-center" role="alert">
+      <h1 className="font-display text-2xl font-extrabold">This game could not load.</h1>
+      <p className="mt-2 text-muted-foreground">Please try again in a moment.</p>
+      <button type="button" onClick={() => void refetch()} className="mt-4 rounded-full bg-primary px-6 py-3 font-semibold text-primary-foreground">Try again</button>
+    </main><SiteFooter />
+  </div>;
 
   if (!game) {
     return (
@@ -182,7 +192,7 @@ const GameDetail = () => {
                       to={`/game/${g.slug}`}
                       className="group flex items-center gap-3 rounded-xl p-1.5 transition-colors hover:bg-secondary/70"
                     >
-                      <img
+                      <ArcadeImage
                         src={gameArt(g)}
                         alt=""
                         loading="lazy"

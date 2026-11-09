@@ -1,10 +1,11 @@
+import { isCloudflareBackend } from "@/lib/backend-config";
 // /upload — 3-step wizard (spec §4.6): metadata + manifest → files →
 // test flight in the production sandbox. Submissions land in the admin
 // review queue as `pending`.
 
 import { useMemo, useState } from "react";
 import { Link, Navigate, useLocation } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/legacy-supabase";
 import { useAuth } from "@/contexts/AuthContext";
 import { authCta } from "@/lib/known-player";
 import SiteHeader from "@/components/layout/SiteHeader";
@@ -64,7 +65,7 @@ const emptyMeta = (): SubmissionMeta => ({
 });
 
 const Upload = () => {
-  const { user, loading } = useAuth();
+  const { user, loading, isGuest } = useAuth();
   const location = useLocation();
 
   // "Upload new version" from My Uploads carries the previous submission
@@ -221,7 +222,7 @@ const Upload = () => {
     );
   };
 
-  if (!loading && !user) {
+  if (!loading && (!user || isGuest)) {
     return <Navigate to={authCta("/upload").to} replace />;
   }
 
@@ -265,6 +266,7 @@ const Upload = () => {
                 </Link>
                 .
               </p>
+              {isCloudflareBackend && <p className="mt-3 max-w-xl text-sm text-muted-foreground">Uploaded files are public, including files awaiting review. Use original files you intend to share. Free storage has a shared 400 MB payload allowance, with up to 12 files per verified account per day; no paid overages are enabled.</p>}
             </div>
 
             {/* Progress dots */}

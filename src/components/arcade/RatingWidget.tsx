@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/legacy-supabase";
 import { useAuth } from "@/contexts/AuthContext";
+import { useGameSocialSummary } from "@/hooks/useGameSocialSummary";
+import { isCloudflareBackend } from "@/lib/backend-config";
 import { showError } from "@/utils/toast";
 import { Star } from "lucide-react";
 import type { Game } from "@/hooks/useGames";
@@ -15,9 +17,11 @@ const RatingWidget = ({ game }: { game: Game }) => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [hovered, setHovered] = useState(0);
+  const { data: summary } = useGameSocialSummary(game.id);
 
   const { data: ratings } = useQuery({
     queryKey: ["ratings", game.id],
+    enabled: !isCloudflareBackend,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("ratings")
@@ -28,11 +32,13 @@ const RatingWidget = ({ game }: { game: Game }) => {
     },
   });
 
-  const count = ratings?.length ?? 0;
-  const average = count
-    ? ratings!.reduce((sum, r) => sum + r.rating, 0) / count
-    : 0;
-  const mine = user ? ratings?.find((r) => r.user_id === user.id)?.rating : undefined;
+  const count = isCloudflareBackend ? summary?.rating_count ?? 0 : ratings?.length ?? 0;
+  const average = isCloudflareBackend
+    ? summary?.rating_average ?? 0
+    : count ? ratings!.reduce((sum, r) => sum + r.rating, 0) / count : 0;
+  const mine = isCloudflareBackend
+    ? user ? summary?.player_rating : undefined
+    : user ? ratings?.find((r) => r.user_id === user.id)?.rating : undefined;
 
   const rate = useMutation({
     mutationFn: async (rating: number) => {
@@ -44,7 +50,9 @@ const RatingWidget = ({ game }: { game: Game }) => {
       });
       if (error) throw error;
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["ratings", game.id] }),
+    onSuccess: () => queryClient.invalidateQueries({
+      queryKey: [isCloudflareBackend ? "game-social-summary" : "ratings", game.id],
+    }),
     onError: () => showError("Couldn't save your rating."),
   });
 

@@ -20,6 +20,23 @@ const check = (ok, label) => {
   return ok;
 };
 
+// The engine uses Math.random for spawns, shot spread and pickups. Reset a
+// declared seed per bot so unrelated CI runs exercise the same inputs.
+const SEED = 20260824;
+const withSeed = (run) => {
+  const original = Math.random;
+  let state = SEED >>> 0;
+  Math.random = () => {
+    state = (state + 0x6d2b79f5) >>> 0;
+    let value = state;
+    value = Math.imul(value ^ (value >>> 15), value | 1);
+    value ^= value + Math.imul(value ^ (value >>> 7), value | 61);
+    return ((value ^ (value >>> 14)) >>> 0) / 4294967296;
+  };
+  try { return run(); } finally { Math.random = original; }
+};
+console.log(`simulation seed ${SEED}, timestep 1/120s`);
+
 const ACE = {
   bossDist: 130,
   dodgeOrbs: true,
@@ -114,7 +131,7 @@ const drive = (eng, prof, st) => {
   i.jump = st.jumpHold > 0;
 };
 
-const simulate = (prof, label) => {
+const simulate = (prof, label) => withSeed(() => {
   const eng = new Engine();
   const st = { jumpHold: 0 };
   const dt = 1 / 120;
@@ -168,7 +185,7 @@ const simulate = (prof, label) => {
   );
   console.log(`  achievements: ${[...achievements].sort().join(", ") || "(none)"}`);
   return { eng, achievements, stages, capOk, stats };
-};
+});
 
 // ---- grunt: clears within the lives budget -------------------------------
 
@@ -194,6 +211,13 @@ for (const slug of [
 ]) {
   check(ace.achievements.has(slug), `ace reaches ${slug}`);
 }
+
+const replay = simulate(ACE, "ace bot rerun (same seed)");
+const snapshot = ({ eng, achievements, stages, capOk, stats }) => ({
+  phase: eng.phase, time: eng.time, score: eng.score, kills: eng.kills,
+  deaths: eng.deaths, lives: eng.lives, achievements: [...achievements].sort(), stages, capOk, stats,
+});
+check(JSON.stringify(snapshot(ace)) === JSON.stringify(snapshot(replay)), "same-seed ace replay preserves outcome, score, kills and achievements");
 
 // ---- verdict -------------------------------------------------------------
 

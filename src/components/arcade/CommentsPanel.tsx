@@ -2,29 +2,18 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { formatDistanceToNowStrict } from "date-fns";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/legacy-supabase";
 import { useAuth } from "@/contexts/AuthContext";
 import { authCta } from "@/lib/known-player";
+import { isCloudflareBackend } from "@/lib/backend-config";
+import { cloudflareCommunity } from "@/lib/cloudflare-community";
+import { loadGameComments, type GameComment } from "@/lib/load-game-comments";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { showError } from "@/utils/toast";
 import { Loader2, MessageCircle, Reply, Trash2 } from "lucide-react";
 import type { Game } from "@/hooks/useGames";
-
-interface CommentRow {
-  id: string;
-  user_id: string;
-  parent_id: string | null;
-  body: string;
-  created_at: string;
-  profiles: {
-    username: string;
-    display_name: string | null;
-    avatar_url: string | null;
-    role: string;
-  } | null;
-}
 
 const roleChip: Record<string, { label: string; className: string }> = {
   admin: { label: "ADMIN", className: "bg-terra/10 text-terra" },
@@ -40,16 +29,17 @@ const CommentsPanel = ({ game }: { game: Game }) => {
   const [replyDraft, setReplyDraft] = useState("");
   const [armedDelete, setArmedDelete] = useState<string | null>(null);
 
-  const { data: comments, isLoading } = useQuery({
+  const { data: comments, isLoading, isError, isFetching, refetch } = useQuery({
     queryKey: ["comments", game.id],
-    queryFn: async () => {
+    queryFn: async ({ signal }) => {
+      if (isCloudflareBackend) return loadGameComments(cloudflareCommunity, game.id, signal);
       const { data, error } = await supabase
         .from("comments")
         .select("id, user_id, parent_id, body, created_at, profiles(username, display_name, avatar_url, role)")
         .eq("game_id", game.id)
         .order("created_at", { ascending: true });
       if (error) throw error;
-      return data as unknown as CommentRow[];
+      return data as unknown as GameComment[];
     },
   });
 
@@ -94,10 +84,18 @@ const CommentsPanel = ({ game }: { game: Game }) => {
     }
   };
 
-  const roots = comments?.filter((c) => !c.parent_id) ?? [];
-  const repliesFor = (id: string) => comments?.filter((c) => c.parent_id === id) ?? [];
+  const roots: GameComment[] = [];
+  const replies = new Map<string, GameComment[]>();
+  for (const comment of comments ?? []) {
+    if (!comment.parent_id) roots.push(comment);
+    else {
+      const thread = replies.get(comment.parent_id) ?? [];
+      thread.push(comment);
+      replies.set(comment.parent_id, thread);
+    }
+  }
 
-  const CommentItem = ({ comment, isReply }: { comment: CommentRow; isReply?: boolean }) => {
+  const CommentItem = ({ comment, isReply }: { comment: GameComment; isReply?: boolean }) => {
     const p = comment.profiles;
     const chip = p ? roleChip[p.role] : undefined;
     const isCreator = game.created_by !== null && comment.user_id === game.created_by;
@@ -242,6 +240,22 @@ const CommentsPanel = ({ game }: { game: Game }) => {
         <div className="flex justify-center py-10">
           <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
         </div>
+      ) : isError ? (
+        <div className="py-10 text-center" role="alert">
+          <p className="text-sm text-muted-foreground">
+            Couldn't load the complete conversation. Try again.
+          </p>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={isFetching}
+            onClick={() => void refetch()}
+            className="mt-3 rounded-full"
+          >
+            {isFetching ? <Loader2 className="h-4 w-4 animate-spin" /> : "Retry"}
+          </Button>
+        </div>
       ) : roots.length === 0 ? (
         <div className="py-10 text-center">
           <MessageCircle className="mx-auto h-6 w-6 text-muted-foreground" />
@@ -254,7 +268,7 @@ const CommentsPanel = ({ game }: { game: Game }) => {
           {roots.map((comment) => (
             <div key={comment.id}>
               <CommentItem comment={comment} />
-              {repliesFor(comment.id).map((reply) => (
+              {(replies.get(comment.id) ?? []).map((reply) => (
                 <CommentItem key={reply.id} comment={reply} isReply />
               ))}
             </div>

@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/legacy-supabase";
+import { isCloudflareBackend } from "@/lib/backend-config";
 import { useAuth } from "@/contexts/AuthContext";
 import { authCta } from "@/lib/known-player";
 import SiteHeader from "@/components/layout/SiteHeader";
@@ -15,7 +16,7 @@ import { format } from "date-fns";
 
 const USERNAME_RE = /^[a-z0-9_]{3,20}$/;
 
-type UsernameState = "unchanged" | "invalid" | "checking" | "available" | "taken";
+type UsernameState = "unchanged" | "invalid" | "checking" | "available" | "taken" | "error";
 
 const roleChipClass: Record<string, string> = {
   admin: "bg-terra/10 text-terra",
@@ -25,13 +26,14 @@ const roleChipClass: Record<string, string> = {
 };
 
 const Settings = () => {
-  const { user, profile, loading, signOut } = useAuth();
+  const { user, profile, loading, signOut, isGuest } = useAuth();
   const queryClient = useQueryClient();
 
   const [username, setUsername] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [bio, setBio] = useState("");
   const [usernameState, setUsernameState] = useState<UsernameState>("unchanged");
+  const [availabilityAttempt, setAvailabilityAttempt] = useState(0);
 
   // Hydrate the form once the profile arrives
   useEffect(() => {
@@ -59,18 +61,25 @@ const Settings = () => {
     // must not overwrite the verdict for a newer candidate.
     let stale = false;
     const timer = setTimeout(async () => {
-      const { data } = await supabase
-        .from("profiles")
-        .select("id")
-        .eq("username", candidate)
-        .maybeSingle();
-      if (!stale) setUsernameState(data ? "taken" : "available");
+      try {
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("id")
+          .eq("username", candidate)
+          .maybeSingle();
+        if (stale) return;
+        if (error) setUsernameState("error");
+        else if (data === null) setUsernameState("available");
+        else setUsernameState(typeof data?.id === "string" ? "taken" : "error");
+      } catch {
+        if (!stale) setUsernameState("error");
+      }
     }, 450);
     return () => {
       stale = true;
       clearTimeout(timer);
     };
-  }, [username, profile]);
+  }, [username, profile, availabilityAttempt]);
 
   const save = useMutation({
     mutationFn: async () => {
@@ -108,7 +117,7 @@ const Settings = () => {
   if (!user) return <Navigate to={authCta("/settings").to} replace />;
   if (!profile) return null;
 
-  const usernameBlocked = usernameState === "invalid" || usernameState === "taken" || usernameState === "checking";
+  const usernameBlocked = usernameState !== "unchanged" && usernameState !== "available";
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
@@ -137,12 +146,20 @@ const Settings = () => {
                 <Input
                   id="username"
                   value={username}
-                  onChange={(e) => setUsername(e.target.value.toLowerCase())}
+                  onChange={(e) => {
+                    const value = e.target.value.toLowerCase();
+                    const candidate = value.trim();
+                    setUsername(value);
+                    if (value !== username) {
+                      setUsernameState(candidate === profile.username ? "unchanged" : USERNAME_RE.test(candidate) ? "checking" : "invalid");
+                    }
+                  }}
+                  aria-describedby="username-status"
                   maxLength={20}
                   className="h-11 rounded-full border-border bg-background px-5 font-mono text-sm"
                 />
               </div>
-              <p className="mt-1.5 flex items-center gap-1.5 text-xs font-medium">
+              <p id="username-status" aria-live="polite" className="mt-1.5 flex items-center gap-1.5 text-xs font-medium">
                 {usernameState === "unchanged" && (
                   <span className="text-muted-foreground">
                     3–20 characters: a–z, 0–9, underscores.
@@ -168,23 +185,39 @@ const Settings = () => {
                     Lowercase letters, numbers and underscores only (3–20).
                   </span>
                 )}
+                {usernameState === "error" && (
+                  <>
+                    <span className="text-destructive">Couldn't check availability.</span>
+                    <button
+                      type="button"
+                      className="underline underline-offset-2 hover:text-terra focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
+                      onClick={() => {
+                        setUsernameState("checking");
+                        setAvailabilityAttempt((attempt) => attempt + 1);
+                      }}
+                    >
+                      Retry
+                    </button>
+                  </>
+                )}
               </p>
             </div>
 
             <div>
               <label htmlFor="displayName" className="text-sm font-semibold">
-                Display name
+                {isCloudflareBackend ? "Private player name" : "Display name"}
               </label>
               <Input
                 id="displayName"
                 value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
                 maxLength={40}
-                placeholder="How your name appears on boards"
+                placeholder={isCloudflareBackend ? "Private player name" : "How your name appears on boards"}
                 className="mt-1.5 h-11 rounded-full border-border bg-background px-5"
               />
             </div>
 
+            {isCloudflareBackend && <p className="text-sm text-muted-foreground">Only your username appears publicly. Your bio is public if you add one; avoid personal details.</p>}
             <div>
               <label htmlFor="bio" className="text-sm font-semibold">
                 Bio
@@ -234,7 +267,7 @@ const Settings = () => {
           <dl className="mt-4 flex flex-col gap-3 text-sm">
             <div className="flex items-center justify-between gap-4">
               <dt className="text-muted-foreground">Email</dt>
-              <dd className="truncate font-medium">{user.email}</dd>
+              <dd className="truncate font-medium">{user.email || "Guest card · no email collected"}</dd>
             </div>
             <div className="flex items-center justify-between gap-4">
               <dt className="text-muted-foreground">Role</dt>
@@ -253,13 +286,14 @@ const Settings = () => {
               </dd>
             </div>
           </dl>
-          <Button
+          {isGuest && <p className="mt-4 text-sm text-muted-foreground">This guest card uses a 30-day cookie in this browser. Clearing cookies, switching browsers or changing devices can lose access. A username alone cannot recover it. Optional email sign-in can keep a new account linked to this card.</p>}
+          {!isGuest && <Button
             variant="outline"
             onClick={() => void signOut()}
             className="mt-5 h-10 rounded-full border-border font-medium text-muted-foreground hover:text-foreground"
           >
             Sign out
-          </Button>
+          </Button>}
         </section>
       </main>
       <SiteFooter />

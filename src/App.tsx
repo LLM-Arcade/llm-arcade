@@ -43,8 +43,8 @@ const App = () => (
             <Route path="/games" element={<Games />} />
             <Route path="/game/:slug" element={<GameDetail />} />
             <Route path="/creator/:username" element={<CreatorProfile />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/signup" element={<Login />} />
+            <Route path="/login/*" element={<Login />} />
+            <Route path="/signup/*" element={<Login />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/faq" element={<Faq />} />
             <Route path="/guides" element={<Guides />} />
