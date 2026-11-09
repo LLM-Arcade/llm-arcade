@@ -1213,3 +1213,15 @@ until the user signs in on llmarcade.fun in the driven browser.
   This source-only follow-up accessed or placed no keys and created no credential,
   access/security/billing change, migration, deployment, merge or production
   mutation.
+
+## Deterministic guest-limit CI boundary check (2026-11-09)
+
+- Hosted CI on the email-code guidance follow-up exposed a timing assumption:
+  an eleven-request guest burst crossed a minute boundary and correctly received
+  a fresh allowance, while the test expected the eleventh request to return 429.
+- Kept HTTP guest-route limiter wiring coverage and moved exact allowance/reset
+  assertions to the actual exported limiter against real local D1 with a controlled
+  Node clock. Ten requests pass and the eleventh fails on each side of a
+  one-millisecond minute rollover. Production limiter behavior is unchanged.
+- Validation: full backend `pnpm check` passes typecheck, build and all 26 real
+  local D1/provider-fixture tests. Independent focused review found no blocker.

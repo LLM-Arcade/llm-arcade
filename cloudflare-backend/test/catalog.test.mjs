@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { readFile, access } from "node:fs/promises";
 import { build } from "esbuild";
-import { fixture } from "./fixture.mjs";
+import { fixture, ORIGIN } from "./fixture.mjs";
 
 test("reconstructed catalog uses shipped assets and the frontend API client saves/readbacks real D1 scores", async () => {
   const app = await fixture();
@@ -41,8 +41,36 @@ test("reconstructed catalog uses shipped assets and the frontend API client save
     assert.equal("email" in card.profile, false);
     assert.equal("google_sub" in card.profile, false);
     await assert.rejects(client.arcadePost("/profile", { username: "hacker", name: "Hacker", role: "admin" }), error => error.status === 400);
-    const hits = [];
-    for (let i = 0; i < 11; i++) hits.push((await app.post("/api/auth/guest", { username: "rate_guest_" + i })).status);
-    assert.deepEqual(hits, [...Array(10).fill(200), 429]);
+    assert.equal((await app.post("/api/auth/guest", { username: "route_limit_guest" })).status, 200);
+    assert.equal((await app.db.prepare("SELECT SUM(count) AS n FROM auth_rate_limits").first()).n, 1,
+      "Guest creation must pass through the real request limiter");
   } finally { await app.runtime.dispose(); }
+});
+
+test("guest rate limits allow ten requests per minute and reset at the boundary", async t => {
+  const app = await fixture({ accounts: false });
+  try {
+    // Node's clock controls the actual exported limiter, while its statements
+    // still execute against real local D1. A wall-clock HTTP burst may legally
+    // cross a minute boundary and receive more than ten successful responses.
+    const compiled = await build({ entryPoints: ["src/auth.ts"], bundle: true, platform: "node", format: "esm", write: false });
+    const { rateLimit } = await import("data:text/javascript;base64," + Buffer.from(compiled.outputFiles[0].text).toString("base64"));
+    const now = Date.parse("2026-11-09T16:00:59.999Z");
+    t.mock.timers.enable({ apis: ["Date"], now });
+    const request = new Request(ORIGIN + "/api/auth/guest", { headers: { "CF-Connecting-IP": "192.0.2.10" } });
+    const env = { APP_ORIGIN: ORIGIN, ARCADE_DB: app.db };
+    for (let i = 0; i < 10; i++) await rateLimit(request, env, "/guest");
+    await assert.rejects(() => rateLimit(request, env, "/guest"), error => error.status === 429);
+    t.mock.timers.setTime(now + 1);
+    for (let i = 0; i < 10; i++) await rateLimit(request, env, "/guest");
+    await assert.rejects(() => rateLimit(request, env, "/guest"), error => error.status === 429);
+    const buckets = (await app.db.prepare("SELECT identity,bucket,count FROM auth_rate_limits ORDER BY bucket").all()).results;
+    assert.deepEqual(buckets.map(({ bucket, count }) => [bucket, count]), [
+      [Math.floor(now / 60000), 11], [Math.floor(now / 60000) + 1, 11],
+    ]);
+    assert.equal(buckets[0].identity, buckets[1].identity, "Only the minute bucket resets; the same day's IP identity remains stable");
+  } finally {
+    t.mock.timers.reset();
+    await app.runtime.dispose();
+  }
 });

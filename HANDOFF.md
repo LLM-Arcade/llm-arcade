@@ -21,6 +21,9 @@ project/API access and exact preview origin remain unresolved. Preserve those
 gates: verified backup → additive storage upgrade → Worker → frontend preview →
 full acceptance before any merge or production deployment. Exact setup and key
 placement approvals: `cloudflare-backend/SETUP_AND_ACCEPTANCE.md`.
+The guest rate-limit regression now controls the clock across a minute boundary
+instead of assuming eleven HTTP requests share a wall-clock minute; HTTP route
+limiter wiring remains covered. Production rate limits are unchanged.
 
 **Session 23: Lastwatch, the 3D flagship, is playable end to end on
 `feature/lastwatch-game`** (engine + harness + three.js realm + synth
