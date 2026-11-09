@@ -1,6 +1,6 @@
 # Exact remaining setup and acceptance
 
-Use the existing repository, task branch and draft PR #2. Keep the current site
+Use the existing repository, task branch and PR #2. Keep the current site
 and original data/backup intact. Passing local or hosted tests does not establish
 real provider sign-in, public gameplay or a completed production cutover.
 
@@ -117,6 +117,14 @@ trust change and hosted key placement need their applicable approval. The defaul
 - Review the source-reconstructed achievement metadata and badge rules, public
   pending uploads and free storage/request limits already listed in the PR. No
   missing working feature may be silently removed to get a deployment through.
-- Normal review and Jeff's required merge approval, then authorized production
-  configuration, deployment and complete live verification. Preserve old resources
-  and recovery artifacts throughout.
+- Jeff has authorized merging this PR once ready. Complete the required review
+  and acceptance before using that approval; do not request it again or bypass
+  gates. Production promotion/configuration and complete live verification are
+  separate steps with their applicable approvals. Preserve old resources and
+  recovery artifacts throughout.
+
+The hosted security review exhausted its paying account's Codex allowance; no
+paid credits are authorized. It needs available free allowance or an independent
+review that satisfies the existing review policy, not a waiver of that policy.
+The local security-diff skill's required configuration-preflight resource and
+scan helpers are unavailable here, so that workflow cannot be claimed complete.

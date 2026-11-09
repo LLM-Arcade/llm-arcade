@@ -1,6 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/legacy-supabase";
 import { useAuth } from "@/contexts/AuthContext";
+import { useGameSocialSummary } from "@/hooks/useGameSocialSummary";
+import { isCloudflareBackend } from "@/lib/backend-config";
 import { showError } from "@/utils/toast";
 import { Heart } from "lucide-react";
 import type { Game } from "@/hooks/useGames";
@@ -8,9 +10,11 @@ import type { Game } from "@/hooks/useGames";
 const FavoriteButton = ({ game }: { game: Game }) => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const { data: summary } = useGameSocialSummary(game.id);
 
   const { data: favorites } = useQuery({
     queryKey: ["favorites", game.id],
+    enabled: !isCloudflareBackend,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("favorites")
@@ -21,8 +25,10 @@ const FavoriteButton = ({ game }: { game: Game }) => {
     },
   });
 
-  const count = favorites?.length ?? 0;
-  const mine = !!user && !!favorites?.some((f) => f.user_id === user.id);
+  const count = isCloudflareBackend ? summary?.favorite_count ?? 0 : favorites?.length ?? 0;
+  const mine = isCloudflareBackend
+    ? !!user && !!summary?.is_favorite
+    : !!user && !!favorites?.some((f) => f.user_id === user.id);
 
   const toggle = useMutation({
     mutationFn: async () => {
@@ -40,7 +46,9 @@ const FavoriteButton = ({ game }: { game: Game }) => {
         if (error) throw error;
       }
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["favorites", game.id] }),
+    onSuccess: () => queryClient.invalidateQueries({
+      queryKey: [isCloudflareBackend ? "game-social-summary" : "favorites", game.id],
+    }),
     onError: () => showError("Couldn't update your favorites."),
   });
 

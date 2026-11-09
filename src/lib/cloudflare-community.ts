@@ -4,18 +4,26 @@ interface QueryResult { data: unknown; error: { message: string; code?: string }
 interface QueryState {
   table: string; operation: string; filters: { column: string; op: string; value: unknown }[];
   orders: { column: string; ascending: boolean }[];
-  limit?: number; single?: "required" | "optional"; head?: boolean; values?: unknown;
+  limit?: number; offset?: number; single?: "required" | "optional"; head?: boolean; values?: unknown;
 }
 // A narrow compatibility boundary for the existing UI. The Worker accepts only
 // named models, allowlisted filters and explicit mutations, never client SQL.
 class CommunityQuery implements PromiseLike<QueryResult> {
   private state: QueryState;
+  private signal?: AbortSignal;
   constructor(table: string) { this.state = { table, operation: "select", filters: [], orders: [] }; }
   select(_columns = "*", options?: { head?: boolean }) { this.state.head = options?.head; return this; }
   eq(column: string, value: unknown) { this.state.filters.push({ column, op: "eq", value }); return this; }
   ilike(column: string, value: string) { this.state.filters.push({ column, op: "ilike", value }); return this; }
   order(column: string, options?: { ascending?: boolean }) { this.state.orders.push({ column, ascending: options?.ascending !== false }); return this; }
   limit(limit: number) { this.state.limit = limit; return this; }
+  range(from: number, to: number) {
+    if (!Number.isSafeInteger(from) || !Number.isSafeInteger(to) || from < 0 || to < from || !Number.isSafeInteger(to - from + 1)) {
+      throw new Error("Choose a valid inclusive page range.");
+    }
+    this.state.offset = from; this.state.limit = to - from + 1; return this;
+  }
+  abortSignal(signal: AbortSignal) { this.signal = signal; return this; }
   single() { this.state.single = "required"; return this; }
   maybeSingle() { this.state.single = "optional"; return this; }
   insert(values: unknown) { this.state.operation = "insert"; this.state.values = values; return this; }
@@ -23,7 +31,7 @@ class CommunityQuery implements PromiseLike<QueryResult> {
   update(values: unknown) { this.state.operation = "update"; this.state.values = values; return this; }
   delete() { this.state.operation = "delete"; return this; }
   private async execute(): Promise<QueryResult> {
-    try { return { ...await arcadeRequest<{ data: unknown; count?: number }>("/community/query", { method: "POST", body: JSON.stringify(this.state) }), error: null }; }
+    try { return { ...await arcadeRequest<{ data: unknown; count?: number }>("/community/query", { method: "POST", body: JSON.stringify(this.state), signal: this.signal }), error: null }; }
     catch (error) { return { data: null, error: { message: error instanceof Error ? error.message : "This request failed." } }; }
   }
   then<TResult1 = QueryResult, TResult2 = never>(onfulfilled?: ((value: QueryResult) => TResult1 | PromiseLike<TResult1>) | null,

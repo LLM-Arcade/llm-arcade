@@ -1,4 +1,4 @@
-import { ApiError, assertPlayerIntent, json, requireOrigin, type Bindings } from "./auth";
+import { ApiError, assertPlayerIntent, getSession, json, requireOrigin, type Bindings } from "./auth";
 import { admin, player } from "./community";
 import { reviewSubmission } from "./submissions";
 
@@ -15,6 +15,22 @@ function argsFor(input: Args, keys: string[]): Args {
 export async function communityRpc(request: Request, env: Bindings, input: Args): Promise<Response> {
   requireOrigin(request, env);
   const name = input.name;
+  if (name === "get_game_social_summary") {
+    const args = argsFor(input, ["p_game_id"]), gameId = id(args.p_game_id);
+    const session = await getSession(request, env);
+    // Aggregate the complete relation instead of asking the browser to count a
+    // truncated page. Only the authenticated player's state accompanies counts.
+    const summary = await env.ARCADE_DB.prepare(`SELECT
+      (SELECT count(*) FROM favorites f WHERE f.game_id = g.id) AS favorite_count,
+      EXISTS (SELECT 1 FROM favorites f WHERE f.game_id = g.id AND f.user_id = ?) AS is_favorite,
+      (SELECT count(*) FROM ratings r WHERE r.game_id = g.id) AS rating_count,
+      coalesce((SELECT avg(r.rating) FROM ratings r WHERE r.game_id = g.id),0) AS rating_average,
+      (SELECT r.rating FROM ratings r WHERE r.game_id = g.id AND r.user_id = ?) AS player_rating
+      FROM games g WHERE g.id = ? AND g.status <> 'archived'`)
+      .bind(session?.user.id ?? null, session?.user.id ?? null, gameId).first();
+    if (!summary) throw new ApiError(404, "This game is not available.");
+    return json({ data: { ...summary, is_favorite: Boolean(summary.is_favorite) } });
+  }
   if (name === "get_game_achievements") {
     const args = argsFor(input, ["p_game_id"]), gameId = id(args.p_game_id);
     const rows = await env.ARCADE_DB.prepare(`SELECT a.*,

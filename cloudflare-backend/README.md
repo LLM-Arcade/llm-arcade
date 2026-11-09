@@ -79,7 +79,10 @@ coming-soon social actions, queued player intents, actual frontend file assembly
 and parity against the prior Clerk SDK request verifier. Seven frontend tests cover
 account/cache transitions. The official token verifier remains in use; provider
 responses have a fixed endpoint, pinned API version, no redirects and a body cap.
-These are synthetic provider/runtime tests. Hosted CI passed baseline 349a9f7;
+Two further regression tests cover complete social totals and comment pagination
+after 200 rows, including actual adapter/loader transport, tied timestamps,
+replies, new posts, cancellation and later-page errors. The local suite now has
+22 tests. These are synthetic provider/runtime tests. Hosted CI passed 5c4b68d;
 real Clerk email delivery, browser gameplay and the live site remain unverified.
 
 The local workerd compatibility date is 2026-07-30; proposed deployment uses

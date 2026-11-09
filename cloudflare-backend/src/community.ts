@@ -89,7 +89,7 @@ async function socialGame(env: Bindings, value: unknown) {
 
 export async function communityQuery(request: Request, env: Bindings, input: Input): Promise<Response> {
   requireOrigin(request, env);
-  only(input, ["table", "operation", "filters", "orders", "limit", "single", "head", "values"]);
+  only(input, ["table", "operation", "filters", "orders", "limit", "offset", "single", "head", "values"]);
   const table = typeof input.table === "string" ? input.table : "";
   const model = Object.hasOwn(models, table) ? models[table] : undefined;
   if (!model) throw new ApiError(400, "This record type is not supported.");
@@ -112,12 +112,14 @@ export async function communityQuery(request: Request, env: Bindings, input: Inp
   });
   const limit = input.limit ?? 200;
   if (!Number.isSafeInteger(limit) || Number(limit) < 1 || Number(limit) > 200) throw new ApiError(400, "Choose a page size up to 200.");
+  const offset = input.offset ?? 0;
+  if (!Number.isSafeInteger(offset) || Number(offset) < 0) throw new ApiError(400, "Choose a valid page offset.");
   const query = `FROM (${model.source}) ${where ? "WHERE " + where : ""}`;
   if (input.head === true) {
     const count = await env.ARCADE_DB.prepare(`SELECT count(*) AS n ${query}`).bind(...values).first<{ n: number }>();
     return json({ data: null, count: count?.n ?? 0 });
   }
-  const rows = await env.ARCADE_DB.prepare(`SELECT * ${query} ${orders.length ? "ORDER BY " + orders.join(", ") : ""} LIMIT ?`).bind(...values, limit).all();
+  const rows = await env.ARCADE_DB.prepare(`SELECT * ${query} ${orders.length ? "ORDER BY " + orders.join(", ") : ""} LIMIT ? OFFSET ?`).bind(...values, limit, offset).all();
   const data = rows.results.map(row => {
     for (const key of model.json ?? []) if (typeof row[key] === "string") row[key] = JSON.parse(row[key] as string);
     if (table === "site_settings") row.launched = Boolean(row.launched);

@@ -1170,3 +1170,17 @@ until the user signs in on llmarcade.fun in the driven browser.
 - Kept the same branch/draft PR. No merge, new app/key/session, access expansion,
   follow-up deployment or production cutover. Exact remaining setup and access
   repairs are recorded in cloudflare-backend/SETUP_AND_ACCEPTANCE.md.
+
+## Social pagination review correction (2026-11-09)
+
+- Addressed the code review's 200-row truncation: favorites/ratings now use full
+  database aggregates and server-derived current-player state; comments page
+  through complete ordered threads, including replies and newly posted messages.
+  Query errors offer Retry rather than presenting a partial thread as complete.
+- Real local D1 regressions failed against the previous Worker and pass with the
+  correction, covering 451 social records, 425 comments, exact page boundaries,
+  own unfavorite/rating changes, cancellation and later-page failures.
+- Jeff's conditional approval to merge PR #2 is recorded. Required review and live
+  acceptance still block merging: the hosted security allowance is exhausted,
+  Clerk/preview access is unresolved and deployed CPU/browser proof is missing.
+  No paid credits, credentials, access changes, deployment or production cutover.

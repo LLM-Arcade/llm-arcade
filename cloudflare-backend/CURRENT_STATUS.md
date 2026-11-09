@@ -1,4 +1,4 @@
-# Arcade recovery status — 2026-11-08 UTC
+# Arcade recovery status — 2026-11-09 UTC
 
 Implementation runs in the selected Codex Cloud Linux workspace, Node 24.19.0,
 pnpm 11.25.0. Work began on isolated task/151-agents-git-law at eea739db8a8075cfcea8c1ac1bdf12db4bb341ec.
@@ -14,11 +14,11 @@ achievements/XP/streaks/badges, activity, follows, comments/replies, ratings,
 favorites, waitlist/playtest forms, uploads/versioning/review and admin commands.
 Temporary feature placeholders were removed. Existing game files are unchanged.
 
-Twenty integration tests now pass, including concurrent account linking,
+Twenty-two integration tests now pass, including concurrent account linking,
 row ownership, private signup access, authorization revocation, manifest validation,
 XP caps, immutable uploads and the complete migration with SQL semicolons. Root
 lint/typecheck/build, eight game harnesses, redirect checks and seven account-transition
-tests pass. Baseline commit 349a9f7 passed hosted CI run 42507075505. Follow-up
+tests pass. Commit 5c4b68d passed hosted CI run 42525322155. Follow-up
 checks and the next hosted run must be associated with their exact new commit;
 real browser/provider testing remains outstanding.
 
@@ -28,6 +28,14 @@ query data after account changes and queued scores/unlocks moving to another
 player or a later run. Immutable mutation variables retain the original player,
 game, run, stats and achievement. Player-intent fields only reject mismatches; server identity still owns
 all writes. Guest-to-account links retain the same player UUID.
+
+The 2026-11-09 code review found that a 200-row query cap hid later favorites,
+ratings and comments. Complete server aggregates now supply counts/averages and
+the current player's state. Comment requests page with stable timestamp/ID
+ordering, preserving complete threads and newly posted comments. A later-page
+failure or cancellation cannot become a successful partial result. Real local
+D1 tests cover 451 social rows and 425 comments, page boundaries, replies, new
+posts, ownership and error/cancellation handling; both failed on the old Worker.
 
 The pinned official Clerk signature verifier is retained with explicit session
 token guards. Nineteen signed-token parity cases compare it with the previous
@@ -49,10 +57,13 @@ Only the Arcade preview database was initialized:
 
 Worker llm-arcade-api-preview was uploaded at 17:42:31 UTC and workers.dev enabled:
 https://llm-arcade-api-preview.jeffkazzee.workers.dev
-Deployment ID: 75febdd3e7be48a1b7edf4c33645cbed.
+Version ID: 75febdd3-e7be-48a1-b7ed-f4c33645cbed.
+Deployment ID: d57b9a46-cbfa-4086-b7f7-0bb579753110.
 Bundle SHA-256: 0bf076545a0c6ff5af249d88f6595d71656719c820c229693f9215aca259fb4a.
 API readback confirms only this D1 and the exact Worker-origin APP_ORIGIN are bound;
 there are no Clerk keys, owner email, R2 binding or other project credentials.
+Read-only metadata on 2026-11-09 confirms the same version at 100% and only
+APP_ORIGIN/ARCADE_DB binding names/types; no secret values were requested/output.
 This deployment contains baseline 349a9f7, not the follow-up changes. Once access,
 configuration and validation permit deployment, update the Worker before the
 matching frontend: the new achievement request adds a player-intent argument that
@@ -105,7 +116,16 @@ The actual owner must personally verify email; nobody was pre-signed-up/admin.
   pending submissions. Files are public including pending ones. A monolithic
   5 MB response sampled 363/109 ms and was rejected; bounded reads sampled
   0–6.7 ms and authenticated upload 8.9 ms locally, not deployed accounting.
-- Normal review and Jeff's merge approval before any production cutover.
+- Jeff has authorized merging PR #2 once ready; required review and acceptance
+  remain incomplete. Do not ask for the same merge approval again or treat it as
+  permission to skip those gates. Production promotion remains a separate step.
+
+The hosted security review failed because its paying account reached Codex usage
+limits. Do not enable paid credits or retry unchanged. The local security-diff
+workflow is also incomplete: its required configuration-preflight reference and
+terminal scan helpers are unavailable in this executor. The hosted ordinary code
+review completed with the pagination finding addressed above; that correction
+does not establish a completed independent security review.
 
 Deployment is explicitly authorized after acceptance; that does not authorize new
 credentials, hosted key placement or persistent access/security changes. See
