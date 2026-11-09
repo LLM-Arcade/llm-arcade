@@ -1166,3 +1166,20 @@ until the user signs in on llmarcade.fun in the driven browser.
   key art at `public/assets/games/<slug>.png`, and that art does not exist
   yet. Adding the row now would ship a broken tile. Until the art lands the
   cabinet is playable at `/dev/flagstone` and stays `coming_soon` in the DB.
+
+## Flagstone scoring and live clue state (2026-11-09)
+
+- Reproduced indirect score farming: lifting/replacing a paid stone raised the
+  streak to x5, so a genuinely new stone paid 50 instead of 10. Only first-time
+  correct fills now advance current/best streak, preserving ordinary scoring.
+- Separated live row/column completion from one-time bonus history. Lifting a
+  required stone immediately resets its clue indicator; replacing it restores
+  completion without paying the stone or either line bonus again. Empty clues
+  remain complete and unpaid; paid refills can still finish a slab.
+- The expanded harness failed eight checks on the previous engine and passes
+  after the correction. The perfect six-slab route stays at 25,075 with all six
+  achievements. Full local `pnpm run ci` passes, including all nine game harnesses.
+- Browser launch is blocked by this executor's Chromium sandbox helper ownership
+  (owned by nobody; Chromium requires root and mode 4755). No sandbox bypass or
+  permission change was attempted; fresh browser-play acceptance remains pending.
+  PR #2, database state, art/launch gates and production remain unchanged.

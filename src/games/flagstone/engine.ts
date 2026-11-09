@@ -11,7 +11,7 @@ export const TUNE = {
   scoreCap: 60000,
   /** Points for the first correct fill of a cell. */
   fillBase: 10,
-  /** Consecutive correct fills needed for each extra multiplier step. */
+  /** Consecutive first-time correct fills needed for each extra multiplier step. */
   comboStep: 8,
   /** Multiplier ceiling (x1..x5). */
   comboMax: 5,
@@ -49,6 +49,8 @@ export class Engine {
   awarded: Uint8Array = new Uint8Array(0);
   rowDone: boolean[] = [];
   colDone: boolean[] = [];
+  private rowAwarded: boolean[] = [];
+  private colAwarded: boolean[] = [];
 
   puzzleIndex = 0;
   score = 0;
@@ -124,9 +126,9 @@ export class Engine {
       if (!this.awarded[i]) {
         this.awarded[i] = 1;
         this.award(TUNE.fillBase * this.multiplier);
+        this.streak += 1;
+        if (this.streak > this.bestStreak) this.bestStreak = this.streak;
       }
-      this.streak += 1;
-      if (this.streak > this.bestStreak) this.bestStreak = this.streak;
       this.push({ type: "sfx", sound: "fill" });
       this.checkLines();
       this.checkSlab();
@@ -156,6 +158,7 @@ export class Engine {
     const i = this.idx();
     if (this.marks[i] === EMPTY) return;
     this.marks[i] = EMPTY;
+    this.checkLines();
   }
 
   update(dt: number): void {
@@ -181,6 +184,10 @@ export class Engine {
     // work the player never did.
     this.rowDone = p.rowClues.map((clue) => clue.length === 1 && clue[0] === 0);
     this.colDone = p.colClues.map((clue) => clue.length === 1 && clue[0] === 0);
+    // Completion reflects the live board; payout history survives lifting a
+    // stone. Empty clues are already satisfied and must never award a bonus.
+    this.rowAwarded = [...this.rowDone];
+    this.colAwarded = [...this.colDone];
     this.puzzleMistakes = 0;
     this.cursorRow = 0;
     this.cursorCol = 0;
@@ -205,7 +212,6 @@ export class Engine {
     const p = this.puzzle;
 
     for (let y = 0; y < p.h; y++) {
-      if (this.rowDone[y]) continue;
       let done = true;
       for (let x = 0; x < p.w; x++) {
         if (p.solution[y * p.w + x] && this.marks[y * p.w + x] !== FILLED) {
@@ -213,14 +219,14 @@ export class Engine {
           break;
         }
       }
-      if (done) {
-        this.rowDone[y] = true;
+      this.rowDone[y] = done;
+      if (done && !this.rowAwarded[y]) {
+        this.rowAwarded[y] = true;
         this.linePaid();
       }
     }
 
     for (let x = 0; x < p.w; x++) {
-      if (this.colDone[x]) continue;
       let done = true;
       for (let y = 0; y < p.h; y++) {
         if (p.solution[y * p.w + x] && this.marks[y * p.w + x] !== FILLED) {
@@ -228,8 +234,9 @@ export class Engine {
           break;
         }
       }
-      if (done) {
-        this.colDone[x] = true;
+      this.colDone[x] = done;
+      if (done && !this.colAwarded[x]) {
+        this.colAwarded[x] = true;
         this.linePaid();
       }
     }

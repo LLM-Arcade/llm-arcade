@@ -9,10 +9,11 @@
 //      never exceeds the score cap,
 //   5. a sloppy bot dies on exactly the fifth wrong fill and never earns
 //      the flawless achievements,
-//   6. un-filling and re-filling a cell cannot farm score.
+//   6. un-filling and re-filling cannot farm score, streak or later payouts,
+//   7. line indicators follow the live board while bonuses pay only once.
 
 import { PUZZLES, clueLine } from "../../src/games/flagstone/levels.ts";
-import { Engine, FLAGGED, FILLED, TUNE } from "../../src/games/flagstone/engine.ts";
+import { Engine, EMPTY, FLAGGED, FILLED, TUNE } from "../../src/games/flagstone/engine.ts";
 
 let failures = 0;
 const check = (ok, label) => {
@@ -294,6 +295,7 @@ check(perfect.flawlessClears === PUZZLES.length, "every slab flawless");
 check(!!perfectRun.gameover, "fires a gameover event");
 check(perfectRun.gameover?.score === perfect.score, "gameover carries the final score");
 check(perfect.score <= TUNE.scoreCap, "score within the cap");
+check(perfect.score === 25075, "the unchanged perfect route retains its 25,075-point payout");
 check(
   perfect.score >= TUNE.legendScore,
   `score reaches the legend threshold (${perfect.score} >= ${TUNE.legendScore})`,
@@ -349,6 +351,73 @@ check(afterFirst > 0, "a correct fill pays");
 farm.clear();
 farm.fill();
 check(farm.score === afterFirst, "re-filling the same cell pays nothing");
+for (let i = 0; i < 31; i++) {
+  farm.clear();
+  farm.fill();
+}
+check(farm.streak === 1 && farm.bestStreak === 1, "paid refills cannot inflate current or best streak");
+check(farm.multiplier === 1, "paid refills cannot inflate the multiplier");
+const nextFreshCell = nextSolutionCell(farm, farm.puzzle);
+farm.setCursor(Math.floor(nextFreshCell / farm.puzzle.w), nextFreshCell % farm.puzzle.w);
+const beforeFreshFill = farm.score;
+farm.fill();
+check(farm.score - beforeFreshFill === TUNE.fillBase, "the next genuinely new stone still pays 10, not farmed x5");
+const bestBeforeMistake = farm.bestStreak;
+farm.setCursor(0, 0);
+farm.fill();
+farm.setCursor(Math.floor(firstCell / farm.puzzle.w), firstCell % farm.puzzle.w);
+farm.clear();
+farm.flag();
+farm.fill();
+check(farm.streak === 0 && farm.bestStreak === bestBeforeMistake, "paid refills cannot rebuild a streak after a mistake");
+
+console.log("\nlive line indicators and one-time bonuses");
+const row = new Engine();
+for (const x of [2, 3, 4]) { row.setCursor(1, x); row.fill(); }
+check(row.rowDone[1], "Boot row 1 is complete after its three stones");
+const rowScore = row.score;
+row.drainEvents();
+row.setCursor(1, 2);
+row.clear();
+check(row.markAt(1, 2) === EMPTY && !row.rowDone[1], "lifting (1,2) immediately clears the completed row indicator");
+row.flag();
+check(!row.rowDone[1], "flagging a missing required stone does not complete its row");
+row.clear();
+row.fill();
+check(row.rowDone[1], "replacing the stone restores the completed row indicator");
+check(row.score === rowScore, "restoring a paid row cannot repay stone or line bonuses");
+check(!row.drainEvents().some(event => event.type === "sfx" && event.sound === "line"), "restoring a paid line emits no second line award");
+check(row.rowDone[0], "the zero-clue opening row remains complete and unpaid");
+
+const crossing = new Engine();
+for (let x = 1; x <= 9; x++) { crossing.setCursor(9, x); crossing.fill(); }
+check(crossing.rowDone[9] && crossing.colDone[9], "the corner stone completes its row and column");
+const crossingScore = crossing.score;
+crossing.drainEvents();
+crossing.setCursor(9, 9);
+crossing.clear();
+check(!crossing.rowDone[9] && !crossing.colDone[9], "lifting the intersection clears both row and column indicators");
+crossing.fill();
+check(crossing.rowDone[9] && crossing.colDone[9], "replacing the intersection restores both indicators");
+check(crossing.score === crossingScore, "restoring both indicators never repays either line");
+check(!crossing.drainEvents().some(event => event.type === "sfx" && event.sound === "line"), "a paid row/column intersection emits no repeated line awards");
+
+const delayed = new Engine();
+delayed.setCursor(1, 2); delayed.fill(); delayed.clear();
+const ordinary = new Engine();
+const opening = PUZZLES[0];
+for (let i = 0; i < opening.solution.length; i++) {
+  if (!opening.solution[i]) continue;
+  ordinary.setCursor(Math.floor(i / opening.w), i % opening.w); ordinary.fill();
+  if (i !== opening.w + 2) {
+    delayed.setCursor(Math.floor(i / opening.w), i % opening.w); delayed.fill();
+  }
+}
+check(delayed.puzzleIndex === 0, "the lifted paid stone still prevents a slab clear");
+delayed.setCursor(1, 2); delayed.fill();
+check(delayed.puzzleIndex === 1 && delayed.cleared === 1, "a paid refill can still finish the slab");
+check(delayed.score === ordinary.score && delayed.streak === ordinary.streak && delayed.bestStreak === ordinary.bestStreak,
+  "restoring a paid stone last preserves the ordinary slab score and legitimate streak");
 
 const flag = new Engine();
 const before = flag.score;

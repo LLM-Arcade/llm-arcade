@@ -10,6 +10,15 @@ and Google OAuth origins use it.
 
 ## Current state
 
+**Flagstone PR #1 correction (2026-11-09):** isolated work on
+`feature/flagstone-game` fixes paid-stone streak farming and stale row/column clue
+indicators. Engine regressions and full local CI pass; ordinary perfect scoring
+remains 25,075. Fresh browser play is still required: this cloud executor's
+Chromium aborts because its sandbox helper is not root-owned. Provide a supported
+sandboxed browser for desktop/mobile `/dev/flagstone` verification before calling
+the cabinet ready. No database, key-art, launch-lineup or deployment changes were
+made, and PR #2's recovery checkout/branch remain separate.
+
 **Session 23: Lastwatch, the 3D flagship, is playable end to end on
 `feature/lastwatch-game`** (engine + harness + three.js realm + synth
 audio + live playtest round one). `/dev/lastwatch` on the worktree's dev
