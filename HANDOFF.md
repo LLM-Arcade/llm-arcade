@@ -18,6 +18,10 @@ and profile naming remain unchanged. Seven isolated component tests run through
 `pnpm test:settings` and the normal CI command. They use synthetic identities and
 transport only; this source correction changes no real player or provider state.
 The coordinator owns all preview configuration, migrations and deployment.
+The Run 'n Gunner harness now resets a declared RNG seed per bot and checks a
+same-seed replay; controlled baseline/candidate output matched with all original
+assertions retained. Gameplay is unchanged. Its separate boss-supplied 60th-kill
+achievement edge remains documented in the DEVLOG for game-scoped follow-up.
 
 **Cloudflare recovery / PR #2 (2026-11-09):** the isolated task branch retains
 guest cards and persistent scores plus optional Clerk accounts; production still

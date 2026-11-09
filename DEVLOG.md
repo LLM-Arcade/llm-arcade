@@ -1247,3 +1247,22 @@ until the user signs in on llmarcade.fun in the driven browser.
   retains its checked verdict without a stuck Checking state or redundant query.
 - This is source-only work on the existing task branch. No real player settings,
   credentials, provider state, deployment or production changes.
+
+## Controlled Run 'n Gunner CI fixture (2026-11-09)
+
+- The Settings commit's pre-push gate stopped when an unseeded ace run ended at
+  60 kills/65,000 points without `wrecking-crew`. The harness, engine and stage
+  source were unchanged from its passing baseline; the engine consumes
+  `Math.random` for spawns, shots and pickups.
+- Compared baseline `2e89636` and Settings candidate `0d66be8` under the same
+  predeclared seed 20260824, timestep 1/120 and bot inputs. Source graphs, compiled
+  bundles and output hashes matched. Both ace runs won with 64 kills, 65,800
+  points and all seven achievements.
+- Reset the fixture RNG per synchronous simulation and restore it in `finally`.
+  All original gate assertions remain; a same-seed replay additionally compares
+  outcomes, score, kills, achievements, stage rows and stats. Gameplay, balance
+  and achievement thresholds are unchanged. The original failure and comparison
+  receipts are preserved outside the repository.
+- Separate pre-existing edge remains: a boss supplying the 60th kill increments
+  `kills` without the normal enemy path's achievement check. The seeded 64-kill
+  pass does not fix or disprove that edge; no gameplay correction is included.
