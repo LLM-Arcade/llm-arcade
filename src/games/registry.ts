@@ -27,6 +27,8 @@ export const gameRegistry: Record<
   "sky-defense": lazy(() => import("./sky-defense/SkyDefense")),
   "gem-columns": lazy(() => import("./gem-columns/GemColumns")),
   brickstorm: lazy(() => import("./brickstorm/Brickstorm")),
+  // Grid-logic cabinet: no sprites — the clues are the picture.
+  flagstone: lazy(() => import("./flagstone/Flagstone")),
   // The 3D flagship: co-op horde defense, keyboard only.
   lastwatch: lazy(() => import("./lastwatch/Lastwatch")),
 };
