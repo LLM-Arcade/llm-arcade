@@ -10,6 +10,18 @@ and Google OAuth origins use it.
 
 ## Current state
 
+**Cloudflare recovery / PR #2 (2026-11-09):** the isolated task branch retains
+guest cards and persistent scores plus optional Clerk accounts; production still
+uses its existing deployment. The parent confirmed creation of the free LLM Arcade
+Development app with verified email codes, passwords/email links/Google off. No
+keys have been accessed or placed. The Cloudflare FAQ now describes that flow and
+the guest cookie/recovery limits; the legacy FAQ copy stays on the legacy path.
+Backup download and Worker HTTP remain blocked by executor CONNECT 403; Vercel
+project/API access and exact preview origin remain unresolved. Preserve those
+gates: verified backup → additive storage upgrade → Worker → frontend preview →
+full acceptance before any merge or production deployment. Exact setup and key
+placement approvals: `cloudflare-backend/SETUP_AND_ACCEPTANCE.md`.
+
 **Session 23: Lastwatch, the 3D flagship, is playable end to end on
 `feature/lastwatch-game`** (engine + harness + three.js realm + synth
 audio + live playtest round one). `/dev/lastwatch` on the worktree's dev

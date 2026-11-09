@@ -1197,3 +1197,19 @@ until the user signs in on llmarcade.fun in the driven browser.
 - Apply/verify that upgrade before a matching Worker deployment. This task changes
   source and tests only; no remote migration, deletion, deployment, access, billing
   or usage-reset action was performed.
+
+## Clerk email-code setup and recovery copy (2026-11-09)
+
+- Recorded the parent's confirmed creation of the approved free Clerk Development
+  app: required verified email and signup/sign-in codes on; passwords, email links
+  and Google off. The existing dashboard-driven Clerk components support this
+  without an auth implementation change. Actual delivery/sign-in is unverified.
+- Corrected the Cloudflare FAQ's stale Google/account requirement: guest cards
+  retain scores/progression without email, with browser-cookie recovery limits;
+  optional email-code accounts support return across devices. Public identity
+  remains username-based. Legacy backend copy is preserved.
+- Documented same-instance preview key destinations, branch-only frontend scope,
+  exact issuer/origin requirements and the separate hosted-placement approval.
+  This source-only follow-up accessed or placed no keys and created no credential,
+  access/security/billing change, migration, deployment, merge or production
+  mutation.

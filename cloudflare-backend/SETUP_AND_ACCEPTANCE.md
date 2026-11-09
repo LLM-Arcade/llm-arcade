@@ -6,17 +6,17 @@ real provider sign-in, public gameplay or a completed production cutover.
 
 ## Clerk: authentication, credentials and placement are separate
 
-1. **Owner authentication:** Jeff signs into his existing Clerk account in the
-   parent's existing cloud browser, completing his own password/MFA or chosen
-   existing sign-in method. The browser has only reached a signed-out page.
-   No identifier or sign-in method was selected by this task. Stop at any new
+1. **Confirmed setup:** the parent verified that the approved free **LLM Arcade
+   Development** app was created on 2026-11-09. Email is required and verified;
+   one-time email codes handle signup/sign-in. Password signup and adding
+   passwords are off, as are email links and Google. No keys were accessed or
+   placed. This records the parent's dashboard evidence, not a live sign-in test.
+   Jeff completes his own email verification during acceptance. Stop at any new
    consent, persistent grant or terms that lacks its applicable approval.
-2. **App/credential creation:** inspect existing applications first. Reuse an
-   existing Arcade-specific app if one exists; otherwise the earlier approval
-   covered one free development app named LLM Arcade and development keys stored
-   only in this project's ignored local files. That app was not created by this
-   task. Do not create another app, rotate keys, enable paid features or add
-   social OAuth. The current resumed work performs no credential creation.
+2. **Existing app only:** use that Development instance; do not create a duplicate,
+   rotate keys, enable paid features or add social OAuth. If its secret key has
+   no securely stored copy, creating a new key needs separate credential-creation
+   approval. App creation approval did not approve hosted key placement.
 3. **Secure handoff:** the CLI process is stopped. Its former localhost callback
    URL and OAuth request cannot be reused. This executor has no browser handoff,
    environment-edit or secure port-forward tool. A login in another browser does
@@ -31,8 +31,21 @@ real provider sign-in, public gameplay or a completed production cutover.
    and frontend preview environment. The Worker needs `CLERK_SECRET_KEY`,
    `CLERK_PUBLISHABLE_KEY`, `CLERK_ISSUER` and the private
    `INITIAL_ADMIN_EMAIL`; `CLERK_JWT_KEY` is an optional public verification key.
-   The frontend receives only `VITE_CLERK_PUBLISHABLE_KEY`. The secret key never
-   belongs in Vite variables or browser code. No provider user/admin is precreated.
+   Use the same Development instance's `pk_test` and `sk_test` values. The issuer
+   is its exact Frontend API HTTPS URL, not `api.clerk.com`. The frontend receives
+   only `VITE_CLERK_PUBLISHABLE_KEY`, scoped to the existing Vercel project's
+   Preview environment and `task/20261108-cloudflare-recovery` branch. The secret
+   key never belongs in Vite variables or browser code. No provider user/admin
+   is precreated. The exact canonical HTTPS frontend preview origin is not yet
+   known; obtain it from the accepted deployment before requesting approval to
+   set `APP_ORIGIN`/authorized-party trust. Do not substitute the Worker origin,
+   production domain, a guessed preview URL or a wildcard.
+
+The owner can copy values directly from the selected Clerk app into the approved
+project secret interfaces; CLI login is not required. Preview identities stay in
+the isolated preview database: Clerk users do not transfer between instances,
+and the server refuses automatic email-only relinking to a new production subject.
+Review the production data/identity transition before switching to live keys.
 
 Codex Cloud's current environment configuration supports direct environment
 variables and proxy-substituted HTTP secrets. The SDK needs readable configuration;
