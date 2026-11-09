@@ -10,6 +10,15 @@ and Google OAuth origins use it.
 
 ## Current state
 
+**Settings lookup correction (2026-11-09):** a mounted React/actual-adapter test
+reproduced an HTTP-error lookup incorrectly showing Available with Save enabled.
+The form now distinguishes an indeterminate check from Taken/Available, offers
+Retry and keeps Save disabled until a valid verdict. Existing username eligibility
+and profile naming remain unchanged. Seven isolated component tests run through
+`pnpm test:settings` and the normal CI command. They use synthetic identities and
+transport only; this source correction changes no real player or provider state.
+The coordinator owns all preview configuration, migrations and deployment.
+
 **Cloudflare recovery / PR #2 (2026-11-09):** the isolated task branch retains
 guest cards and persistent scores plus optional Clerk accounts; production still
 uses its existing deployment. The parent confirmed creation of the free LLM Arcade

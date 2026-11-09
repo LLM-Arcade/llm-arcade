@@ -16,7 +16,7 @@ import { format } from "date-fns";
 
 const USERNAME_RE = /^[a-z0-9_]{3,20}$/;
 
-type UsernameState = "unchanged" | "invalid" | "checking" | "available" | "taken";
+type UsernameState = "unchanged" | "invalid" | "checking" | "available" | "taken" | "error";
 
 const roleChipClass: Record<string, string> = {
   admin: "bg-terra/10 text-terra",
@@ -33,6 +33,7 @@ const Settings = () => {
   const [displayName, setDisplayName] = useState("");
   const [bio, setBio] = useState("");
   const [usernameState, setUsernameState] = useState<UsernameState>("unchanged");
+  const [availabilityAttempt, setAvailabilityAttempt] = useState(0);
 
   // Hydrate the form once the profile arrives
   useEffect(() => {
@@ -60,18 +61,25 @@ const Settings = () => {
     // must not overwrite the verdict for a newer candidate.
     let stale = false;
     const timer = setTimeout(async () => {
-      const { data } = await supabase
-        .from("profiles")
-        .select("id")
-        .eq("username", candidate)
-        .maybeSingle();
-      if (!stale) setUsernameState(data ? "taken" : "available");
+      try {
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("id")
+          .eq("username", candidate)
+          .maybeSingle();
+        if (stale) return;
+        if (error) setUsernameState("error");
+        else if (data === null) setUsernameState("available");
+        else setUsernameState(typeof data?.id === "string" ? "taken" : "error");
+      } catch {
+        if (!stale) setUsernameState("error");
+      }
     }, 450);
     return () => {
       stale = true;
       clearTimeout(timer);
     };
-  }, [username, profile]);
+  }, [username, profile, availabilityAttempt]);
 
   const save = useMutation({
     mutationFn: async () => {
@@ -109,7 +117,7 @@ const Settings = () => {
   if (!user) return <Navigate to={authCta("/settings").to} replace />;
   if (!profile) return null;
 
-  const usernameBlocked = usernameState === "invalid" || usernameState === "taken" || usernameState === "checking";
+  const usernameBlocked = usernameState !== "unchanged" && usernameState !== "available";
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
@@ -138,12 +146,20 @@ const Settings = () => {
                 <Input
                   id="username"
                   value={username}
-                  onChange={(e) => setUsername(e.target.value.toLowerCase())}
+                  onChange={(e) => {
+                    const value = e.target.value.toLowerCase();
+                    const candidate = value.trim();
+                    setUsername(value);
+                    if (value !== username) {
+                      setUsernameState(candidate === profile.username ? "unchanged" : USERNAME_RE.test(candidate) ? "checking" : "invalid");
+                    }
+                  }}
+                  aria-describedby="username-status"
                   maxLength={20}
                   className="h-11 rounded-full border-border bg-background px-5 font-mono text-sm"
                 />
               </div>
-              <p className="mt-1.5 flex items-center gap-1.5 text-xs font-medium">
+              <p id="username-status" aria-live="polite" className="mt-1.5 flex items-center gap-1.5 text-xs font-medium">
                 {usernameState === "unchanged" && (
                   <span className="text-muted-foreground">
                     3–20 characters: a–z, 0–9, underscores.
@@ -168,6 +184,21 @@ const Settings = () => {
                   <span className="text-destructive">
                     Lowercase letters, numbers and underscores only (3–20).
                   </span>
+                )}
+                {usernameState === "error" && (
+                  <>
+                    <span className="text-destructive">Couldn't check availability.</span>
+                    <button
+                      type="button"
+                      className="underline underline-offset-2 hover:text-terra focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
+                      onClick={() => {
+                        setUsernameState("checking");
+                        setAvailabilityAttempt((attempt) => attempt + 1);
+                      }}
+                    >
+                      Retry
+                    </button>
+                  </>
                 )}
               </p>
             </div>

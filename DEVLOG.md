@@ -1225,3 +1225,25 @@ until the user signs in on llmarcade.fun in the driven browser.
   one-millisecond minute rollover. Production limiter behavior is unchanged.
 - Validation: full backend `pnpm check` passes typecheck, build and all 26 real
   local D1/provider-fixture tests. Independent focused review found no blocker.
+
+## Settings username lookup error state (2026-11-09)
+
+- Reproduced the actual Settings component with the actual Cloudflare data adapter
+  mounted in an isolated DOM: a synthetic HTTP 503 returned `data: null` plus an
+  error, but the UI displayed Available and enabled Save. No real player or
+  provider request was used.
+- Availability errors, thrown queries and malformed responses now remain
+  indeterminate with Retry; only a successful empty lookup means Available.
+  Save remains blocked while checking or indeterminate, and stale success/error
+  replies cannot replace a newer candidate's verdict. Username edits clear the
+  previous verdict immediately. Existing 3–20 eligibility and profile naming
+  are unchanged.
+- Added seven mounted React component/actual-adapter regressions using the
+  dev-only Happy DOM dependency and existing Node test runner. They cover errors,
+  retry, taken/available/unchanged and eligibility, stale replies, and saving a
+  private player name without renaming the account. Included in `pnpm run ci`.
+- Validation: the mounted HTTP-error regression failed before the UI correction
+  (Available, Save enabled), then all seven focused cases passed. Case-only input
+  retains its checked verdict without a stuck Checking state or redundant query.
+- This is source-only work on the existing task branch. No real player settings,
+  credentials, provider state, deployment or production changes.
