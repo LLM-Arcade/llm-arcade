@@ -1184,3 +1184,16 @@ until the user signs in on llmarcade.fun in the driven browser.
   acceptance still block merging: the hosted security allowance is exhausted,
   Clerk/preview access is unresolved and deployed CPU/browser proof is missing.
   No paid credits, credentials, access changes, deployment or production cutover.
+
+## Upload payload accounting security fix (2026-11-09)
+
+- Reproduced the independent review's availability finding: 80 empty 5 MiB
+  declarations from seven verified synthetic accounts blocked a legitimate byte
+  with 507. Shared quota now charges actual stored chunks, with atomic capacity
+  checks and replay-safe byte accounting. Metadata quotas remain unchanged.
+- Added a separate additive upgrade for the initialized database. It counts all
+  existing completed/partial chunks and retains files, paths and legacy accounting;
+  local tests verify rollback, repeat-apply refusal and retained immutable data.
+- Apply/verify that upgrade before a matching Worker deployment. This task changes
+  source and tests only; no remote migration, deletion, deployment, access, billing
+  or usage-reset action was performed.

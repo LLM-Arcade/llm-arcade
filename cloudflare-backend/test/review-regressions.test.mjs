@@ -31,7 +31,7 @@ test("existing Clerk identities refresh verified primary email without moving pl
   } finally { await app.runtime.dispose(); }
 });
 
-test("concurrent file reservations enforce daily quota and reserve only accepted payloads", async () => {
+test("concurrent file metadata enforces daily quota without charging unstored payloads", async () => {
   const app = await fixture();
   try {
     const player = await app.login({ sub: "user_parallel_uploads", email: "quota@example.test" });
@@ -42,7 +42,7 @@ test("concurrent file reservations enforce daily quota and reserve only accepted
     assert.equal(responses.filter(r => r.status === 201).length, 12);
     assert.equal(responses.filter(r => r.status === 429).length, 4);
     assert.equal((await app.db.prepare("SELECT count(*) AS n FROM storage_files").first()).n, 12);
-    assert.equal((await app.db.prepare("SELECT reserved_bytes FROM storage_budget WHERE id = 1").first()).reserved_bytes, size * 12);
+    assert.equal((await app.db.prepare("SELECT stored_bytes FROM storage_budget WHERE id = 1").first()).stored_bytes, 0);
   } finally { await app.runtime.dispose(); }
 });
 

@@ -14,11 +14,11 @@ achievements/XP/streaks/badges, activity, follows, comments/replies, ratings,
 favorites, waitlist/playtest forms, uploads/versioning/review and admin commands.
 Temporary feature placeholders were removed. Existing game files are unchanged.
 
-Twenty-two integration tests now pass, including concurrent account linking,
+Twenty-five integration tests now pass, including concurrent account linking,
 row ownership, private signup access, authorization revocation, manifest validation,
 XP caps, immutable uploads and the complete migration with SQL semicolons. Root
 lint/typecheck/build, eight game harnesses, redirect checks and seven account-transition
-tests pass. Commit 5c4b68d passed hosted CI run 42525322155. Follow-up
+tests pass. Commit fa0728d passed hosted CI run 42607096774. Follow-up
 checks and the next hosted run must be associated with their exact new commit;
 real browser/provider testing remains outstanding.
 
@@ -36,6 +36,15 @@ ordering, preserving complete threads and newly posted comments. A later-page
 failure or cancellation cannot become a successful partial result. Real local
 D1 tests cover 451 social rows and 425 comments, page boundaries, replies, new
 posts, ownership and error/cancellation handling; both failed on the old Worker.
+
+The independent security review also reproduced empty upload declarations filling
+the shared 400 MiB reservation counter. The correction charges only stored chunk
+bytes, atomically in the database, with duplicate-aware checks. Three regressions
+cover the exact 80 empty 5 MiB declarations across seven accounts, concurrent
+capacity/retry behavior and additive upgrade preservation/rollback. No file or
+partial payload is deleted. The existing preview needs the prepared
+`storage-byte-budget-2026-11-09` database upgrade before the matching Worker;
+no remote upgrade or deployment was attempted. See the README's upgrade steps.
 
 The pinned official Clerk signature verifier is retained with explicit session
 token guards. Nineteen signed-token parity cases compare it with the previous

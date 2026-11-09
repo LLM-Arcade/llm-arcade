@@ -101,6 +101,9 @@ trust change and hosted key placement need their applicable approval. The defaul
   boards, XP/streaks, social actions, uploads and concurrent admin decisions.
 - Full migration preparation against an empty local D1, artifact hashes,
   authorization review, public-data scan and Cloudflare build dry run.
+- Prepare/test the additive storage-byte upgrade against a local copy of the old
+  schema: retained completed/partial data, atomic rollback and replay-safe counters.
+  This does not authorize applying it remotely.
 - Read-only provider metadata to identify the deployed Worker, preview D1 binding
   and branch/ref/check state. Metadata readback does not prove public HTTP behavior.
 
@@ -123,8 +126,15 @@ trust change and hosted key placement need their applicable approval. The defaul
   separate steps with their applicable approvals. Preserve old resources and
   recovery artifacts throughout.
 
-The hosted security review exhausted its paying account's Codex allowance; no
-paid credits are authorized. It needs available free allowance or an independent
-review that satisfies the existing review policy, not a waiver of that policy.
+Before a later authorized deployment, back up and inspect the reviewed Arcade
+database, then apply/verify `storage-byte-budget-2026-11-09` as one atomic batch.
+Use the README upgrade procedure; never rerun initial schemas on the initialized
+preview. Upgrade the database before the matching Worker, then the frontend.
+The correction only prepares/tests this migration; no remote data was changed.
+
+The hosted security review exhausted its paying account's Codex allowance. Do not
+enable hosted paid-credit settings or touch the usage reset. The separately
+authorized independent review may use the owner's existing agent allowance; it
+must satisfy the existing review policy rather than waive it.
 The local security-diff skill's required configuration-preflight resource and
 scan helpers are unavailable here, so that workflow cannot be claimed complete.

@@ -82,7 +82,9 @@ responses have a fixed endpoint, pinned API version, no redirects and a body cap
 Two further regression tests cover complete social totals and comment pagination
 after 200 rows, including actual adapter/loader transport, tied timestamps,
 replies, new posts, cancellation and later-page errors. The local suite now has
-22 tests. These are synthetic provider/runtime tests. Hosted CI passed 5c4b68d;
+22 tests. The storage-budget correction adds three more cases for metadata-only
+exhaustion, concurrent byte charging/retries and non-destructive legacy upgrade.
+These are synthetic provider/runtime tests. Hosted CI passed fa0728d;
 real Clerk email delivery, browser gameplay and the live site remain unverified.
 
 The local workerd compatibility date is 2026-07-30; proposed deployment uses
@@ -108,8 +110,10 @@ See [SETUP_AND_ACCEPTANCE.md](SETUP_AND_ACCEPTANCE.md) for the exact authenticat
 credential-placement and access-repair steps. The deployed Worker is still the
 baseline build; future deployment must update it before the follow-up frontend.
 
-Remote SQL files target a NEW EMPTY Arcade database only. No automatic migration
-runs. Preserve UUIDs/links and review trigger behavior before importing any
+Initial schemas/artifacts target a NEW EMPTY Arcade database only. No automatic
+migration runs. The existing preview instead needs the separately prepared
+`storage-byte-budget-2026-11-09` upgrade described below. Preserve UUIDs/links and
+review trigger behavior before importing any
 recovered export. Never copy private backup bundles or original PR refs into
 this repository. D1 binding IDs must be explicit: a missing ID may otherwise
 cause `cf deploy` to provision resources unexpectedly.
@@ -120,3 +124,39 @@ keeps the default production config unchanged. Relevant
 access repair, complete feature parity, hosted CI, browser acceptance and normal
 merge approval remain necessary before production cutover. Do not modify DNS
 or assume a change from the existing `www.llmarcade.fun` domain.
+
+## Existing database storage upgrade
+
+The previous Worker charged the shared 400 MiB quota at metadata creation. Empty
+5 MiB declarations could exhaust it without storing payload. The new Worker uses
+`storage_budget.stored_bytes`, maintained atomically by chunk INSERT/DELETE
+triggers. Metadata does not charge bytes; the 12-files/account/day and three
+pending-submission limits remain. No expiry, deletion endpoint or automatic
+cleanup is introduced. Completed and recoverable partial files stay intact.
+
+Prepare the additive upgrade without calling a service:
+
+```sh
+node scripts/prepare-storage-upgrade-artifact.mjs
+```
+
+Before an authorized deployment, preserve an Arcade-only backup and inspect its
+migration ledger and `PRAGMA table_info(storage_budget)`. Apply the entire prepared
+batch once to that reviewed database, then verify its version/hash, triggers,
+foreign keys and that `stored_bytes` equals `SUM(length(data))` across **all**
+chunks. The batch adds/backfills the counter and records its migration atomically;
+it retains legacy `reserved_bytes`, file IDs, paths and every chunk. Do not run
+initial schemas on the initialized database. If the column/version already exists
+or a result is uncertain, read back state before considering any retry.
+
+Apply the database upgrade before the matching Worker, then its frontend. The old
+Worker may still reject metadata using its legacy reservation counter during this
+staged transition; the new counter is kept accurate for inserts from both versions.
+No upgrade or deployment was executed by this correction.
+
+Metadata creation checks current free payload capacity but does not promise a
+reservation. If another upload consumes the remaining capacity, a chunk returns
+507; previously saved chunks and the immutable path remain available to resume.
+Identical chunks never charge twice, even at a full cap; conflicting retries still
+return 409. The payload cap leaves intended headroom but does not prove physical
+database size, daily free allowances or deployed CPU acceptance.

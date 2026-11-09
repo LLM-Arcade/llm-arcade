@@ -73,7 +73,7 @@ test("immutable public uploads stay sandboxed, enforce ownership, byte limits an
       await writeFile("dist/storage-profile.json", JSON.stringify({ perInvocation: summaries }, null, 2));
       console.log("128 KB chunk profiles:", JSON.stringify(summaries));
     }
-    await app.db.prepare("UPDATE storage_budget SET reserved_bytes = 400 * 1024 * 1024 WHERE id = 1").run();
+    await app.db.prepare("UPDATE storage_budget SET stored_bytes = 400 * 1024 * 1024 WHERE id = 1").run();
     assert.equal((await app.post("/api/storage/files", { ...metadata, path: alice.user.id + "/second-v1-123.html" }, alice.auth)).status, 507);
   } finally { await app.runtime.dispose(); }
 });

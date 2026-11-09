@@ -33,8 +33,8 @@ export async function fixture(options = {}) {
       throw new Error("Unexpected outbound request in isolated test: " + url.origin + url.pathname);
     } });
   const db = await runtime.getD1Database("ARCADE_DB");
-  const statements = await schemaStatements(options.catalog ? allSchemas : baseSchemas);
-  await db.batch(statements.map(({ sql }) => db.prepare(sql)));
+  const statements = await schemaStatements(options.schemas ?? (options.catalog ? allSchemas : baseSchemas));
+  if (statements.length) await db.batch(statements.map(({ sql }) => db.prepare(sql)));
   const request = (path, options = {}) => {
     const headers = new Headers(options.headers);
     if (!headers.has("Origin")) headers.set("Origin", ORIGIN);

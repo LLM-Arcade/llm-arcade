@@ -58,22 +58,19 @@ export async function storageRoute(request: Request, env: Bindings): Promise<Res
     }
     const pending = await env.ARCADE_DB.prepare("SELECT count(*) AS n FROM game_submissions WHERE user_id = ? AND status = 'pending'").bind(user.id).first<{ n: number }>();
     if ((pending?.n ?? 0) >= 3) throw new ApiError(429, "You already have three games awaiting review.");
-    // Bound abandoned uploads too, rather than allowing unlimited reserved
-    // payloads outside the submission queue. Never delete player files here.
+    // Bound metadata creation per account. Size declarations do not consume the
+    // shared payload budget; database triggers charge only stored chunk bytes.
     const since = new Date(Date.now() - 86400000).toISOString();
     const recentFiles = () => env.ARCADE_DB.prepare("SELECT count(*) AS n FROM storage_files WHERE user_id = ? AND created_at >= ?").bind(user.id, since).first<{ n: number }>();
     const recent = await recentFiles();
     if ((recent?.n ?? 0) >= 12) throw new ApiError(429, "Your daily upload allowance is full. Try again tomorrow.");
     const id = crypto.randomUUID();
-    const result = await env.ARCADE_DB.batch([
-      env.ARCADE_DB.prepare(`INSERT INTO storage_files (id,path,user_id,content_type,size,created_at)
-        SELECT ?,?,?,?,?,? WHERE (SELECT reserved_bytes FROM storage_budget WHERE id = 1) + ? <= ?
+    const result = await env.ARCADE_DB.prepare(`INSERT INTO storage_files (id,path,user_id,content_type,size,created_at)
+        SELECT ?,?,?,?,?,? WHERE (SELECT stored_bytes FROM storage_budget WHERE id = 1) + ? <= ?
         AND (SELECT count(*) FROM storage_files WHERE user_id = ? AND created_at >= ?) < 12
         AND (SELECT count(*) FROM game_submissions WHERE user_id = ? AND status = 'pending') < 3`)
-        .bind(id, path, user.id, contentType, input.size, new Date().toISOString(), input.size, STORAGE_BYTES, user.id, since, user.id),
-      env.ARCADE_DB.prepare("UPDATE storage_budget SET reserved_bytes = reserved_bytes + ? WHERE id = 1 AND EXISTS (SELECT 1 FROM storage_files WHERE id = ?)").bind(input.size, id),
-    ]);
-    if (!result[0].meta.changes) {
+        .bind(id, path, user.id, contentType, input.size, new Date().toISOString(), input.size, STORAGE_BYTES, user.id, since, user.id).run();
+    if (!result.meta.changes) {
       if (((await recentFiles())?.n ?? 0) >= 12) throw new ApiError(429, "Your daily upload allowance is full. Try again tomorrow.");
       const queued = await env.ARCADE_DB.prepare("SELECT count(*) AS n FROM game_submissions WHERE user_id = ? AND status = 'pending'").bind(user.id).first<{ n: number }>();
       if ((queued?.n ?? 0) >= 3) throw new ApiError(429, "You already have three games awaiting review.");
@@ -114,9 +111,19 @@ export async function storageRoute(request: Request, env: Bindings): Promise<Res
   const hex = encoder.toHex();
   // Bind compact text, not D1's expensive JSON byte-array representation.
   // SQLite decodes inside the database; bytes and file paths remain immutable.
-  const saved = await env.ARCADE_DB.prepare(`INSERT INTO storage_chunks (file_id,position,data)
-    SELECT ?,?,unhex(?) WHERE EXISTS (SELECT 1 FROM storage_files WHERE id = ? AND user_id = ? AND complete = 0)
-    ON CONFLICT(file_id,position) DO NOTHING RETURNING position`).bind(file.id, position, hex, file.id, user.id).first();
+  let saved;
+  try {
+    // The database's duplicate-aware trigger checks/charges actual bytes in
+    // this same transaction, including concurrent inserts and older writers.
+    saved = await env.ARCADE_DB.prepare(`INSERT INTO storage_chunks (file_id,position,data)
+      SELECT ?,?,unhex(?) WHERE EXISTS (SELECT 1 FROM storage_files WHERE id = ? AND user_id = ? AND complete = 0)
+      ON CONFLICT(file_id,position) DO NOTHING RETURNING position`).bind(file.id, position, hex, file.id, user.id).first();
+  } catch (error) {
+    if (error instanceof Error && error.message.includes("arcade_storage_payload_budget_exceeded")) {
+      throw new ApiError(507, "Arcade's free file storage is full. Your saved chunks remain available to resume.");
+    }
+    throw error;
+  }
   if (saved) return json({ data: { position, replayed: false } }, 201);
   const existing = await env.ARCADE_DB.prepare("SELECT data = unhex(?) AS matches FROM storage_chunks WHERE file_id = ? AND position = ?")
     .bind(hex, file.id, position).first<{ matches: number }>();
