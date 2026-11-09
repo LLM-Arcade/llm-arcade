@@ -22,7 +22,7 @@ const medallions = [
 const LeaderboardPanel = ({ game }: { game: Game }) => {
   const { user } = useAuth();
   const [period, setPeriod] = useState<LeaderboardPeriod>("weekly");
-  const { data: rows, isLoading } = useLeaderboard(game.id, period);
+  const { data: rows, isLoading, isError, refetch } = useLeaderboard(game.id, period);
 
   return (
     <div className="rounded-2xl bg-card p-4 shadow-sm ring-1 ring-foreground/10 sm:p-5">
@@ -52,6 +52,11 @@ const LeaderboardPanel = ({ game }: { game: Game }) => {
       {isLoading ? (
         <div className="flex justify-center py-10">
           <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+        </div>
+      ) : isError ? (
+        <div role="alert" className="py-10 text-center text-sm">
+          <p>The leaderboard could not load.</p>
+          <button type="button" onClick={() => void refetch()} className="mt-3 rounded-full bg-secondary px-4 py-2 font-semibold">Try again</button>
         </div>
       ) : !rows || rows.length === 0 ? (
         <div className="py-10 text-center">

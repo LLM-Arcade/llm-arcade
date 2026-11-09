@@ -1,5 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/legacy-supabase";
+import { isCloudflareBackend } from "@/lib/backend-config";
+import { arcadeData } from "@/lib/arcade-api";
 import { useAuth, type Profile } from "@/contexts/AuthContext";
 import type { BadgeRarity } from "@/components/arcade/BadgeChip";
 
@@ -140,6 +142,7 @@ export const useRecentScores = (limit = 14) =>
   useQuery({
     queryKey: ["recent-scores", limit],
     queryFn: async () => {
+      if (isCloudflareBackend) return (await arcadeData<TickerScore[]>("/recent-scores")).slice(0, limit);
       const { data, error } = await supabase
         .from("scores")
         .select("id, score, created_at, profiles(username), games(slug, title, score_label)")

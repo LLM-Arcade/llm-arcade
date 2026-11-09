@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/accordion";
 import SiteFooter from "@/components/layout/SiteFooter";
 import { ArrowLeft } from "lucide-react";
+import { isCloudflareBackend } from "@/lib/backend-config";
 
 const groups = [
   {
@@ -38,7 +39,9 @@ const groups = [
       {
         id: "accounts",
         q: "Do I need an account to play?",
-        a: "No — anyone can play. You'll need to sign in (Google) to claim scores on leaderboards, unlock achievements, earn badges, and keep a streak. If you finish a run as a guest, we hold your score so you can claim it right after signing in.",
+        a: isCloudflareBackend
+          ? "No. An email-free guest card saves your scores, achievements, badges, and streak under your username. It uses a 30-day cookie in this browser; clearing cookies or switching devices can lose access, and a username alone cannot recover it. An optional account uses a code sent to your verified email so you can return across devices. A new account can keep your current guest card; an existing account keeps its own history. Your email stays private; other players see your username."
+          : "No — anyone can play. You'll need to sign in (Google) to claim scores on leaderboards, unlock achievements, earn badges, and keep a streak. If you finish a run as a guest, we hold your score so you can claim it right after signing in.",
       },
       {
         id: "scores",
@@ -96,7 +99,9 @@ const groups = [
       {
         id: "data",
         q: "What data do you store?",
-        a: "Your email (waitlist/account), profile info you choose to set, and gameplay data: scores, achievements, and activity. Uploaded games run in a sandbox with no access to your cookies or storage.",
+        a: isCloudflareBackend
+          ? "Guest cards store your username, profile information you choose to set, and gameplay data such as scores, achievements, and activity. We also keep private abuse-prevention records. An optional account adds your private verified email and account identity; public profiles use usernames. Waitlist and playtest forms collect the email you submit. Uploaded games run in a sandbox with no access to your cookies or storage."
+          : "Your email (waitlist/account), profile info you choose to set, and gameplay data: scores, achievements, and activity. Uploaded games run in a sandbox with no access to your cookies or storage.",
       },
     ],
   },

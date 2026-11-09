@@ -1,6 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/legacy-supabase";
 import { gameArtPath, type Era } from "@/data/launch-lineup";
+import { isCloudflareBackend } from "@/lib/backend-config";
+import { arcadeData, ArcadeApiError } from "@/lib/arcade-api";
 
 export interface Game {
   id: string;
@@ -31,6 +33,7 @@ export const useGames = () =>
   useQuery({
     queryKey: ["games"],
     queryFn: async () => {
+      if (isCloudflareBackend) return (await arcadeData<Game[]>("/games")).map(game => ({ ...game, featured: Boolean(game.featured) }));
       const { data, error } = await supabase
         .from("games")
         .select("*")
@@ -48,6 +51,15 @@ export const useGame = (slug: string) =>
   useQuery({
     queryKey: ["game", slug],
     queryFn: async () => {
+      if (isCloudflareBackend) {
+        try {
+          const game = await arcadeData<Game>("/games/" + encodeURIComponent(slug));
+          return { ...game, featured: Boolean(game.featured) };
+        } catch (error) {
+          if (error instanceof ArcadeApiError && error.status === 404) return null;
+          throw error;
+        }
+      }
       const { data, error } = await supabase
         .from("games")
         .select("*")

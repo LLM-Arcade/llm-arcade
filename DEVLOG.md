@@ -1132,3 +1132,167 @@ until the user signs in on llmarcade.fun in the driven browser.
 - The harness stages the lone Hexer and restores the seed-2026 floor
   beside the twelve-seed mean and best-run gates. Seeds 2020 to 2031 now
   reach 15 22 22 16 22 15 15 21 15 15 15 22 (mean 17.92), with no stall.
+
+
+## Cloudflare recovery implementation and isolated API preview (2026-11-08)
+
+- Added D1/Worker and frontend paths for guest cards, optional Clerk accounts,
+  scores/boards, progression, social features, submissions and admin review.
+  Guest cards collect no email; new accounts retain the card's UUID and links.
+  Public reads expose usernames rather than private email/provider names.
+- Reconstructed 15 game rows and 110 achievement definitions from source;
+  Run 'n Gunner remains playable as explicitly documented. Lastwatch retains
+  its source playtest gate. Missing metadata is marked as new configuration,
+  not recovered database content; old users/scores/uploads remain unrecovered.
+- Local integration, frontend, engine and redirect checks passed. The new
+  Arcade-only preview D1 and API Worker were deployed; configured cloud egress
+  denied the live health check. Clerk browser callback setup and original
+  Vercel preview access remain blocked. No production cutover or merge.
+- Uploads retain 5 MB HTML/2 MB artwork limits using bounded immutable chunks
+  and browser assembly. Old versions/award history survive review. No R2 or
+  paid resource enabled. Browser/deployed CPU and complete live acceptance
+  remain required before release; details in cloudflare-backend/CURRENT_STATUS.md.
+
+## Arcade recovery acceptance follow-up (2026-11-08)
+
+- Fixed account/session cache transitions and same-UUID guest upgrades. Queued
+  score and achievement writes carry the originating player intent and reject
+  a newly active player instead of moving the old run to that account.
+- Fixed stale Clerk primary email, concurrent upload quotas, playtest role grants
+  and competing submission reviews. Coming-soon cabinets keep their existing
+  ratings/favorites/comments while gameplay score/unlock gates remain intact.
+- Kept official Clerk signature verification while removing full management-client
+  construction; pinned and bounded primary-email reads fail closed. Signed-token
+  parity and provider-response tests retain session/issuer/authorized-party checks.
+- Twenty real local workerd/D1 tests, seven frontend account-transition tests and
+  root CI checks pass. CPU samples still exceed Workers Free's budget on some
+  account requests; deployed CPU, actual Clerk and browser acceptance are pending.
+- Kept the same branch/draft PR. No merge, new app/key/session, access expansion,
+  follow-up deployment or production cutover. Exact remaining setup and access
+  repairs are recorded in cloudflare-backend/SETUP_AND_ACCEPTANCE.md.
+
+## Social pagination review correction (2026-11-09)
+
+- Addressed the code review's 200-row truncation: favorites/ratings now use full
+  database aggregates and server-derived current-player state; comments page
+  through complete ordered threads, including replies and newly posted messages.
+  Query errors offer Retry rather than presenting a partial thread as complete.
+- Real local D1 regressions failed against the previous Worker and pass with the
+  correction, covering 451 social records, 425 comments, exact page boundaries,
+  own unfavorite/rating changes, cancellation and later-page failures.
+- Jeff's conditional approval to merge PR #2 is recorded. Required review and live
+  acceptance still block merging: the hosted security allowance is exhausted,
+  Clerk/preview access is unresolved and deployed CPU/browser proof is missing.
+  No paid credits, credentials, access changes, deployment or production cutover.
+
+## Upload payload accounting security fix (2026-11-09)
+
+- Reproduced the independent review's availability finding: 80 empty 5 MiB
+  declarations from seven verified synthetic accounts blocked a legitimate byte
+  with 507. Shared quota now charges actual stored chunks, with atomic capacity
+  checks and replay-safe byte accounting. Metadata quotas remain unchanged.
+- Added a separate additive upgrade for the initialized database. It counts all
+  existing completed/partial chunks and retains files, paths and legacy accounting;
+  local tests verify rollback, repeat-apply refusal and retained immutable data.
+- Apply/verify that upgrade before a matching Worker deployment. This task changes
+  source and tests only; no remote migration, deletion, deployment, access, billing
+  or usage-reset action was performed.
+
+## Clerk email-code setup and recovery copy (2026-11-09)
+
+- Recorded the parent's confirmed creation of the approved free Clerk Development
+  app: required verified email and signup/sign-in codes on; passwords, email links
+  and Google off. The existing dashboard-driven Clerk components support this
+  without an auth implementation change. Actual delivery/sign-in is unverified.
+- Corrected the Cloudflare FAQ's stale Google/account requirement: guest cards
+  retain scores/progression without email, with browser-cookie recovery limits;
+  optional email-code accounts support return across devices. Public identity
+  remains username-based. Legacy backend copy is preserved.
+- Documented same-instance preview key destinations, branch-only frontend scope,
+  exact issuer/origin requirements and the separate hosted-placement approval.
+  This source-only follow-up accessed or placed no keys and created no credential,
+  access/security/billing change, migration, deployment, merge or production
+  mutation.
+
+## Deterministic guest-limit CI boundary check (2026-11-09)
+
+- Hosted CI on the email-code guidance follow-up exposed a timing assumption:
+  an eleven-request guest burst crossed a minute boundary and correctly received
+  a fresh allowance, while the test expected the eleventh request to return 429.
+- Kept HTTP guest-route limiter wiring coverage and moved exact allowance/reset
+  assertions to the actual exported limiter against real local D1 with a controlled
+  Node clock. Ten requests pass and the eleventh fails on each side of a
+  one-millisecond minute rollover. Production limiter behavior is unchanged.
+- Validation: full backend `pnpm check` passes typecheck, build and all 26 real
+  local D1/provider-fixture tests. Independent focused review found no blocker.
+
+## Settings username lookup error state (2026-11-09)
+
+- Reproduced the actual Settings component with the actual Cloudflare data adapter
+  mounted in an isolated DOM: a synthetic HTTP 503 returned `data: null` plus an
+  error, but the UI displayed Available and enabled Save. No real player or
+  provider request was used.
+- Availability errors, thrown queries and malformed responses now remain
+  indeterminate with Retry; only a successful empty lookup means Available.
+  Save remains blocked while checking or indeterminate, and stale success/error
+  replies cannot replace a newer candidate's verdict. Username edits clear the
+  previous verdict immediately. Existing 3–20 eligibility and profile naming
+  are unchanged.
+- Added seven mounted React component/actual-adapter regressions using the
+  dev-only Happy DOM dependency and existing Node test runner. They cover errors,
+  retry, taken/available/unchanged and eligibility, stale replies, and saving a
+  private player name without renaming the account. Included in `pnpm run ci`.
+- Validation: the mounted HTTP-error regression failed before the UI correction
+  (Available, Save enabled), then all seven focused cases passed. Case-only input
+  retains its checked verdict without a stuck Checking state or redundant query.
+- This is source-only work on the existing task branch. No real player settings,
+  credentials, provider state, deployment or production changes.
+
+## Controlled Run 'n Gunner CI fixture (2026-11-09)
+
+- The Settings commit's pre-push gate stopped when an unseeded ace run ended at
+  60 kills/65,000 points without `wrecking-crew`. The harness, engine and stage
+  source were unchanged from its passing baseline; the engine consumes
+  `Math.random` for spawns, shots and pickups.
+- Compared baseline `2e89636` and Settings candidate `0d66be8` under the same
+  predeclared seed 20260824, timestep 1/120 and bot inputs. Source graphs, compiled
+  bundles and output hashes matched. Both ace runs won with 64 kills, 65,800
+  points and all seven achievements.
+- Reset the fixture RNG per synchronous simulation and restore it in `finally`.
+  All original gate assertions remain; a same-seed replay additionally compares
+  outcomes, score, kills, achievements, stage rows and stats. Gameplay, balance
+  and achievement thresholds are unchanged. The original failure and comparison
+  receipts are preserved outside the repository.
+- Separate pre-existing edge remains: a boss supplying the 60th kill increments
+  `kills` without the normal enemy path's achievement check. The seeded 64-kill
+  pass does not fix or disprove that edge; no gameplay correction is included.
+
+## Vercel production and preview routing (2026-11-09)
+
+- Following PR #2's merge into `dev` at `1b214da`, added one scoped source-only
+  follow-up for the fresh production release. Replaced the automatic static
+  config with Vercel's supported named `config` export in `vercel.mjs`, without
+  another dependency. Production and preview select distinct reviewed Worker
+  origins; same-origin `/api` and `/api/*` precede the unchanged SPA fallback.
+- Managed builds force `VITE_ARCADE_BACKEND=cloudflare`. Production requires a
+  well-formed `pk_live` whose encoded host is not a Clerk development host;
+  non-production accepts only a development key or no key for guests. Checked
+  the effective Vite dotenv/process value before compilation and froze that
+  value in the bundle. Invalid keys, missing managed-build context, conflicting
+  contexts and a config/build target mismatch stop the build without printing key values. A direct Vite
+  build cannot skip the same guard.
+- Kept the explicit preview JSON for existing deployment workflows, now with
+  the same guarded preview build command. Documented the CLI 65.1.0+ override
+  requirement and the need to omit `vercel.mjs` when a snapshot substitutes the
+  preview JSON as `vercel.json`. Rejected a second automatic static config:
+  ordinary Git preview deployments must choose the preview Worker themselves.
+- Six focused checks cover real config export/routing, target contradictions,
+  production and preview key policies, dotenv fallback/precedence and actual
+  app builds under both targets with synthetic keys and a stale backend flag.
+  Build outputs use temporary directories, preserving `dist` for existing
+  verification tools. Added `pnpm test:vercel` to the protected CI command.
+- No credentials, provider settings, data, deployment, merge or PR publication
+  are part of this source change. Hosted routing/cookies, real Clerk sign-in,
+  production-only resource identity and public gameplay/score readback remain
+  the coordinator's release acceptance gates. A preview artifact must not be
+  promoted as the production build.

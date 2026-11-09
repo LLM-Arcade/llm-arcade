@@ -1,5 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/legacy-supabase";
+import { isCloudflareBackend } from "@/lib/backend-config";
+import { arcadeData } from "@/lib/arcade-api";
 
 export type LeaderboardPeriod = "daily" | "weekly" | "all";
 
@@ -25,6 +27,7 @@ export const useLeaderboard = (gameId: string, period: LeaderboardPeriod) =>
   useQuery({
     queryKey: ["leaderboard", gameId, period],
     queryFn: async () => {
+      if (isCloudflareBackend) return arcadeData<LeaderboardRow[]>(`/games/${encodeURIComponent(gameId)}/leaderboard?period=${period}`);
       const { data, error } = await supabase.rpc("get_leaderboard", {
         p_game_id: gameId,
         p_since: sinceFor(period),

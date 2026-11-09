@@ -1,12 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, Navigate, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { safeNextPath } from "@/lib/safe-next";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/legacy-supabase";
 import { useAuth } from "@/contexts/AuthContext";
 import { isKnownPlayer } from "@/lib/known-player";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Loader2, Trophy } from "lucide-react";
+import { isCloudflareBackend } from "@/lib/backend-config";
+import AccountLogin from "@/components/arcade/AccountLogin";
 
 const GoogleMark = () => (
   <svg viewBox="0 0 48 48" className="h-4 w-4 shrink-0" aria-hidden="true">
@@ -22,7 +24,7 @@ type Mode = "signin" | "signup";
 const GOOGLE_DISABLED_COPY =
   "Google sign-in isn't switched on for this arcade yet — use email below. (Operators: enable the Google provider in the Supabase dashboard.)";
 
-const Login = () => {
+const LegacyLogin = () => {
   const { session } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -255,4 +257,5 @@ const Login = () => {
   );
 };
 
+const Login = () => isCloudflareBackend ? <AccountLogin /> : <LegacyLogin />;
 export default Login;

@@ -10,6 +10,62 @@ and Google OAuth origins use it.
 
 ## Current state
 
+**Environment-specific Vercel routing (2026-11-09):** PR #2 is merged into `dev`
+at `1b214daf377f9e4b24cd180109dbd56f7fa0cad7`. The scoped follow-up replaces the
+automatic `vercel.json` with dependency-free `vercel.mjs`. Git Production builds
+use `llm-arcade-api.jeffkazzee.workers.dev`; preview, development and custom
+targets use only `llm-arcade-api-preview.jeffkazzee.workers.dev`. Both route
+same-origin `/api` and `/api/*` before the existing SPA fallback and force the
+Cloudflare backend. Production builds require a structurally valid live Clerk
+publishable key; non-production builds reject live keys and allow a development
+key or email-free guest mode. Validation includes Vite dotenv values and direct
+`pnpm build` invocations under a Vercel target. Ordinary local builds retain the
+existing backend opt-in.
+
+`pnpm test:vercel` runs the routing/key matrix and real app builds in isolated
+temporary output directories; it is part of `pnpm run ci`. These use synthetic
+keys and prove build selection, not actual Clerk ownership or live sign-in.
+The coordinator owns provider settings, exact key placement, production-only
+Worker/D1, hosted acceptance and merges. Build fresh under the Production target
+after those gates; promoting a preview artifact cannot change its baked-in key
+or rewrites. No provider or player state was changed by this source follow-up.
+
+The explicit `vercel.cloudflare-preview.json` remains supported and its build
+command rejects a Production context. Vercel CLI explicit-config users need
+65.1.0+ (the programmatic-config override fix). A source-snapshot deployment that
+renames that preview file to `vercel.json` must omit `vercel.mjs`; never submit two
+automatic configs. Prefer the automatic config for normal Git deployments.
+See `cloudflare-backend/SETUP_AND_ACCEPTANCE.md` for release checks. Earlier
+recovery notes below are historical snapshots, not fresh provider readback.
+
+**Settings lookup correction (2026-11-09):** a mounted React/actual-adapter test
+reproduced an HTTP-error lookup incorrectly showing Available with Save enabled.
+The form now distinguishes an indeterminate check from Taken/Available, offers
+Retry and keeps Save disabled until a valid verdict. Existing username eligibility
+and profile naming remain unchanged. Seven isolated component tests run through
+`pnpm test:settings` and the normal CI command. They use synthetic identities and
+transport only; this source correction changes no real player or provider state.
+The coordinator owns all preview configuration, migrations and deployment.
+The Run 'n Gunner harness now resets a declared RNG seed per bot and checks a
+same-seed replay; controlled baseline/candidate output matched with all original
+assertions retained. Gameplay is unchanged. Its separate boss-supplied 60th-kill
+achievement edge remains documented in the DEVLOG for game-scoped follow-up.
+
+**Cloudflare recovery / PR #2 (2026-11-09):** the isolated task branch retains
+guest cards and persistent scores plus optional Clerk accounts; production still
+uses its existing deployment. The parent confirmed creation of the free LLM Arcade
+Development app with verified email codes, passwords/email links/Google off. No
+keys have been accessed or placed. The Cloudflare FAQ now describes that flow and
+the guest cookie/recovery limits; the legacy FAQ copy stays on the legacy path.
+Backup download and Worker HTTP remain blocked by executor CONNECT 403; Vercel
+project/API access and exact preview origin remain unresolved. Preserve those
+gates: verified backup → additive storage upgrade → Worker → frontend preview →
+full acceptance before any merge or production deployment. Exact setup and key
+placement approvals: `cloudflare-backend/SETUP_AND_ACCEPTANCE.md`.
+The guest rate-limit regression now controls the clock across a minute boundary
+instead of assuming eleven HTTP requests share a wall-clock minute; HTTP route
+limiter wiring remains covered. Production rate limits are unchanged.
+
 **Session 23: Lastwatch, the 3D flagship, is playable end to end on
 `feature/lastwatch-game`** (engine + harness + three.js realm + synth
 audio + live playtest round one). `/dev/lastwatch` on the worktree's dev
