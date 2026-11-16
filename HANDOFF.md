@@ -10,6 +10,30 @@ and Google OAuth origins use it.
 
 ## Current state
 
+**Local CI security floors (2026-11-16 UTC):** an isolated task candidate based on
+public `dev` at `7a34b120f037af22638f952d2344e87c976dd78c` raises only the CI
+Node selectors: app `>=22.23.5 <23`, backend `>=24.22.3 <25`. These are the
+November 11 security-release minima; later stable releases in each existing
+major remain eligible. Actions, pnpm versions, install policy and all gate
+commands remain unchanged. This is CI selection hardening, not evidence of the
+resolved or live production Node version.
+
+Fresh local validation passed on Node 22.23.5/pnpm 10.34.9 (frozen install,
+`pnpm run ci`, explicit Cloudflare build) and Node 24.22.3/pnpm 11.25.0
+(backend frozen install with `--ignore-scripts`, typecheck/build and all 26 tests).
+The routing builds use synthetic keys and the backend tests use local D1/provider
+fixtures. Separate range/cache fixtures reject older cached versions, accept the
+minima and retain same-major updates. No production access or browser acceptance
+was repeated. The earlier private-repository candidate and receipts remain separate.
+
+The coordinator's authenticated read-only handoff identifies Vercel team
+`jeffrey-kazzee`, project `llm-arcade`, connected to this public repository with
+production branch `prod`. Preview tracking covers all unassigned branches;
+ignored-build rules, preview costs and deployed backend/credential isolation
+remain unverified. Keep this candidate local: no push, PR, deploy or merge is
+authorized. Independent review and the existing PR/live-verification/human gates
+remain required before any later release step; local passes do not satisfy them.
+
 **Environment-specific Vercel routing (2026-11-09):** PR #2 is merged into `dev`
 at `1b214daf377f9e4b24cd180109dbd56f7fa0cad7`. The scoped follow-up replaces the
 automatic `vercel.json` with dependency-free `vercel.mjs`. Git Production builds

@@ -1296,3 +1296,32 @@ until the user signs in on llmarcade.fun in the driven browser.
   production-only resource identity and public gameplay/score readback remain
   the coordinator's release acceptance gates. A preview artifact must not be
   promoted as the production build.
+
+## CI Node security floors (2026-11-16 UTC)
+
+- Reconciled the authenticated Vercel handoff with public `LLM-Arcade/llm-arcade`
+  rather than transferring the private candidate or its pass claims. The existing
+  security owner was explicitly assigned this isolated public task; available
+  task/branch/PR records established no conflicting security writer. Historical
+  recovery/routing branches and unrelated Flagstone PR #1 were left alone.
+- Changed only the two setup-node inputs to `>=22.23.5 <23` and `>=24.22.3 <25`,
+  following the official November 11 security releases. A floor avoids selecting
+  older cached releases while retaining stable patch/minor updates in each major.
+  This does not establish an affected installed pin or a production exposure.
+- Fresh public-tree validation passed: app frozen install, full `pnpm run ci`
+  and explicit Cloudflare build on Node 22.23.5/pnpm 10.34.9; backend frozen
+  install with `--ignore-scripts` and `pnpm check` on Node 24.22.3/pnpm 11.25.0,
+  including all 26 tests. Existing lint/chunk warnings remain. No test, assertion,
+  capture requirement, isolation control, script policy or resource gate changed.
+- Auxiliary checks confirm that only those workflow values changed and exercise
+  18 version boundaries plus 10 actual tool-cache fixture selections. Their first
+  attempt exposed a fixture setup-order error, corrected outside the repository;
+  both rejection and acceptance assertions then passed. Fixtures do not prove a
+  hosted runner or download fallback. Evidence is retained outside the source tree.
+- The six tracked manifests/lockfiles/workspace files have no MongoDB driver
+  match. This narrow inventory makes no installed/deployment/exploitation claim.
+- Publication remains prohibited because the assignment is local-only and Vercel
+  tracks all unassigned branches for previews; costs, ignored-build behavior and
+  actual backend isolation are unresolved. Preserve the private candidate and
+  existing acceptance evidence. Actual PR checks/risk-floor, prescribed named
+  review methods, live verification and human approval remain separate gates.
