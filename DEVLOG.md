@@ -1296,3 +1296,60 @@ until the user signs in on llmarcade.fun in the driven browser.
   production-only resource identity and public gameplay/score readback remain
   the coordinator's release acceptance gates. A preview artifact must not be
   promoted as the production build.
+
+## CI Node security floors (2026-11-16 UTC)
+
+- Reconciled the authenticated Vercel handoff with public `LLM-Arcade/llm-arcade`
+  rather than transferring the private candidate or its pass claims. The existing
+  security owner was explicitly assigned this isolated public task; available
+  task/branch/PR records established no conflicting security writer. Historical
+  recovery/routing branches and unrelated Flagstone PR #1 were left alone.
+- Changed only the two setup-node inputs to `>=22.23.5 <23` and `>=24.22.3 <25`,
+  following the official November 11 security releases. A floor avoids selecting
+  older cached releases while retaining stable patch/minor updates in each major.
+  This does not establish an affected installed pin or a production exposure.
+- Fresh public-tree validation passed: app frozen install, full `pnpm run ci`
+  and explicit Cloudflare build on Node 22.23.5/pnpm 10.34.9; backend frozen
+  install with `--ignore-scripts` and `pnpm check` on Node 24.22.3/pnpm 11.25.0,
+  including all 26 tests. Existing lint/chunk warnings remain. No test, assertion,
+  capture requirement, isolation control, script policy or resource gate changed.
+- Auxiliary checks confirm that only those workflow values changed and exercise
+  18 version boundaries plus 10 actual tool-cache fixture selections. Their first
+  attempt exposed a fixture setup-order error, corrected outside the repository;
+  both rejection and acceptance assertions then passed. Fixtures do not prove a
+  hosted runner or download fallback. Evidence is retained outside the source tree.
+- The six tracked manifests/lockfiles/workspace files have no MongoDB driver
+  match. This narrow inventory makes no installed/deployment/exploitation claim.
+- Publication remains prohibited because the assignment is local-only and Vercel
+  tracks all unassigned branches for previews; costs, ignored-build behavior and
+  actual backend isolation are unresolved. Preserve the private candidate and
+  existing acceptance evidence. Actual PR checks/risk-floor, prescribed named
+  review methods, live verification and human approval remain separate gates.
+
+## CI-floor publication state correction (2026-11-15 MST)
+
+- Corrected the current HANDOFF paragraph after the authenticated Vercel receipt
+  and Jeff's explicit nonproduction-preview/publication approval. The earlier
+  local-only entry above records the authorization at that time and remains
+  history. PR #6 targets `dev`; production/settings/paid changes stay excluded.
+- GitHub rejected the original commit's private email (GH007). A metadata-only
+  successor uses the previously verified noreply identity, with identical tree,
+  parent, message and file content independently rebound by Sol. Existing CI-floor
+  source reviews and test proof remain valid with that qualification. This follow-up
+  changes prose only; final-head hosted CI, preview acceptance and mandatory
+  verification/review gates still apply before merge.
+
+## CI workflow name integration (2026-11-15 MST)
+
+- The unchanged pinned risk-floor ran through the existing admin user-account
+  route: High, exit 1, blocked only because it required workflow `ci` while the
+  successful exact-head workflow was named `CI`. Rule reads succeeded with no
+  required contexts or enforcement; no access or protection setting changed.
+- Rename only the workflow display name to `ci`. Keep its file, jobs `check` and
+  `backend`, triggers, Node floors, installs and every test command unchanged.
+  No tracked name-based consumer or deployment workflow was found. The
+  concurrency namespace changes with `github.workflow`; all prior runs completed.
+- Application, assets, dependencies and Vercel configuration remain identical.
+  Rebind the prior guarded immutable-preview receipt to that unchanged content;
+  do not repeat browser cases. New-head automatic CI, Vercel source/Ready binding
+  and the actual unchanged canonical risk-floor verdict remain required.
