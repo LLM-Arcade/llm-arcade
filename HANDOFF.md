@@ -26,13 +26,16 @@ fixtures. Separate range/cache fixtures reject older cached versions, accept the
 minima and retain same-major updates. No production access or browser acceptance
 was repeated. The earlier private-repository candidate and receipts remain separate.
 
-The coordinator's authenticated read-only handoff identifies Vercel team
-`jeffrey-kazzee`, project `llm-arcade`, connected to this public repository with
-production branch `prod`. Preview tracking covers all unassigned branches;
-ignored-build rules, preview costs and deployed backend/credential isolation
-remain unverified. Keep this candidate local: no push, PR, deploy or merge is
-authorized. Independent review and the existing PR/live-verification/human gates
-remain required before any later release step; local passes do not satisfy them.
+The authenticated November 15 dashboard receipt confirms Vercel team
+`jeffrey-kazzee`, project `llm-arcade`, this public repository and production
+branch `prod`. Project Node is `24.x`; ignored builds are Automatic, and all
+unassigned branches track Preview. Basic builds run one at a time on Hobby;
+team usage showed 1 h / 100 h, without a future dollar-cost guarantee. Jeff
+approved this candidate's nonproduction previews and routine publication;
+PR #6 targets `dev`. Production branches, settings and paid changes remain
+outside that approval. Final-head hosted checks, guarded preview acceptance,
+required verification and human/protection review remain before merge.
+Source routing guards do not establish deployed backend/credential isolation.
 
 **Environment-specific Vercel routing (2026-11-09):** PR #2 is merged into `dev`
 at `1b214daf377f9e4b24cd180109dbd56f7fa0cad7`. The scoped follow-up replaces the

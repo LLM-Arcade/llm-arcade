@@ -1325,3 +1325,16 @@ until the user signs in on llmarcade.fun in the driven browser.
   actual backend isolation are unresolved. Preserve the private candidate and
   existing acceptance evidence. Actual PR checks/risk-floor, prescribed named
   review methods, live verification and human approval remain separate gates.
+
+## CI-floor publication state correction (2026-11-15 MST)
+
+- Corrected the current HANDOFF paragraph after the authenticated Vercel receipt
+  and Jeff's explicit nonproduction-preview/publication approval. The earlier
+  local-only entry above records the authorization at that time and remains
+  history. PR #6 targets `dev`; production/settings/paid changes stay excluded.
+- GitHub rejected the original commit's private email (GH007). A metadata-only
+  successor uses the previously verified noreply identity, with identical tree,
+  parent, message and file content independently rebound by Sol. Existing CI-floor
+  source reviews and test proof remain valid with that qualification. This follow-up
+  changes prose only; final-head hosted CI, preview acceptance and mandatory
+  verification/review gates still apply before merge.
