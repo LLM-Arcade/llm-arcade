@@ -1338,3 +1338,18 @@ until the user signs in on llmarcade.fun in the driven browser.
   source reviews and test proof remain valid with that qualification. This follow-up
   changes prose only; final-head hosted CI, preview acceptance and mandatory
   verification/review gates still apply before merge.
+
+## CI workflow name integration (2026-11-15 MST)
+
+- The unchanged pinned risk-floor ran through the existing admin user-account
+  route: High, exit 1, blocked only because it required workflow `ci` while the
+  successful exact-head workflow was named `CI`. Rule reads succeeded with no
+  required contexts or enforcement; no access or protection setting changed.
+- Rename only the workflow display name to `ci`. Keep its file, jobs `check` and
+  `backend`, triggers, Node floors, installs and every test command unchanged.
+  No tracked name-based consumer or deployment workflow was found. The
+  concurrency namespace changes with `github.workflow`; all prior runs completed.
+- Application, assets, dependencies and Vercel configuration remain identical.
+  Rebind the prior guarded immutable-preview receipt to that unchanged content;
+  do not repeat browser cases. New-head automatic CI, Vercel source/Ready binding
+  and the actual unchanged canonical risk-floor verdict remain required.

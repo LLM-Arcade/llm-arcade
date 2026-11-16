@@ -11,12 +11,13 @@ and Google OAuth origins use it.
 ## Current state
 
 **Local CI security floors (2026-11-16 UTC):** an isolated task candidate based on
-public `dev` at `7a34b120f037af22638f952d2344e87c976dd78c` raises only the CI
+public `dev` at `7a34b120f037af22638f952d2344e87c976dd78c` sets the CI
 Node selectors: app `>=22.23.5 <23`, backend `>=24.22.3 <25`. These are the
 November 11 security-release minima; later stable releases in each existing
 major remain eligible. Actions, pnpm versions, install policy and all gate
-commands remain unchanged. This is CI selection hardening, not evidence of the
-resolved or live production Node version.
+commands remain unchanged. The workflow display name is `ci`, matching the
+pinned review checker; job contexts remain `check` and `backend`. This is CI
+selection hardening, not evidence of the resolved or live production Node version.
 
 Fresh local validation passed on Node 22.23.5/pnpm 10.34.9 (frozen install,
 `pnpm run ci`, explicit Cloudflare build) and Node 24.22.3/pnpm 11.25.0
